@@ -62,6 +62,32 @@ export default function PrescriptionsPage() {
     showToast(`${rx?.patient}'s prescription sent to Pharmacy queue.`);
   }
 
+  function sendViaWhatsApp(rx) {
+    const patient = PATIENTS.find((p) => p.id === rx.pid);
+    const phone = patient?.phone || '0300-1122334';
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const intlPhone = cleanPhone.startsWith('0') ? `92${cleanPhone.slice(1)}` : cleanPhone;
+
+    const medLines = rx.items
+      .map((it) => `• *${it.medicine}* (${it.dose}) — ${it.frequency} for ${it.duration}`)
+      .join('\n');
+
+    const message = encodeURIComponent(
+      `🏥 *Medora HMS — Official Electronic Prescription*\n\n` +
+      `Prescription No: *${rx.id}*\n` +
+      `Patient: *${rx.patient}* (${rx.pid})\n` +
+      `Consultant: *${rx.doctor}*\n` +
+      `Date: ${rx.date}\n\n` +
+      `📋 *Prescribed Medications:*\n${medLines}\n\n` +
+      `⚠️ *Instructions:* Follow dosages strictly. Take with water.\n\n` +
+      `_Medora Cloud Health · Verified Electronic Health Record_`
+    );
+
+    const waUrl = `https://wa.me/${intlPhone}?text=${message}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    showToast(`Dispatched prescription ${rx.id} to WhatsApp (${phone})`);
+  }
+
   function handleCreatePrescription(e) {
     e.preventDefault();
     const patient = PATIENTS.find((p) => p.id === newRx.patientId) || PATIENTS[0];
@@ -182,7 +208,15 @@ export default function PrescriptionsPage() {
                 </table>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  style={{ borderColor: 'rgba(37,211,102,0.4)', color: '#25D366' }}
+                  onClick={() => sendViaWhatsApp(rx)}
+                  title="Send verified digital prescription directly to patient's WhatsApp"
+                >
+                  <span>💬</span> WhatsApp Rx
+                </button>
                 {rx.status === 'Active' && (
                   <button className="btn btn-primary btn-sm" onClick={() => sendToPharmacy(rx.id)}>
                     Transmit to Pharmacy

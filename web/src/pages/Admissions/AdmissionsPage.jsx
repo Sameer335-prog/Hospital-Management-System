@@ -9,6 +9,7 @@ import { bedService } from '../../services/bedService.js';
 import { patientService } from '../../services/patientService.js';
 import { useToast } from '../../hooks/useToast.js';
 import { WARDS, STATUS_LABEL } from '../../data/wardsData.js';
+import PlanGateLock from '../../components/common/PlanGateLock.jsx';
 
 export default function AdmissionsPage() {
   const navigate = useNavigate();
@@ -521,8 +522,20 @@ export default function AdmissionsPage() {
 
   return (
     <AppShell>
-      {/* Page Header */}
-      <div className="page-header">
+      <PlanGateLock
+        featureKey="wards_admissions"
+        featureName="Inpatient Wards & Acute Bed Allocations"
+        description="Room census, bed turnover tracking, nurse medication rounds, and acute inpatient bed lifecycle management are part of the Enterprise Hospital OS tier."
+        benefits={[
+          'Real-time Ward & Room Occupancy Census',
+          'Bedside Oxygen, Monitor & Ventilator Tracking',
+          'Printable 80mm Bedside Admission Slips',
+          'Nurse Medication Rounds & Vitals Roster',
+          'Automated Hospital Discharge Summaries',
+        ]}
+      >
+        {/* Page Header */}
+        <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             <h1>Admissions & Inpatient Beds</h1>
@@ -1571,6 +1584,7 @@ export default function AdmissionsPage() {
         </div>
       )}
 
+      </PlanGateLock>
       <Toast text={toast} />
     </AppShell>
   );

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { appointmentService } from '../../services/appointmentService.js';
 import { audioAlert } from '../../utils/audioAlert.js';
+import { usePlanGate } from '../../hooks/usePlanGate.js';
 
 /**
  * LobbyDisplayPage.jsx
@@ -11,6 +12,7 @@ import { audioAlert } from '../../utils/audioAlert.js';
  */
 export default function LobbyDisplayPage() {
   const clinic = useClinicProfile();
+  const { canAccess, plan } = usePlanGate();
   const [appointments, setAppointments] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -66,7 +68,7 @@ export default function LobbyDisplayPage() {
   const inConsultationList = appointments.filter(
     (a) => a.status === 'In Consultation' || a.status === 'Checked-in'
   );
-  const currentCalling = inConsultationList[0] || appointments.find((a) => a.status === 'Waiting' || a.status === 'Confirmed') || null;
+  const currentCalling = appointments.find((a) => a.status === 'In Consultation' || a.status === 'Calling') || inConsultationList[0] || appointments.find((a) => a.status === 'Waiting' || a.status === 'Confirmed') || null;
   const waitingQueue = appointments.filter(
     (a) => a.id !== currentCalling?.id && (a.status === 'Waiting' || a.status === 'Confirmed')
   );
@@ -79,14 +81,14 @@ export default function LobbyDisplayPage() {
     setTimeout(() => setIsCallingFlash(false), 2500);
 
     // Play clinical audio chime
-    audioAlert.playChime('reminder');
+    audioAlert.playChime('urgent');
 
     // Announce voice through speech synthesizer
     if (announcementVoice && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
-        const docName = targetToken.doctor?.split('(')[0] || 'the doctor';
-        const chamber = targetToken.room || 'consultation room';
+        const docName = targetToken.doctor || 'attending specialist';
+        const chamber = targetToken.room || 'Examination Room 1';
         const msg = new SpeechSynthesisUtterance(
           `Token number ${targetToken.token}. Patient ${targetToken.patient}, please proceed to ${docName} in ${chamber}.`
         );
@@ -129,8 +131,8 @@ export default function LobbyDisplayPage() {
    */
   const handleSkipCurrent = async () => {
     if (!currentCalling) return;
-    await appointmentService.skipCurrentToken(currentCalling.id);
-    await handleAdvanceNextToken();
+    await appointmentService.skipToken(currentCalling.id);
+    await refreshQueue();
   };
 
   const toggleFullscreen = () => {
@@ -140,6 +142,82 @@ export default function LobbyDisplayPage() {
       document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
     }
   };
+
+  // Subscription Gate: Lobby TV requires Growth or Enterprise
+  if (!canAccess('lobby_tv')) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: '#070b14',
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          fontFamily: "'Inter', sans-serif",
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 580,
+            background: 'rgba(15, 23, 42, 0.95)',
+            padding: '40px 32px',
+            borderRadius: 24,
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div style={{ fontSize: 52, marginBottom: 16 }}>📺</div>
+          <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20, background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Requires Growth or Enterprise Tier
+          </span>
+          <h2 style={{ fontSize: 24, fontWeight: 900, margin: '14px 0 10px', color: '#f8fafc' }}>
+            Public Lobby TV Queue Display Locked
+          </h2>
+          <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.6, marginBottom: 24 }}>
+            Your clinic is currently enrolled in <strong>{plan.name}</strong>. Real-time patient waiting room TV broadcasts, automated token speech synthesizer announcements, and high-definition lobby queues are included in the <strong>Growth</strong> and <strong>Enterprise</strong> tiers.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+            <Link
+              to="/subscription"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 22px',
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                color: '#ffffff',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 8px 24px rgba(2, 132, 199, 0.35)',
+              }}
+            >
+              <span>⚡</span>
+              <span>Upgrade to Growth Tier (Rs. 12,000/mo)</span>
+            </Link>
+            <Link
+              to="/dashboard"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '12px 20px',
+                borderRadius: 12,
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#94a3b8',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              Return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
