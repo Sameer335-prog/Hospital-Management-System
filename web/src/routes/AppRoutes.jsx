@@ -1,28 +1,48 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import RoleRoute from './RoleRoute.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ROLE_LANDING } from '../legacy/legacyEngine.js';
 
-import LoginPage from '../pages/Login/LoginPage.jsx';
-import DashboardPage from '../pages/Dashboard/DashboardPage.jsx';
-import PatientsPage from '../pages/Patients/PatientsPage.jsx';
-import PatientProfilePage from '../pages/PatientProfile/PatientProfilePage.jsx';
-import AppointmentsPage from '../pages/Appointments/AppointmentsPage.jsx';
-import ConsultationPage from '../pages/Consultation/ConsultationPage.jsx';
-import NursingPage from '../pages/Nursing/NursingPage.jsx';
-import AdmissionsPage from '../pages/Admissions/AdmissionsPage.jsx';
-import PrescriptionsPage from '../pages/Prescriptions/PrescriptionsPage.jsx';
-import LaboratoryPage from '../pages/Laboratory/LaboratoryPage.jsx';
-import PharmacyPage from '../pages/Pharmacy/PharmacyPage.jsx';
-import BillingPage from '../pages/Billing/BillingPage.jsx';
-import StaffPage from '../pages/Staff/StaffPage.jsx';
-import ReportsPage from '../pages/Reports/ReportsPage.jsx';
-import SettingsPage from '../pages/Settings/SettingsPage.jsx';
-import PatientPortalPage from '../pages/PatientPortal/PatientPortalPage.jsx';
-import LobbyDisplayPage from '../pages/Display/LobbyDisplayPage.jsx';
-import SubscriptionPage from '../pages/Subscription/SubscriptionPage.jsx';
-import SuperAdminPage from '../pages/SuperAdmin/SuperAdminPage.jsx';
+// Lazy-loaded routes for web and mobile performance
+const LoginPage = lazy(() => import('../pages/Login/LoginPage.jsx'));
+const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage.jsx'));
+const PatientsPage = lazy(() => import('../pages/Patients/PatientsPage.jsx'));
+const PatientProfilePage = lazy(() => import('../pages/PatientProfile/PatientProfilePage.jsx'));
+const AppointmentsPage = lazy(() => import('../pages/Appointments/AppointmentsPage.jsx'));
+const ConsultationPage = lazy(() => import('../pages/Consultation/ConsultationPage.jsx'));
+const NursingPage = lazy(() => import('../pages/Nursing/NursingPage.jsx'));
+const AdmissionsPage = lazy(() => import('../pages/Admissions/AdmissionsPage.jsx'));
+const PrescriptionsPage = lazy(() => import('../pages/Prescriptions/PrescriptionsPage.jsx'));
+const LaboratoryPage = lazy(() => import('../pages/Laboratory/LaboratoryPage.jsx'));
+const PharmacyPage = lazy(() => import('../pages/Pharmacy/PharmacyPage.jsx'));
+const BillingPage = lazy(() => import('../pages/Billing/BillingPage.jsx'));
+const StaffPage = lazy(() => import('../pages/Staff/StaffPage.jsx'));
+const ReportsPage = lazy(() => import('../pages/Reports/ReportsPage.jsx'));
+const SettingsPage = lazy(() => import('../pages/Settings/SettingsPage.jsx'));
+const PatientPortalPage = lazy(() => import('../pages/PatientPortal/PatientPortalPage.jsx'));
+const LobbyDisplayPage = lazy(() => import('../pages/Display/LobbyDisplayPage.jsx'));
+const SubscriptionPage = lazy(() => import('../pages/Subscription/SubscriptionPage.jsx'));
+const SuperAdminPage = lazy(() => import('../pages/SuperAdmin/SuperAdminPage.jsx'));
+
+function RouteLoadingFallback() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14 }}>
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          border: '3px solid rgba(2, 132, 199, 0.15)',
+          borderTopColor: '#0284c7',
+          borderRadius: '50%',
+          animation: 'spin 0.7s linear infinite',
+        }}
+      />
+      <div style={{ fontSize: 13, color: 'var(--c-text-muted)', fontWeight: 600 }}>Loading Medora workspace…</div>
+    </div>
+  );
+}
 
 /**
  * Every business route below is wrapped twice:
@@ -34,7 +54,8 @@ import SuperAdminPage from '../pages/SuperAdmin/SuperAdminPage.jsx';
  */
 export default function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/display" element={<LobbyDisplayPage />} />
       <Route path="/lobby" element={<LobbyDisplayPage />} />
@@ -111,6 +132,7 @@ export default function AppRoutes() {
 
       <Route path="*" element={<IndexRedirect />} />
     </Routes>
+    </Suspense>
   );
 }
 
