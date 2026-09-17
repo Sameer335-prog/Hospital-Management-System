@@ -296,6 +296,75 @@ export default function LoginPage() {
             >
               {loading ? 'Authenticating…' : 'Sign In'}
             </button>
+
+            {/* Quick Demo Credentials Bar */}
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--c-border)' }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-muted)', marginBottom: 8, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Quick Demo Role Accounts
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 700, borderColor: 'rgba(147, 51, 234, 0.4)', background: 'rgba(147, 51, 234, 0.08)', color: '#c084fc' }}
+                  onClick={() => {
+                    setLoginEmail('superadmin@medora.hospital');
+                    setLoginPassword('superadmin123');
+                  }}
+                  title="Sign in as SaaS Super Admin (Registered Clinics & Subscriptions ONLY)"
+                >
+                  👑 Super Admin
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 600 }}
+                  onClick={() => {
+                    setLoginEmail('admin@medora.hospital');
+                    setLoginPassword('admin123');
+                  }}
+                  title="Sign in as Hospital Administrator"
+                >
+                  🏥 Admin
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 600 }}
+                  onClick={() => {
+                    setLoginEmail('s.khan@medora.hospital');
+                    setLoginPassword('doctor123');
+                  }}
+                  title="Sign in as Doctor"
+                >
+                  🩺 Doctor
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 600 }}
+                  onClick={() => {
+                    setLoginEmail('nurse@medora.hospital');
+                    setLoginPassword('nurse123');
+                  }}
+                  title="Sign in as Nurse"
+                >
+                  👩‍⚕️ Nurse
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 600 }}
+                  onClick={() => {
+                    setLoginEmail('patient@medora.hospital');
+                    setLoginPassword('patient123');
+                  }}
+                  title="Sign in as Patient"
+                >
+                  👤 Patient
+                </button>
+              </div>
+            </div>
           </form>
         )}
 

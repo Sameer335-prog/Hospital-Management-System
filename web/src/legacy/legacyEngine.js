@@ -164,13 +164,18 @@ const ROUTES = [
   {group:'Patient Services', items:[
     {id:'portal',label:'My Health Portal',icon:I.patients},
   ]},
+  {group:'SaaS Platform', items:[
+    {id:'super-admin',label:'Registered Clinics',icon:I.patients},
+    {id:'subscription',label:'Clinic Subscriptions',icon:I.billing},
+  ]},
 ];
 /* Role scoping — each role only sees what it actually uses day to day.
    This is the fix for the "generic admin template" sidebar: nav = job, not entity list.
    NOTE: no 'automation' route/item exists anywhere in this list — automation
    is explicitly out of scope for this phase (implemented later, separately). */
 const ROLE_ROUTES = {
-  'Administrator': ['dashboard','patients','appointments','nursing','admissions','laboratory','pharmacy','billing','staff','reports','settings','portal'],
+  'Super Admin': ['super-admin', 'subscription'],
+  'Administrator': ['dashboard','patients','appointments','nursing','admissions','laboratory','pharmacy','billing','staff','reports','settings','subscription','portal'],
   'Receptionist': ['dashboard','patients','appointments','billing'],
   'Doctor': ['dashboard','patients','appointments','consultation','prescriptions','laboratory'],
   'Nurse': ['dashboard','patients','nursing','admissions'],
@@ -180,6 +185,7 @@ const ROLE_ROUTES = {
 };
 /* Each role's real "start of shift" screen — not a generic Dashboard for everyone. */
 const ROLE_LANDING = {
+  'Super Admin':'super-admin',
   'Administrator':'dashboard','Receptionist':'appointments','Doctor':'dashboard',
   'Nurse':'nursing','Lab Technician':'laboratory','Pharmacist':'pharmacy',
   'Patient': 'portal',
@@ -211,6 +217,8 @@ const ROUTE_TITLES = {
   reports:['Reports','Operational reporting across the hospital'],
   settings:['Settings','Hospital configuration'],
   portal:['My Health Portal','Track your appointments, tokens, prescriptions, and lab reports'],
+  'super-admin':['Registered Clinics','Multi-tenant clinic directory, subscriptions, and SaaS MRR'],
+  subscription:['Clinic Subscriptions','Tier plans, billing cycles, and feature access'],
 };
 
 /* Note: HTML-string statusBadge()/avatar()/initials()/icon() helpers that

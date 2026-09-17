@@ -25,13 +25,13 @@ export default function Sidebar() {
   return (
     <aside className="sidebar" aria-label="Main Navigation">
       <div className="sidebar-brand">
-        <div className="logo" aria-hidden="true">{logoText}</div>
+        <div className="logo" aria-hidden="true">{user?.role === 'Super Admin' ? '⚡' : logoText}</div>
         <div style={{ overflow: 'hidden' }}>
           <div className="name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {clinic.name || 'Medora HMS'}
+            {user?.role === 'Super Admin' ? 'Medora SaaS Cloud' : (clinic.name || 'Medora HMS')}
           </div>
           <div className="sub" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {clinic.tagline || 'Hospital OS · v2.0'}
+            {user?.role === 'Super Admin' ? 'Super Admin Console' : (clinic.tagline || 'Hospital OS · v2.0')}
           </div>
         </div>
       </div>
@@ -57,40 +57,65 @@ export default function Sidebar() {
       </nav>
 
       {/* SaaS Subscription & Plan Badge */}
-      <div style={{ padding: '0 12px', marginBottom: 12 }}>
-        <NavLink
-          to="/subscription"
-          style={{
-            display: 'block',
-            padding: '8px 12px',
-            borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(15, 23, 42, 0.4) 100%)',
-            border: '1px solid rgba(2, 132, 199, 0.25)',
-            textDecoration: 'none',
-            color: 'inherit',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              ⚡ {plan.name}
-            </span>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: isExpired ? '#ef4444' : isTrial ? '#f59e0b' : '#10b981',
-              }}
-            >
-              {isExpired ? 'Expired' : isTrial ? `${daysLeftInTrial}d Trial` : 'Active'}
-            </span>
+      {user?.role === 'Super Admin' ? (
+        <div style={{ padding: '0 12px', marginBottom: 12 }}>
+          <div
+            style={{
+              padding: '10px 12px',
+              borderRadius: 'var(--radius-md)',
+              background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.14) 0%, rgba(15, 23, 42, 0.5) 100%)',
+              border: '1px solid rgba(147, 51, 234, 0.35)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                👑 Platform Owner
+              </span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981' }}>
+                Online
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8' }}>
+              Multi-Tenant Cloud Control
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>Plan & Seats</span>
-            <span>→</span>
-          </div>
-        </NavLink>
-      </div>
+        </div>
+      ) : (
+        <div style={{ padding: '0 12px', marginBottom: 12 }}>
+          <NavLink
+            to="/subscription"
+            style={{
+              display: 'block',
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-md)',
+              background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(15, 23, 42, 0.4) 100%)',
+              border: '1px solid rgba(2, 132, 199, 0.25)',
+              textDecoration: 'none',
+              color: 'inherit',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                ⚡ {plan.name}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: isExpired ? '#ef4444' : isTrial ? '#f59e0b' : '#10b981',
+                }}
+              >
+                {isExpired ? 'Expired' : isTrial ? `${daysLeftInTrial}d Trial` : 'Active'}
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Plan & Seats</span>
+              <span>→</span>
+            </div>
+          </NavLink>
+        </div>
+      )}
 
       <div className="sidebar-foot">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, padding: '4px 6px' }}>
@@ -139,6 +164,7 @@ function iconKeyFor(routeId) {
     admissions: 'bed', laboratory: 'lab', pharmacy: 'pharmacy', billing: 'billing',
     staff: 'staff', reports: 'reports', automation: 'automation', settings: 'settings',
     consultation: 'stetho', prescriptions: 'rx', portal: 'patients',
+    'super-admin': 'patients', subscription: 'billing',
   };
   return map[routeId] || 'dash';
 }

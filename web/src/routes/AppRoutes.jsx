@@ -98,8 +98,13 @@ export default function AppRoutes() {
           <Route path="/portal" element={<PatientPortalPage />} />
         </Route>
 
-        <Route path="/subscription" element={<SubscriptionPage />} />
-        <Route path="/super-admin" element={<SuperAdminPage />} />
+        <Route element={<RoleRoute routeId="super-admin" />}>
+          <Route path="/super-admin" element={<SuperAdminPage />} />
+        </Route>
+
+        <Route element={<RoleRoute routeId="subscription" />}>
+          <Route path="/subscription" element={<SubscriptionPage />} />
+        </Route>
 
         <Route path="/" element={<IndexRedirect />} />
       </Route>

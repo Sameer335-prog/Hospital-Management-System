@@ -6,6 +6,7 @@ import StatusBadge from './StatusBadge.jsx';
 import { PATIENTS } from '../../legacy/legacyEngine.js';
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { getTenantClinics } from '../../utils/subscriptionConfig.js';
 
 const NAVIGATION_ITEMS = [
   { id: 'nav-dash', title: 'Dashboard', section: 'Navigation', icon: 'dash', path: '/dashboard', hint: 'Overview & Hospital Metrics' },
@@ -39,6 +40,7 @@ export default function CommandPalette({ isOpen, onClose }) {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const isPatient = user?.role === 'Patient';
+  const isSuperAdmin = user?.role === 'Super Admin';
 
   // Focus input when opened
   useEffect(() => {
@@ -52,6 +54,59 @@ export default function CommandPalette({ isOpen, onClose }) {
   // Memoized search results
   const allResults = useMemo(() => {
     const q = query.trim().toLowerCase();
+
+    // Super Admin Sandboxing: strictly show registered clinics & their subscriptions
+    if (isSuperAdmin) {
+      const saNav = [
+        { id: 'sa-clinics', title: 'Registered Clinics Directory', section: 'SaaS Platform', icon: 'patients', path: '/super-admin', hint: 'View and manage all tenant clinics' },
+        { id: 'sa-subscriptions', title: 'Clinic Subscriptions & MRR', section: 'SaaS Platform', icon: 'billing', path: '/subscription', hint: 'Tier plans, renewals, and revenue telemetry' },
+      ];
+
+      const navMatches = saNav.filter(
+        (item) => item.title.toLowerCase().includes(q) || item.hint.toLowerCase().includes(q)
+      ).map((item) => ({
+        ...item,
+        type: 'nav',
+        action: () => navigate(item.path),
+      }));
+
+      const clinics = getTenantClinics();
+      const clinicMatches = clinics.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.city.toLowerCase().includes(q) ||
+          c.doctorInCharge.toLowerCase().includes(q)
+      ).slice(0, 6).map((c) => ({
+        id: `tenant-${c.id}`,
+        title: c.name,
+        subtitle: `${c.city} · In Charge: ${c.doctorInCharge} · Plan: ${c.plan.toUpperCase()} (${c.status})`,
+        section: 'Registered Clinics',
+        type: 'clinic',
+        icon: 'patients',
+        action: () => navigate('/super-admin'),
+      }));
+
+      const saActions = [
+        {
+          id: 'act-new-clinic',
+          title: 'Register & Onboard New Clinic',
+          subtitle: 'Launch tenant with 14-day free trial',
+          section: 'Quick Actions',
+          icon: 'plus',
+          action: () => navigate('/super-admin'),
+        },
+        {
+          id: 'act-theme',
+          title: `Switch to ${theme === 'light' ? 'Night Shift (Dark Mode)' : 'Day Shift (Light Mode)'}`,
+          subtitle: `Currently using ${theme} theme`,
+          section: 'Quick Actions',
+          icon: theme === 'light' ? 'moon' : 'sun',
+          action: () => toggleTheme(),
+        },
+      ].filter((a) => a.title.toLowerCase().includes(q) || a.subtitle.toLowerCase().includes(q));
+
+      return [...navMatches, ...clinicMatches, ...saActions];
+    }
 
     // Patient Role Sandboxing: strictly prevent patients from viewing other hospital patients
     if (isPatient) {

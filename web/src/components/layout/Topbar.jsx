@@ -72,7 +72,9 @@ export default function Topbar({ onOpenCommand, onOpenMenu }) {
             userSelect: 'none',
           }}
         >
-          {user?.role === 'Patient'
+          {user?.role === 'Super Admin'
+            ? <>Search registered clinics, subscriptions, or press <kbd className="kbd-inline">⌘K</kbd>…</>
+            : user?.role === 'Patient'
             ? <>Search prescriptions, lab results, tokens, or press <kbd className="kbd-inline">⌘K</kbd>…</>
             : <>Search patients, MRN, orders, or press <kbd className="kbd-inline">⌘K</kbd>…</>}
         </span>
@@ -95,18 +97,20 @@ export default function Topbar({ onOpenCommand, onOpenMenu }) {
       </div>
 
       <div className="topbar-right">
-        {/* Waiting Lounge TV Display Launch Button */}
-        <Link
-          to="/display"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-secondary btn-sm"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}
-          title="Open Public Waiting Room TV Display in full-screen window"
-        >
-          <span>📺</span>
-          <span>Lobby TV</span>
-        </Link>
+        {/* Waiting Lounge TV Display Launch Button (Not applicable to SaaS Super Admin) */}
+        {user?.role !== 'Super Admin' && (
+          <Link
+            to="/display"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}
+            title="Open Public Waiting Room TV Display in full-screen window"
+          >
+            <span>📺</span>
+            <span>Lobby TV</span>
+          </Link>
+        )}
 
         {/* Night Shift / Dark Theme Toggle */}
         <button

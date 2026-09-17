@@ -1,14 +1,23 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import Icon from '../ui/Icon.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function MobileBottomNav({ onOpenMenu }) {
-  const navItems = [
-    { id: 'dashboard', label: 'Home', icon: 'dash', path: '/dashboard' },
-    { id: 'appointments', label: 'Tokens', icon: 'calendar', path: '/appointments' },
-    { id: 'patients', label: 'Patients', icon: 'patients', path: '/patients' },
-    { id: 'billing', label: 'Billing', icon: 'billing', path: '/billing' },
-  ];
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'Super Admin';
+
+  const navItems = isSuperAdmin
+    ? [
+        { id: 'super-admin', label: 'Clinics', icon: 'patients', path: '/super-admin' },
+        { id: 'subscription', label: 'Subscriptions', icon: 'billing', path: '/subscription' },
+      ]
+    : [
+        { id: 'dashboard', label: 'Home', icon: 'dash', path: '/dashboard' },
+        { id: 'appointments', label: 'Tokens', icon: 'calendar', path: '/appointments' },
+        { id: 'patients', label: 'Patients', icon: 'patients', path: '/patients' },
+        { id: 'billing', label: 'Billing', icon: 'billing', path: '/billing' },
+      ];
 
   return (
     <nav

@@ -5,6 +5,7 @@ const STORAGE_KEY = 'medora_hms_session';
 const REGISTERED_USERS_KEY = 'medora_hms_custom_users';
 
 const DEV_USERS = [
+  { id: 'u-superadmin', name: 'Super Admin (SaaS Platform Owner)', email: 'superadmin@medora.hospital', password: 'superadmin123', role: 'Super Admin' },
   { id: 'u-admin', name: 'Admin User', email: 'admin@medora.hospital', password: 'admin123', role: 'Administrator' },
   { id: 'u-recep', name: 'Farah Iqbal', email: 'reception@medora.hospital', password: 'reception123', role: 'Receptionist' },
   { id: 'u-doctor', name: 'Dr. Sarah Khan', email: 's.khan@medora.hospital', password: 'doctor123', role: 'Doctor' },
