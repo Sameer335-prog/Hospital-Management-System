@@ -1,0 +1,15 @@
+{
+  "name": "medora-hms-workspace",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix web install && npm --prefix web run build",
+    "vercel-build": "npm --prefix web install && npm --prefix web run build",
+    "dev": "npm --prefix web run dev",
+    "preview": "npm --prefix web run preview",
+    "lint": "npm --prefix web run lint",
+    "server": "npm --prefix backend run dev",
+    "backend": "npm --prefix backend start",
+    "start:backend": "npm --prefix backend start"
+  }
+}

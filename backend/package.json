@@ -1,0 +1,26 @@
+{
+  "name": "medora-hms-backend",
+  "version": "2.0.0",
+  "description": "Medora HMS Enterprise Backend & Database Service",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "keywords": [
+    "hospital-management-system",
+    "healthcare",
+    "backend",
+    "supabase",
+    "express"
+  ],
+  "author": "Medora Healthcare",
+  "license": "ISC"
+}

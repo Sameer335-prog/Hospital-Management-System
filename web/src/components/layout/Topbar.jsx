@@ -1,0 +1,135 @@
+import { useNavigate, Link } from 'react-router-dom';
+import Icon from '../ui/Icon.jsx';
+import Avatar from '../ui/Avatar.jsx';
+import NotificationPopover from '../notifications/NotificationPopover.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { useTheme } from '../../context/ThemeContext.jsx';
+
+export default function Topbar({ onOpenCommand }) {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await logout();
+    navigate('/login', { replace: true });
+  }
+
+  return (
+    <header className="topbar">
+      {/* Global Command Center Trigger */}
+      <div
+        className="global-search"
+        onClick={onOpenCommand}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpenCommand();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Open Command Center (Press Command K)"
+        style={{
+          position: 'relative',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          background: 'var(--c-surface)',
+          border: '1px solid var(--c-border)',
+          borderRadius: 'var(--radius-pill)',
+          padding: '7px 14px',
+          width: '100%',
+          maxWidth: 440,
+          boxShadow: 'var(--shadow-xs)',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <Icon name="search" style={{ color: 'var(--c-primary)', flexShrink: 0 }} />
+        <span
+          style={{
+            fontSize: 13,
+            color: 'var(--c-text-muted)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            flex: 1,
+            userSelect: 'none',
+          }}
+        >
+          {user?.role === 'Patient'
+            ? <>Search prescriptions, lab results, tokens, or press <kbd className="kbd-inline">⌘K</kbd>…</>
+            : <>Search patients, MRN, orders, or press <kbd className="kbd-inline">⌘K</kbd>…</>}
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            color: 'var(--c-text-faint)',
+            background: 'var(--c-surface-hover)',
+            border: '1px solid var(--c-border)',
+            padding: '2px 6px',
+            borderRadius: 4,
+            fontWeight: 600,
+            fontFamily: 'var(--font-mono)',
+            flexShrink: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          ⌘K
+        </span>
+      </div>
+
+      <div className="topbar-right">
+        {/* Waiting Lounge TV Display Launch Button */}
+        <Link
+          to="/display"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-secondary btn-sm"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}
+          title="Open Public Waiting Room TV Display in full-screen window"
+        >
+          <span>📺</span>
+          <span>Lobby TV</span>
+        </Link>
+
+        {/* Night Shift / Dark Theme Toggle */}
+        <button
+          className="btn-icon"
+          onClick={toggleTheme}
+          title={theme === 'light' ? 'Switch to Night Shift (Dark Mode)' : 'Switch to Day Shift (Light Mode)'}
+          aria-label={theme === 'light' ? 'Switch to Night Shift (Dark Mode)' : 'Switch to Day Shift (Light Mode)'}
+        >
+          <Icon name={theme === 'light' ? 'moon' : 'sun'} />
+        </button>
+
+        {/* Notifications & 2-Hour Reminders */}
+        <NotificationPopover />
+
+        {/* User Account Chip */}
+        <div
+          className="user-chip"
+          onClick={handleLogout}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleLogout();
+            }
+          }}
+          title="Click to log out"
+          aria-label={`User profile for ${user?.name || 'User'} (${user?.role || 'Staff'}). Click to log out.`}
+          role="button"
+          tabIndex={0}
+        >
+          <Avatar name={user?.name || ''} />
+          <div style={{ lineHeight: 1.25 }}>
+            <div style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--c-text)' }}>{user?.name}</div>
+            <div className="hint" style={{ fontSize: 11 }}>{user?.role}</div>
+          </div>
+          <Icon name="chevDown" />
+        </div>
+      </div>
+    </header>
+  );
+}
