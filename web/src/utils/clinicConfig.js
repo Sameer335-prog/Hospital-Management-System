@@ -12,6 +12,8 @@ export const DEFAULT_CLINIC_PROFILE = {
   name: 'Al-Shifa Healthcare Complex',
   tagline: 'Outpatient & Specialist Care Complex',
   doctorInCharge: 'Dr. Sarah Khan (MBBS, FCPS)',
+  logoIcon: '🏥',
+  logoImage: '',
   phone: '0300-1234567',
   hotline: '051-111-222-333',
   address: 'Sector H-8/4, Islamabad, Pakistan',

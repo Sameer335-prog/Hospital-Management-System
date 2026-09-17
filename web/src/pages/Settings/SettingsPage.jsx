@@ -142,7 +142,23 @@ function ClinicProfileTab({ showToast }) {
   function handleSave(e) {
     e.preventDefault();
     saveClinicProfile(form);
-    showToast(`Saved! Branding updated for "${form.name}" across all slips and WhatsApp.`);
+    showToast(`Saved! Branding updated for "${form.name}" across all slips, sidebar and WhatsApp.`);
+  }
+
+  function handleLogoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('Image file size must be under 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result;
+      setForm((prev) => ({ ...prev, logoImage: base64 }));
+      showToast('Uploaded clinic logo image! Click Save to apply across Medora.');
+    };
+    reader.readAsDataURL(file);
   }
 
   function applyPreset(preset) {
@@ -181,7 +197,98 @@ function ClinicProfileTab({ showToast }) {
         <form onSubmit={handleSave} className="card card-pad">
           <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>Clinic Profile & Legal Entity</div>
           <div className="hint" style={{ marginBottom: 16 }}>
-            Configures the clinic title on thermal slips, WhatsApp messages, and invoices.
+            Configures the clinic title, logo, and brand emblem across thermal slips, sidebar, WhatsApp messages, and invoices.
+          </div>
+
+          {/* Clinic Logo & Brand Emblem */}
+          <div
+            style={{
+              marginBottom: 18,
+              padding: '14px 16px',
+              background: 'var(--c-surface-hover)',
+              borderRadius: 12,
+              border: '1px solid var(--c-border)',
+            }}
+          >
+            <label style={{ fontWeight: 800, fontSize: 13.5, display: 'block', marginBottom: 4 }}>
+              Clinic Logo & Visual Emblem
+            </label>
+            <div className="hint" style={{ fontSize: 12, marginBottom: 12 }}>
+              Shown on your navigation sidebar, topbar, thermal receipts, and e-prescriptions.
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 12 }}>
+              {/* Logo Preview Avatar */}
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 12,
+                  background: 'var(--c-surface)',
+                  border: '2px dashed var(--c-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 26,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  boxShadow: 'var(--shadow-xs)',
+                }}
+              >
+                {form.logoImage ? (
+                  <img src={form.logoImage} alt="Clinic Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : (
+                  <span>{form.logoIcon || '🏥'}</span>
+                )}
+              </div>
+
+              {/* Upload & Reset Buttons */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <label
+                  className="btn btn-secondary btn-sm"
+                  style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+                >
+                  <span>📁 Upload Custom Logo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handleLogoUpload}
+                  />
+                </label>
+
+                {form.logoImage && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--c-error)', fontSize: 12 }}
+                    onClick={() => setForm((prev) => ({ ...prev, logoImage: '' }))}
+                  >
+                    Reset to Emblem
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Specialty Icon Badges */}
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--c-text-muted)', marginBottom: 6 }}>
+                Or select a specialty emblem icon:
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {['🏥', '🦷', '👶', '🫀', '👁️', '🦴', '🧠', '💊', '🔬'].map((icon) => (
+                  <button
+                    key={icon}
+                    type="button"
+                    className={`btn btn-xs ${!form.logoImage && form.logoIcon === icon ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ fontSize: 16, padding: '4px 10px', borderRadius: 8 }}
+                    onClick={() => setForm((prev) => ({ ...prev, logoIcon: icon, logoImage: '' }))}
+                  >
+                    {icon}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="field" style={{ marginBottom: 12 }}>
@@ -307,15 +414,38 @@ function ClinicProfileTab({ showToast }) {
           <div className="hint" style={{ marginBottom: 14 }}>Real-time rendering on A4 reports and official e-prescriptions</div>
 
           <div style={{ background: 'var(--c-surface-hover)', padding: 16, borderRadius: 8, border: '1px solid var(--c-border)' }}>
-            <div style={{ borderBottom: '2px solid var(--c-primary)', paddingBottom: 10, marginBottom: 10 }}>
-              <div style={{ fontWeight: 900, fontSize: 17, color: 'var(--c-primary)', letterSpacing: '-0.02em' }}>
-                {form.name}
+            <div style={{ borderBottom: '2px solid var(--c-primary)', paddingBottom: 10, marginBottom: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: 'var(--c-surface)',
+                  border: '1px solid var(--c-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 22,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
+                {form.logoImage ? (
+                  <img src={form.logoImage} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : (
+                  <span>{form.logoIcon || '🏥'}</span>
+                )}
               </div>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--c-text)', marginTop: 2 }}>
-                {form.tagline}
-              </div>
-              <div style={{ fontSize: 10.5, color: 'var(--c-text-muted)', marginTop: 2 }}>
-                {form.accreditation}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 900, fontSize: 17, color: 'var(--c-primary)', letterSpacing: '-0.02em' }}>
+                  {form.name}
+                </div>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--c-text)', marginTop: 2 }}>
+                  {form.tagline}
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--c-text-muted)', marginTop: 2 }}>
+                  {form.accreditation}
+                </div>
               </div>
             </div>
 
@@ -346,6 +476,9 @@ function ClinicProfileTab({ showToast }) {
               }}
             >
               <div style={{ textAlign: 'center', borderBottom: '1px dashed #000', paddingBottom: 6, marginBottom: 6 }}>
+                <div style={{ fontSize: 18, marginBottom: 2 }}>
+                  {form.logoIcon || '🏥'}
+                </div>
                 <div style={{ fontWeight: 900, fontSize: 12.5, textTransform: 'uppercase' }}>{form.name}</div>
                 <div style={{ fontSize: 8.5, fontWeight: 700 }}>{form.tagline}</div>
                 <div style={{ fontSize: 8, color: '#444' }}>{form.address}</div>

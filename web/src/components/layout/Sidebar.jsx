@@ -25,7 +25,17 @@ export default function Sidebar() {
   return (
     <aside className="sidebar" aria-label="Main Navigation">
       <div className="sidebar-brand">
-        <div className="logo" aria-hidden="true">{user?.role === 'Super Admin' ? '⚡' : logoText}</div>
+        <div className="logo" aria-hidden="true">
+          {user?.role === 'Super Admin' ? (
+            '⚡'
+          ) : clinic.logoImage ? (
+            <img src={clinic.logoImage} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
+          ) : clinic.logoIcon ? (
+            <span>{clinic.logoIcon}</span>
+          ) : (
+            logoText
+          )}
+        </div>
         <div style={{ overflow: 'hidden' }}>
           <div className="name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {user?.role === 'Super Admin' ? 'Medora SaaS Cloud' : (clinic.name || 'Medora HMS')}
