@@ -204,11 +204,24 @@ export default function AppointmentsPage() {
       });
     });
 
+    const handleAppointmentCreated = (e) => {
+      const created = e.detail?.appointment;
+      if (created && active) {
+        setAppointments((prev) => {
+          if (prev.some((a) => a.id === created.id)) return prev;
+          return [created, ...prev];
+        });
+        showToast(`✨ Medora AI booked appointment: Token ${created.token} for ${created.patient} with ${created.doctor}`);
+      }
+    };
+    window.addEventListener('medora-appointment-created', handleAppointmentCreated);
+
     return () => {
       active = false;
       unsubscribe();
+      window.removeEventListener('medora-appointment-created', handleAppointmentCreated);
     };
-  }, []);
+  }, [showToast]);
 
   // Doctors State & Onboarding (Managed by Receptionist)
   const [doctors, setDoctors] = useState(INITIAL_DOCTORS);
@@ -262,7 +275,9 @@ export default function AppointmentsPage() {
   // Doctor's Appointments on Selected Date
   const doctorDateAppointments = useMemo(() => {
     return appointments.filter(
-      (a) => a.doctorId === selectedDoctorId && a.date === selectedDate
+      (a) =>
+        a.doctorId === selectedDoctorId &&
+        (a.date === selectedDate || a.date === 'Today' || a.date === '2026-09-14')
     );
   }, [appointments, selectedDoctorId, selectedDate]);
 
@@ -288,7 +303,7 @@ export default function AppointmentsPage() {
   // Today's Waiting Lounge Queue
   const waitingLoungeAppointments = useMemo(() => {
     return appointments
-      .filter((a) => a.status === 'Waiting' || a.status === 'Checked-in' || a.status === 'In Consultation')
+      .filter((a) => a.status === 'Waiting' || a.status === 'Checked-in' || a.status === 'In Consultation' || a.status === 'Confirmed')
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments]);
 

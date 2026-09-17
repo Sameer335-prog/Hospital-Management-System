@@ -252,7 +252,10 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
           sender: 'ai',
           text: result.text,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          appointment: result.appointment
+          appointment: result.appointment,
+          action: result.action,
+          doctors: result.doctors,
+          doctor: result.doctor
         }
       ]);
 
@@ -335,7 +338,10 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
           sender: 'ai',
           text: response.text,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          appointment: response.appointment
+          appointment: response.appointment,
+          action: response.action,
+          doctors: response.doctors,
+          doctor: response.doctor
         }
       ]);
     } catch (err) {
@@ -1051,6 +1057,67 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                     <div>{msg.appointment.doctor} ({msg.appointment.dept})</div>
                     <div>Time: {msg.appointment.time} · {msg.appointment.room}</div>
                     <div style={{ fontSize: '11px', color: '#047857', marginTop: '2px' }}>Consultation Fee: Rs. {msg.appointment.fee}</div>
+                  </div>
+                )}
+
+                {/* 1-Click Selectable Doctor Cards if prompted */}
+                {msg.doctors && msg.action === 'PROMPT_DOCTOR' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px', width: '100%' }}>
+                    {msg.doctors.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => handleSendMessage(`Book ${d.name} at 10:30 AM`)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 12px',
+                          backgroundColor: '#f0fdf4',
+                          border: '1px solid #bbf7d0',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all 0.15s ease'
+                        }}
+                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dcfce7')}
+                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#f0fdf4')}
+                      >
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '12px', color: '#166534' }}>{d.name}</div>
+                          <div style={{ fontSize: '11px', color: '#15803d' }}>{d.dept} · {d.room}</div>
+                        </div>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#166534' }}>Book Now →</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 1-Click Fast Book Button if doctor schedule was queried */}
+                {msg.action === 'DOCTOR_SCHEDULE' && msg.doctor && (
+                  <div style={{ marginTop: '8px', width: '100%' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSendMessage(`Yes, book an appointment with ${msg.doctor.name}`)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        width: '100%',
+                        padding: '9px 14px',
+                        backgroundColor: '#0d9488',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(13, 148, 136, 0.3)'
+                      }}
+                    >
+                      <span>⚡ Yes, Book with {msg.doctor.name}</span>
+                    </button>
                   </div>
                 )}
 

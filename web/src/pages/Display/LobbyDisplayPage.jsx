@@ -66,9 +66,9 @@ export default function LobbyDisplayPage() {
   const inConsultationList = appointments.filter(
     (a) => a.status === 'In Consultation' || a.status === 'Checked-in'
   );
-  const currentCalling = inConsultationList[0] || appointments.find((a) => a.status === 'Waiting') || null;
+  const currentCalling = inConsultationList[0] || appointments.find((a) => a.status === 'Waiting' || a.status === 'Confirmed') || null;
   const waitingQueue = appointments.filter(
-    (a) => a.id !== currentCalling?.id && a.status === 'Waiting'
+    (a) => a.id !== currentCalling?.id && (a.status === 'Waiting' || a.status === 'Confirmed')
   );
 
   const announceToken = (targetToken) => {

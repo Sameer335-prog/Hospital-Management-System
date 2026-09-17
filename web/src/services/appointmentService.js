@@ -41,8 +41,96 @@ function notifyLocalListeners(data) {
   });
 }
 
+export const DEFAULT_APPOINTMENTS = [
+  {
+    id: 'AP-3301',
+    token: 'TK-01',
+    patient: 'Muhammad Ahmed',
+    pid: 'PT-00125',
+    doctorId: 'DOC-01',
+    doctor: 'Dr. Sarah Khan',
+    dept: 'Cardiology',
+    room: 'Room 204 · East Wing',
+    date: '2026-09-14',
+    time: '09:30 AM',
+    type: 'Routine Follow-up',
+    priority: 'Normal',
+    status: 'In Consultation',
+    fee: 2500,
+    complaint: 'Post-CABG recovery and hypertension titration',
+  },
+  {
+    id: 'AP-3302',
+    token: 'TK-02',
+    patient: 'Ayesha Bibi',
+    pid: 'PT-00126',
+    doctorId: 'DOC-05',
+    doctor: 'Dr. Hina Farooq',
+    dept: 'Gynecology',
+    room: 'Room 218 · East Wing',
+    date: '2026-09-14',
+    time: '10:00 AM',
+    type: 'Specialist Consultation',
+    priority: 'Normal',
+    status: 'Waiting',
+    fee: 2500,
+    complaint: 'Routine 2nd trimester ultrasound review',
+  },
+  {
+    id: 'AP-3303',
+    token: 'TK-03',
+    patient: 'Fahad Iqbal',
+    pid: 'PT-00127',
+    doctorId: 'DOC-03',
+    doctor: 'Dr. Ayesha Raza',
+    dept: 'Pediatrics',
+    room: 'Room 105 · OPD Wing',
+    date: '2026-09-14',
+    time: '10:30 AM',
+    type: 'Acute Consultation',
+    priority: 'Urgent',
+    status: 'Checked-in',
+    fee: 2000,
+    complaint: 'High-grade fever (103°F) and dehydration',
+  },
+  {
+    id: 'AP-3304',
+    token: 'TK-04',
+    patient: 'Bilal Chaudhry',
+    pid: 'PT-00129',
+    doctorId: 'DOC-02',
+    doctor: 'Dr. Bilal Ahmed',
+    dept: 'Orthopedics',
+    room: 'Room 112 · Ground Floor',
+    date: '2026-09-14',
+    time: '11:00 AM',
+    type: 'Pre-Op Evaluation',
+    priority: 'Normal',
+    status: 'Waiting',
+    fee: 2500,
+    complaint: 'Post-op knee dressing and suture inspection',
+  },
+  {
+    id: 'AP-3305',
+    token: 'TK-05',
+    patient: 'Sana Malik',
+    pid: 'PT-00130',
+    doctorId: 'DOC-01',
+    doctor: 'Dr. Sarah Khan',
+    dept: 'Cardiology',
+    room: 'Room 204 · East Wing',
+    date: '2026-09-14',
+    time: '12:00 PM',
+    type: 'Cardiac Follow-up',
+    priority: 'Normal',
+    status: 'Waiting',
+    fee: 2500,
+    complaint: 'Persistent palpitations and fatigue',
+  },
+];
+
 function getStoredQueue() {
-  if (typeof window === 'undefined') return [...APPOINTMENTS];
+  if (typeof window === 'undefined') return [...DEFAULT_APPOINTMENTS];
   try {
     const saved = localStorage.getItem(QUEUE_STORAGE_KEY);
     if (saved) {
@@ -52,7 +140,7 @@ function getStoredQueue() {
   } catch {
     // fallback
   }
-  return [...APPOINTMENTS];
+  return [...DEFAULT_APPOINTMENTS];
 }
 
 function saveStoredQueue(list) {
@@ -70,6 +158,7 @@ function saveStoredQueue(list) {
 
 export const appointmentService = {
   async getAppointments() {
+    const localQueue = getStoredQueue();
     try {
       const { data, error } = await supabase
         .from('appointments')
@@ -77,13 +166,14 @@ export const appointmentService = {
         .order('time', { ascending: true });
 
       if (error || !data || data.length === 0) {
-        return getStoredQueue();
+        return localQueue;
       }
       const mapped = data.map((r) => ({
         id: r.id,
         token: r.token || '',
         pid: r.patient_id,
         patient: r.patient,
+        doctorId: r.doctor_id,
         doctor: r.doctor,
         dept: r.dept,
         room: r.room,
@@ -95,40 +185,66 @@ export const appointmentService = {
         fee: r.fee,
         notes: r.notes,
       }));
-      return mapped;
+
+      // Merge local appointments so any newly created appointment is never dropped
+      const mergedMap = new Map();
+      mapped.forEach((item) => mergedMap.set(item.id, item));
+      localQueue.forEach((item) => {
+        if (!mergedMap.has(item.id)) {
+          mergedMap.set(item.id, item);
+        }
+      });
+      return Array.from(mergedMap.values());
     } catch {
-      return getStoredQueue();
+      return localQueue;
     }
   },
 
   async createAppointment(newApt) {
     const current = getStoredQueue();
-    const updated = [newApt, ...current];
+    const resolved = {
+      ...newApt,
+      status: newApt.status || 'Waiting',
+    };
+    const updated = [resolved, ...current.filter((a) => a.id !== resolved.id)];
     saveStoredQueue(updated);
 
     // Also update in-memory APPOINTMENTS array
-    if (!APPOINTMENTS.some((a) => a.id === newApt.id)) {
-      APPOINTMENTS.unshift(newApt);
+    if (!APPOINTMENTS.some((a) => a.id === resolved.id)) {
+      APPOINTMENTS.unshift(resolved);
+    }
+
+    // Broadcast browser event for real-time reactivity in open tabs
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('medora-appointment-created', {
+          detail: { appointment: resolved },
+        })
+      );
     }
 
     try {
       await supabase.from('appointments').upsert({
-        id: newApt.id,
-        token: newApt.token || null,
-        patient_id: newApt.pid,
-        patient: newApt.patient,
-        doctor: newApt.doctor,
-        dept: newApt.dept || '',
-        time: newApt.time,
-        type: newApt.type || 'Consultation',
-        status: newApt.status || 'Waiting',
-        priority: newApt.priority || 'Normal',
-        notes: newApt.notes || '',
+        id: resolved.id,
+        token: resolved.token || null,
+        patient_id: resolved.pid,
+        patient: resolved.patient,
+        doctor_id: resolved.doctorId || null,
+        doctor: resolved.doctor,
+        dept: resolved.dept || '',
+        room: resolved.room || '',
+        date: resolved.date || 'Today',
+        time: resolved.time,
+        type: resolved.type || 'Consultation',
+        status: resolved.status,
+        priority: resolved.priority || 'Normal',
+        fee: resolved.fee || 2000,
+        notes: resolved.notes || '',
       });
     } catch {
       // ignore
     }
-    return newApt;
+    return resolved;
   },
 
   async updateAppointmentStatus(id, status) {
