@@ -1984,10 +1984,10 @@ body:has(.cmd-overlay) .medora-ai-launcher {
    with bottom navigation, mobile drawer, and touch-first UI.
    ========================================================= */
 .mobile-bottom-nav {
-  display: none;
+  display: none !important;
 }
 .mobile-menu-btn {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 1024px) {

@@ -4,11 +4,13 @@ import Avatar from '../ui/Avatar.jsx';
 import { visibleRoutes } from '../../legacy/legacyEngine.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { useSubscription } from '../../utils/subscriptionConfig.js';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const clinic = useClinicProfile();
+  const { plan, isTrial, daysLeftInTrial, isExpired } = useSubscription();
   const groups = visibleRoutes(user?.role);
 
   const logoText = clinic.name
@@ -53,6 +55,42 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* SaaS Subscription & Plan Badge */}
+      <div style={{ padding: '0 12px', marginBottom: 12 }}>
+        <NavLink
+          to="/subscription"
+          style={{
+            display: 'block',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-md)',
+            background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(15, 23, 42, 0.4) 100%)',
+            border: '1px solid rgba(2, 132, 199, 0.25)',
+            textDecoration: 'none',
+            color: 'inherit',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              ⚡ {plan.name}
+            </span>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: isExpired ? '#ef4444' : isTrial ? '#f59e0b' : '#10b981',
+              }}
+            >
+              {isExpired ? 'Expired' : isTrial ? `${daysLeftInTrial}d Trial` : 'Active'}
+            </span>
+          </div>
+          <div style={{ fontSize: 11, color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>Plan & Seats</span>
+            <span>→</span>
+          </div>
+        </NavLink>
+      </div>
 
       <div className="sidebar-foot">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, padding: '4px 6px' }}>

@@ -25,7 +25,6 @@ export default function MobileBottomNav({ onOpenMenu }) {
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
         zIndex: 90,

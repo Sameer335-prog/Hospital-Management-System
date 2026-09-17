@@ -21,6 +21,8 @@ import ReportsPage from '../pages/Reports/ReportsPage.jsx';
 import SettingsPage from '../pages/Settings/SettingsPage.jsx';
 import PatientPortalPage from '../pages/PatientPortal/PatientPortalPage.jsx';
 import LobbyDisplayPage from '../pages/Display/LobbyDisplayPage.jsx';
+import SubscriptionPage from '../pages/Subscription/SubscriptionPage.jsx';
+import SuperAdminPage from '../pages/SuperAdmin/SuperAdminPage.jsx';
 
 /**
  * Every business route below is wrapped twice:
@@ -95,6 +97,9 @@ export default function AppRoutes() {
         <Route element={<RoleRoute routeId="portal" />}>
           <Route path="/portal" element={<PatientPortalPage />} />
         </Route>
+
+        <Route path="/subscription" element={<SubscriptionPage />} />
+        <Route path="/super-admin" element={<SuperAdminPage />} />
 
         <Route path="/" element={<IndexRedirect />} />
       </Route>
