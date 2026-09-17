@@ -280,6 +280,126 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
               </>
             )}
 
+            {/* Shift Close Reconciliation Receipt */}
+            {type === 'shift' && (
+              <>
+                <div style={{ textAlign: 'center', margin: '6px 0 10px 0' }}>
+                  <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    DAILY CASH SHIFT CLOSE & RECONCILE
+                  </div>
+                  <div style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>
+                    SHIFT ID: {data.shiftId || 'SHIFT-01'}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: 9.5, margin: '4px 0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>CASHIER ON DUTY:</span>
+                    <strong>{data.cashier || 'Receptionist'}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>SUPERVISOR:</span>
+                    <strong>{data.supervisor || clinic.doctorInCharge || 'Clinic Manager'}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>SHIFT HOURS:</span>
+                    <span>{data.shiftHours || '09:00 AM – 08:30 PM'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>PATIENTS BILLED:</span>
+                    <strong>{data.invoicesCount || 0} visits</strong>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }} />
+
+                {/* Financial Summary */}
+                <div style={{ fontSize: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
+                    <span>EXPECTED SYSTEM CASH:</span>
+                    <span>{clinic.currency || 'Rs.'} {(data.cashTotal || 0).toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
+                    <span>CARD / JAZZCASH / ONLINE:</span>
+                    <span>{clinic.currency || 'Rs.'} {(data.digitalTotal || 0).toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, borderTop: '1px solid #000', paddingTop: 3, marginTop: 3 }}>
+                    <span>TOTAL SHIFT REVENUE:</span>
+                    <span>{clinic.currency || 'Rs.'} {(data.totalCollected || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }} />
+
+                {/* Physical Cash Count & Denominations */}
+                <div style={{ fontSize: 9 }}>
+                  <div style={{ fontWeight: 800, marginBottom: 3, textTransform: 'uppercase' }}>
+                    DRAWER PHYSICAL CURRENCY COUNT:
+                  </div>
+                  {data.denominations && Object.keys(data.denominations).length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 8px' }}>
+                      {Object.entries(data.denominations).map(([note, count]) => (
+                        <div key={note} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Rs. {note} × {count}:</span>
+                          <span>{clinic.currency || 'Rs.'} {(Number(note) * Number(count)).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>Physical drawer verified without note count breakdown.</div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, marginTop: 4, borderTop: '1px dashed #000', paddingTop: 2 }}>
+                    <span>COUNTED PHYSICAL CASH:</span>
+                    <span>{clinic.currency || 'Rs.'} {(data.countedCash || data.cashTotal || 0).toLocaleString()}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, marginTop: 2 }}>
+                    <span>RECONCILE VARIANCE:</span>
+                    <span style={{ color: (data.variance || 0) === 0 ? '#000' : (data.variance || 0) < 0 ? '#b91c1c' : '#047857' }}>
+                      {(data.variance || 0) === 0
+                        ? 'EXACT MATCH (0)'
+                        : `${(data.variance || 0) > 0 ? '+' : ''}${clinic.currency || 'Rs.'} ${(data.variance || 0).toLocaleString()}`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Doctor Split Breakdown */}
+                {data.doctorBreakdown && data.doctorBreakdown.length > 0 && (
+                  <>
+                    <div style={{ borderTop: '1px dashed #000000', margin: '6px 0' }} />
+                    <div style={{ fontSize: 9 }}>
+                      <div style={{ fontWeight: 800, marginBottom: 3 }}>CONSULTANT REVENUE SHARE:</div>
+                      {data.doctorBreakdown.map((doc, di) => (
+                        <div key={di} style={{ display: 'flex', justifyContent: 'space-between', margin: '2px 0' }}>
+                          <span style={{ maxWidth: 170, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {doc.doctor} ({doc.count})
+                          </span>
+                          <strong>{clinic.currency || 'Rs.'} {(doc.amount || 0).toLocaleString()}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div style={{ borderTop: '1px dashed #000000', margin: '10px 0 6px 0' }} />
+
+                {/* Dual Signature Lines */}
+                <div style={{ fontSize: 8.5, marginTop: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                    <div>
+                      <div>_____________________</div>
+                      <div style={{ fontWeight: 700, marginTop: 2 }}>CASHIER SIGNATURE</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div>_____________________</div>
+                      <div style={{ fontWeight: 700, marginTop: 2 }}>MANAGER SIGNATURE</div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
             <div style={{ borderTop: '1px dashed #000000', margin: '8px 0 6px 0' }} />
 
             {/* Realistic Barcode & QR Code Section */}

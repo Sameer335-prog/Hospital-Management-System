@@ -9,6 +9,7 @@ import { INVOICES, PATIENTS } from '../../legacy/legacyEngine.js';
 import { billingService } from '../../services/billingService.js';
 import { useToast } from '../../hooks/useToast.js';
 import ThermalReceiptModal from '../../components/common/ThermalReceiptModal.jsx';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
 
 function toNumber(rs) {
   return Number(String(rs).replace(/[^0-9.]/g, '')) || 0;
@@ -16,6 +17,47 @@ function toNumber(rs) {
 function toRs(n) {
   return `Rs ${Number(n || 0).toLocaleString('en-US')}`;
 }
+
+const INITIAL_SHIFT_ARCHIVE = [
+  {
+    shiftId: 'SHIFT-20260916-01',
+    date: 'Sep 16, 2026',
+    shiftHours: '09:00 AM – 08:30 PM',
+    cashier: 'Sadia Qureshi · Shift Evening',
+    supervisor: 'Dr. Sarah Khan',
+    totalCollected: 48500,
+    cashTotal: 34500,
+    digitalTotal: 14000,
+    countedCash: 34500,
+    variance: 0,
+    invoicesCount: 16,
+    denominations: { 5000: 4, 1000: 12, 500: 4, 100: 5, 50: 0 },
+    doctorBreakdown: [
+      { doctor: 'Dr. Sarah Khan', amount: 26000, count: 9 },
+      { doctor: 'Dr. Bilal Ahmed', amount: 22500, count: 7 },
+    ],
+    status: 'Verified & Balanced',
+  },
+  {
+    shiftId: 'SHIFT-20260915-01',
+    date: 'Sep 15, 2026',
+    shiftHours: '09:00 AM – 08:30 PM',
+    cashier: 'Farhan Ali · Shift Morning',
+    supervisor: 'Dr. Sarah Khan',
+    totalCollected: 52000,
+    cashTotal: 38000,
+    digitalTotal: 14000,
+    countedCash: 38000,
+    variance: 0,
+    invoicesCount: 19,
+    denominations: { 5000: 5, 1000: 11, 500: 4, 100: 0, 50: 0 },
+    doctorBreakdown: [
+      { doctor: 'Dr. Sarah Khan', amount: 30000, count: 11 },
+      { doctor: 'Dr. Hina Farooq', amount: 22000, count: 8 },
+    ],
+    status: 'Verified & Balanced',
+  },
+];
 
 const INITIAL_INVOICE_ITEMS = {
   'INV-5510': [
@@ -147,6 +189,106 @@ export default function BillingPage() {
   const [thermalInvoiceData, setThermalInvoiceData] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+
+  // Shift Close & Daily Reconciliation State
+  const clinic = useClinicProfile();
+  const [shiftArchive, setShiftArchive] = useState(() => {
+    try {
+      const saved = localStorage.getItem('medora_shift_archive');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return INITIAL_SHIFT_ARCHIVE;
+  });
+
+  const [shiftModalOpen, setShiftModalOpen] = useState(false);
+  const [thermalShiftData, setThermalShiftData] = useState(null);
+  const [shiftCashier, setShiftCashier] = useState('Sadia Qureshi · Cashier 2');
+  const [shiftSupervisor, setShiftSupervisor] = useState(clinic.doctorInCharge || 'Dr. Sarah Khan');
+  const [shiftNotes, setShiftNotes] = useState('');
+  const [denominations, setDenominations] = useState({
+    5000: 0,
+    1000: 0,
+    500: 0,
+    100: 0,
+    50: 0,
+  });
+
+  const countedCashTotal = useMemo(() => {
+    return (
+      (Number(denominations[5000]) || 0) * 5000 +
+      (Number(denominations[1000]) || 0) * 1000 +
+      (Number(denominations[500]) || 0) * 500 +
+      (Number(denominations[100]) || 0) * 100 +
+      (Number(denominations[50]) || 0) * 50
+    );
+  }, [denominations]);
+
+  // Today's Shift Calculations
+  const todayPaidInvoices = useMemo(() => invoices.filter((i) => i.paidN > 0), [invoices]);
+  const shiftCashTotal = useMemo(() => {
+    return todayPaidInvoices.reduce((sum, inv) => {
+      const receipts = receiptsMap[inv.id] || [];
+      const isCash = receipts.some((r) => r.method === 'Cash') || (!receipts.length && inv.paidN > 0);
+      return sum + (isCash ? inv.paidN : 0);
+    }, 0);
+  }, [todayPaidInvoices, receiptsMap]);
+
+  const shiftDigitalTotal = useMemo(() => {
+    return todayPaidInvoices.reduce((sum, inv) => {
+      const receipts = receiptsMap[inv.id] || [];
+      const isDigital = receipts.some((r) => r.method !== 'Cash');
+      return sum + (isDigital ? inv.paidN : 0);
+    }, 0);
+  }, [todayPaidInvoices, receiptsMap]);
+
+  const shiftTotalRevenue = shiftCashTotal + shiftDigitalTotal;
+  const shiftVariance = countedCashTotal - shiftCashTotal;
+
+  const doctorShiftBreakdown = useMemo(() => {
+    const map = {};
+    todayPaidInvoices.forEach((inv) => {
+      const doc = inv.doctor || 'General OPD';
+      if (!map[doc]) map[doc] = { doctor: doc, amount: 0, count: 0 };
+      map[doc].amount += inv.paidN;
+      map[doc].count += 1;
+    });
+    return Object.values(map);
+  }, [todayPaidInvoices]);
+
+  const handleCloseShiftSubmit = (e) => {
+    e.preventDefault();
+    const newShiftRecord = {
+      shiftId: `SHIFT-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(shiftArchive.length + 1).padStart(2, '0')}`,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      shiftHours: '09:00 AM – ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      cashier: shiftCashier,
+      supervisor: shiftSupervisor,
+      totalCollected: shiftTotalRevenue,
+      cashTotal: shiftCashTotal,
+      digitalTotal: shiftDigitalTotal,
+      countedCash: countedCashTotal || shiftCashTotal,
+      variance: shiftVariance,
+      invoicesCount: todayPaidInvoices.length,
+      denominations,
+      notes: shiftNotes,
+      doctorBreakdown: doctorShiftBreakdown,
+      status: shiftVariance === 0 ? 'Verified & Balanced' : shiftVariance < 0 ? 'Shortage Noted' : 'Surplus Logged',
+    };
+
+    const updatedArchive = [newShiftRecord, ...shiftArchive];
+    setShiftArchive(updatedArchive);
+    try {
+      localStorage.setItem('medora_shift_archive', JSON.stringify(updatedArchive));
+    } catch {
+      // ignore
+    }
+
+    setShiftModalOpen(false);
+    setThermalShiftData(newShiftRecord);
+    showToast(`🎉 Shift ${newShiftRecord.shiftId} closed and reconciled! Printing slip...`);
+  };
 
   // Itemized Generator State
   const [builderPatientId, setBuilderPatientId] = useState(PATIENTS[0]?.id || 'PT-00125');
@@ -421,10 +563,26 @@ export default function BillingPage() {
         <div>
           <h1>Hospital Billing & Financial Ledger</h1>
           <div className="sub">
-            Al-Shifa International Hospital · Clinical revenue, itemized statements, and insurance claims
+            {clinic.name} · Clinical revenue, cashier shift close, and insurance claims
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => setShiftModalOpen(true)}
+            style={{
+              background: 'rgba(234, 179, 8, 0.12)',
+              borderColor: 'rgba(234, 179, 8, 0.35)',
+              color: '#ca8a04',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span>🔒</span>
+            <span>Close Cash Shift</span>
+          </button>
           <button
             className={`btn ${activeTab === 'generator' ? 'btn-secondary' : 'btn-primary'}`}
             onClick={() => setActiveTab('generator')}
@@ -476,6 +634,12 @@ export default function BillingPage() {
           onClick={() => setActiveTab('invoices')}
         >
           All Invoices & Receipts ({invoices.length})
+        </button>
+        <button
+          className={`tab ${activeTab === 'shift_close' ? 'active' : ''}`}
+          onClick={() => setActiveTab('shift_close')}
+        >
+          🔒 Cash Shift & Day Close
         </button>
         <button
           className={`tab ${activeTab === 'generator' ? 'active' : ''}`}
@@ -1080,6 +1244,258 @@ export default function BillingPage() {
         </div>
       )}
 
+      {/* TAB 5: CASH SHIFT & DAY CLOSE */}
+      {activeTab === 'shift_close' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Live Shift Financial Overview */}
+          <div
+            className="card card-pad"
+            style={{
+              background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(15, 23, 42, 0.4) 100%)',
+              border: '1px solid rgba(234, 179, 8, 0.3)',
+              borderRadius: 18,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 20,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 14,
+                  background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 24,
+                  boxShadow: '0 8px 24px rgba(217, 119, 6, 0.35)',
+                }}
+              >
+                🔒
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0 }}>
+                    Today's Active Cash Shift
+                  </h2>
+                  <span className="badge badge-warning" style={{ fontWeight: 800 }}>
+                    In Progress
+                  </span>
+                </div>
+                <div className="hint" style={{ fontSize: 13, marginTop: 4 }}>
+                  Shift hours: 09:00 AM – Now · Cashier: {shiftCashier}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <div>
+                <div className="hint" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Expected Cash in Drawer
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: '#10b981' }}>
+                  Rs. {shiftCashTotal.toLocaleString()}
+                </div>
+              </div>
+
+              <div>
+                <div className="hint" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Card / Online / Panel
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text-muted)' }}>
+                  Rs. {shiftDigitalTotal.toLocaleString()}
+                </div>
+              </div>
+
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setShiftModalOpen(true)}
+                style={{
+                  padding: '10px 18px',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 6px 20px rgba(2, 132, 199, 0.35)',
+                }}
+              >
+                <span>⚡</span>
+                <span>Reconcile & Close Shift</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 2-Column Split: Doctor Revenue Splits & Shift Summary */}
+          <div className="grid grid-2" style={{ gap: 20 }}>
+            {/* Left: Doctor-Wise Share Breakdown */}
+            <div className="card" style={{ borderRadius: 16 }}>
+              <div className="card-pad" style={{ borderBottom: '1px solid var(--c-border)' }}>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Doctor Revenue Share (Today)</h3>
+                <p className="hint" style={{ margin: '2px 0 0 0', fontSize: 12 }}>
+                  Automated commission & patient visit breakdown by consultant
+                </p>
+              </div>
+              <div style={{ padding: '6px 0' }}>
+                {doctorShiftBreakdown.length === 0 ? (
+                  <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--c-text-muted)' }}>
+                    No paid consultations recorded in current shift.
+                  </div>
+                ) : (
+                  doctorShiftBreakdown.map((doc, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '12px 18px',
+                        borderBottom: '1px solid var(--c-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{doc.doctor}</div>
+                        <div className="hint" style={{ fontSize: 12 }}>
+                          {doc.count} Patient Consultation{doc.count > 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--c-text-primary)' }}>
+                          Rs. {doc.amount.toLocaleString()}
+                        </div>
+                        <div className="hint" style={{ fontSize: 11 }}>
+                          {shiftTotalRevenue > 0 ? Math.round((doc.amount / shiftTotalRevenue) * 100) : 0}% of Shift Revenue
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Right: Cashier Shift Checklist & Quick Rules */}
+            <div className="card card-pad" style={{ borderRadius: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Front-Desk Shift Protocol</h3>
+                <p className="hint" style={{ margin: '2px 0 14px 0', fontSize: 12 }}>
+                  Standard operating procedure for reception shift handover
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ color: '#10b981', fontWeight: 800 }}>1.</span>
+                    <span>Physically count all Rs. 5000, 1000, 500, and 100 notes in the cash drawer.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ color: '#10b981', fontWeight: 800 }}>2.</span>
+                    <span>Enter note counts into the Reconciliation modal to verify zero variance.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ color: '#10b981', fontWeight: 800 }}>3.</span>
+                    <span>Print the 80mm Shift Close Slip and have the Cashier and Supervisor sign.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ color: '#10b981', fontWeight: 800 }}>4.</span>
+                    <span>Leave standard opening float (e.g. Rs. 5,000) for the morning cashier.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--c-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="hint" style={{ fontSize: 12 }}>Current Shift Status:</span>
+                <span className="badge badge-success" style={{ fontWeight: 700 }}>
+                  Ready to Reconcile
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Historical Shift Handover Archive Table */}
+          <div className="card" style={{ borderRadius: 16 }}>
+            <div
+              className="card-pad"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '1px solid var(--c-border)',
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Reconciled Shifts Archive</h3>
+                <p className="hint" style={{ margin: '2px 0 0 0', fontSize: 12.5 }}>
+                  Permanent historical audit log of verified cashier shift handovers
+                </p>
+              </div>
+              <span className="badge badge-info" style={{ fontWeight: 700 }}>
+                {shiftArchive.length} Past Shifts Logged
+              </span>
+            </div>
+
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Shift ID</th>
+                    <th>Date & Shift Hours</th>
+                    <th>Cashier on Duty</th>
+                    <th>Total Revenue</th>
+                    <th>Cash Counted</th>
+                    <th>Variance Status</th>
+                    <th>Supervisor</th>
+                    <th style={{ textAlign: 'right' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shiftArchive.map((s) => (
+                    <tr key={s.shiftId}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12 }}>
+                        {s.shiftId}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{s.date}</div>
+                        <div className="hint" style={{ fontSize: 11 }}>{s.shiftHours}</div>
+                      </td>
+                      <td>{s.cashier}</td>
+                      <td style={{ fontWeight: 800 }}>Rs. {s.totalCollected.toLocaleString()}</td>
+                      <td style={{ fontWeight: 700, color: '#10b981' }}>
+                        Rs. {(s.countedCash || s.cashTotal).toLocaleString()}
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            s.variance === 0 ? 'badge-success' : s.variance < 0 ? 'badge-error' : 'badge-warning'
+                          }`}
+                          style={{ fontWeight: 700 }}
+                        >
+                          {s.variance === 0 ? 'Balanced (0)' : s.variance < 0 ? `-Rs. ${Math.abs(s.variance)} Short` : `+Rs. ${s.variance} Surplus`}
+                        </span>
+                      </td>
+                      <td>{s.supervisor}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          className="btn btn-secondary btn-xs"
+                          onClick={() => setThermalShiftData(s)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <span>🖨️</span>
+                          <span>Slip</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL 1: VIEW INVOICE & RECEIVE PAYMENT MODAL */}
       {selectedInvoice && (
         <div className="overlay center" onClick={(e) => e.target === e.currentTarget && setSelectedInvoiceId(null)}>
@@ -1445,11 +1861,189 @@ export default function BillingPage() {
           </div>
         </div>
       )}
+      {/* MODAL 3: SHIFT CLOSE RECONCILIATION MODAL */}
+      {shiftModalOpen && (
+        <div className="overlay center" onClick={(e) => e.target === e.currentTarget && setShiftModalOpen(false)}>
+          <div className="modal" style={{ maxWidth: 540, borderRadius: 20 }}>
+            <div className="modal-head">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 20 }}>🔒</span>
+                <div style={{ fontWeight: 800, fontSize: 17 }}>
+                  Front-Desk Cash Shift Reconciliation
+                </div>
+              </div>
+              <button className="btn-icon" onClick={() => setShiftModalOpen(false)} aria-label="Close">
+                <Icon name="x" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCloseShiftSubmit}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Expected Cash Header Banner */}
+                <div
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(15, 23, 42, 0.5) 100%)',
+                    border: '1px solid rgba(2, 132, 199, 0.3)',
+                    borderRadius: 14,
+                    padding: 14,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div>
+                    <div className="hint" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      System Calculated Expected Cash
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: '#10b981', marginTop: 2 }}>
+                      Rs. {shiftCashTotal.toLocaleString()}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div className="hint" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Card / Digital Payments
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--c-text-muted)', marginTop: 2 }}>
+                      Rs. {shiftDigitalTotal.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cashier & Supervisor Details */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label className="label" style={{ fontWeight: 700 }}>Cashier On Duty *</label>
+                    <input
+                      className="input"
+                      value={shiftCashier}
+                      onChange={(e) => setShiftCashier(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="label" style={{ fontWeight: 700 }}>Handover Supervisor *</label>
+                    <input
+                      className="input"
+                      value={shiftSupervisor}
+                      onChange={(e) => setShiftSupervisor(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Currency Note Denominations Counter */}
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: 14, borderRadius: 14, border: '1px solid var(--c-border)' }}>
+                  <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Physical Cash Drawer Count:</span>
+                    <span className="hint" style={{ fontSize: 11 }}>Count physical notes</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
+                    {[5000, 1000, 500, 100, 50].map((note) => (
+                      <div key={note} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ minWidth: 62, fontSize: 12, fontWeight: 700 }}>Rs. {note}:</span>
+                        <input
+                          type="number"
+                          min="0"
+                          className="input input-sm"
+                          placeholder="0"
+                          value={denominations[note] || ''}
+                          onChange={(e) =>
+                            setDenominations({
+                              ...denominations,
+                              [note]: Math.max(0, parseInt(e.target.value, 10) || 0),
+                            })
+                          }
+                          style={{ width: 80, textAlign: 'center' }}
+                        />
+                        <span className="hint" style={{ fontSize: 11, minWidth: 60, textAlign: 'right' }}>
+                          = {((denominations[note] || 0) * note).toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Counted Total & Variance Comparison */}
+                  <div
+                    style={{
+                      marginTop: 12,
+                      paddingTop: 10,
+                      borderTop: '1px solid var(--c-border)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <div className="hint" style={{ fontSize: 11 }}>Total Physical Cash Counted:</div>
+                      <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--c-text-primary)' }}>
+                        Rs. {(countedCashTotal || shiftCashTotal).toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="hint" style={{ fontSize: 11 }}>Reconcile Status:</div>
+                      <span
+                        className={`badge ${
+                          shiftVariance === 0 ? 'badge-success' : shiftVariance < 0 ? 'badge-error' : 'badge-warning'
+                        }`}
+                        style={{ fontWeight: 800, marginTop: 2 }}
+                      >
+                        {shiftVariance === 0
+                          ? '✓ Exact Match (Rs. 0)'
+                          : shiftVariance < 0
+                          ? `Shortage: -Rs. ${Math.abs(shiftVariance).toLocaleString()}`
+                          : `Surplus: +Rs. ${shiftVariance.toLocaleString()}`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Handover Notes */}
+                <div>
+                  <label className="label" style={{ fontWeight: 700 }}>Shift Closing & Float Notes</label>
+                  <input
+                    className="input"
+                    placeholder="e.g. Rs. 5,000 float retained in drawer for morning shift"
+                    value={shiftNotes}
+                    onChange={(e) => setShiftNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-foot">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShiftModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <span>🖨️</span>
+                  <span>Save & Print 80mm Shift Slip</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <ThermalReceiptModal
         isOpen={Boolean(thermalInvoiceData)}
         onClose={() => setThermalInvoiceData(null)}
         data={thermalInvoiceData}
         type="billing"
+      />
+      <ThermalReceiptModal
+        isOpen={Boolean(thermalShiftData)}
+        onClose={() => setThermalShiftData(null)}
+        data={thermalShiftData}
+        type="shift"
       />
       <Toast toast={toast} />
     </AppShell>
