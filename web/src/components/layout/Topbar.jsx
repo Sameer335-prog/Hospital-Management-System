@@ -5,7 +5,7 @@ import NotificationPopover from '../notifications/NotificationPopover.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useTheme } from '../../context/ThemeContext.jsx';
 
-export default function Topbar({ onOpenCommand }) {
+export default function Topbar({ onOpenCommand, onOpenMenu }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -17,6 +17,20 @@ export default function Topbar({ onOpenCommand }) {
 
   return (
     <header className="topbar">
+      {/* Mobile Hamburger Menu Toggle */}
+      <button
+        type="button"
+        className="mobile-menu-btn"
+        onClick={onOpenMenu}
+        aria-label="Open clinical navigation menu"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
       {/* Global Command Center Trigger */}
       <div
         className="global-search"

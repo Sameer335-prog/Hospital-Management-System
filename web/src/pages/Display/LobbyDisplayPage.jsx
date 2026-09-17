@@ -155,8 +155,9 @@ export default function LobbyDisplayPage() {
     >
       {/* Top TV Bar: Clinic Header & Live Digital Clock */}
       <header
+        className="lobby-header"
         style={{
-          padding: '16px 32px',
+          padding: '24px 32px',
           background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 30, 0.9) 100%)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
@@ -337,7 +338,7 @@ export default function LobbyDisplayPage() {
       </header>
 
       {/* TV Main Body: 2 Columns (Current Calling + Upcoming Queue) */}
-      <main style={{ flex: 1, padding: 32, display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 32 }}>
+      <main className="lobby-main-grid" style={{ flex: 1, padding: 32, display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 32 }}>
         {/* Left Column: Huge "NOW CALLING" Display */}
         <div
           style={{

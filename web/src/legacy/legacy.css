@@ -1978,67 +1978,220 @@ body:has(.cmd-overlay) .medora-ai-launcher {
 /* =========================================================
    MOBILE RESPONSIVE ADAPTATIONS (< 768px)
    ========================================================= */
-@media (max-width: 768px) {
+/* =========================================================
+   NATIVE MOBILE APP ARCHITECTURE (< 1024px)
+   Transforms Medora HMS into a native-feeling mobile app
+   with bottom navigation, mobile drawer, and touch-first UI.
+   ========================================================= */
+.mobile-bottom-nav {
+  display: none;
+}
+.mobile-menu-btn {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  /* 1. App Shell Mobile App Frame */
   #app {
+    display: flex;
     flex-direction: column;
-    height: auto;
-    min-height: 100vh;
-    overflow-y: auto;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+    background: var(--c-bg);
   }
+
+  /* 2. Hide Desktop Sidebar in favor of MobileBottomNav & MobileDrawer */
   .sidebar {
-    width: 100% !important;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: none !important;
   }
-  .sidebar-brand {
-    padding: 10px 14px;
+
+  .mobile-bottom-nav {
+    display: flex !important;
   }
-  .sidebar-nav {
+
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* 3. Main Column & Topbar */
+  .main-col {
     display: flex;
-    overflow-x: auto;
-    padding: 6px 12px;
-    gap: 6px;
-    scrollbar-width: none;
-  }
-  .sidebar-nav > div {
-    margin-bottom: 0 !important;
-    display: flex;
-    gap: 4px;
-  }
-  .nav-group-label {
-    display: none;
-  }
-  .nav-item {
-    padding: 8px 12px;
-    white-space: nowrap;
-    border-radius: 999px;
-  }
-  .sidebar-foot {
-    display: none;
-  }
-  .topbar {
-    padding: 10px 14px;
-    height: auto;
-    min-height: 52px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .topbar .global-search {
-    order: 3;
-    max-width: 100%;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
     width: 100%;
-    margin-bottom: 6px;
   }
+
+  .topbar {
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    padding: 0 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justifyContent: space-between !important;
+    gap: 8px !important;
+    border-bottom: 1px solid var(--c-border) !important;
+    background: var(--c-surface) !important;
+    flex-shrink: 0;
+    z-index: 50;
+  }
+
+  .topbar .global-search {
+    flex: 1;
+    max-width: 100% !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+  }
+
+  .topbar .global-search span:last-child {
+    display: none !important; /* Hide ⌘K pill on mobile touch devices */
+  }
+
+  .topbar .user-chip {
+    display: none !important; /* Managed inside mobile drawer */
+  }
+
+  .topbar-right {
+    gap: 6px !important;
+  }
+
+  .topbar-right .btn-sm {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+
+  /* 4. Scrollable Screen Content with Mobile Safe Area */
   .content {
-    padding: 14px 10px;
+    flex: 1;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 14px 12px calc(76px + env(safe-area-inset-bottom, 0px)) 12px !important;
+    width: 100%;
+    box-sizing: border-box;
   }
-  .grid-2, .grid-3, .grid-4 {
+
+  /* 5. Mobile Floating AI Assistant Position (Hover above bottom bar) */
+  .medora-ai-launcher {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 12px !important;
+    max-width: calc(100vw - 24px) !important;
+    gap: 6px !important;
+  }
+
+  .medora-ai-launcher button {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+  }
+
+  /* 6. Grids and Layout Adaptations */
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .dashboard-grid {
     grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+
+  .stats-strip,
+  .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  /* 7. Full Touch-Friendly Tables with Horizontal Momentum */
+  .table-responsive,
+  .table-container {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+  }
+
+  .table-responsive table {
+    min-width: 620px; /* Ensures clean table layout without squishing columns */
+  }
+
+  /* 8. Mobile Bottom-Sheet Modal Adaptations */
+  .modal-backdrop,
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-box,
+  .thermal-receipt-modal,
+  .patient-intake-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: none !important;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)) 16px !important;
+    animation: slideUpBottom 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  /* Pull-down indicator notch for mobile sheets */
+  .modal-box::before {
+    content: '';
+    display: block;
+    width: 38px;
+    height: 4px;
+    background: var(--c-border);
+    border-radius: 99px;
+    margin: -10px auto 14px auto;
+  }
+
+  /* 9. Segmented Control Tabs for Appointments & Records */
+  .tabs-nav,
+  .nav-tabs {
+    display: flex !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    gap: 6px !important;
+    padding: 4px !important;
+    background: var(--c-surface-hover) !important;
+    border-radius: var(--radius-pill) !important;
+  }
+
+  .tabs-nav button,
+  .nav-tabs button {
+    flex: 1 !important;
+    white-space: nowrap !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    text-align: center !important;
+  }
+
+  /* 10. Lobby TV Queue Display Mobile Stacking */
+  .lobby-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 14px 16px !important;
+  }
+  .lobby-main-grid {
+    grid-template-columns: 1fr !important;
+    padding: 14px !important;
+    gap: 16px !important;
+    overflow-y: auto !important;
+  }
+}
+
+@keyframes slideUpBottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 
