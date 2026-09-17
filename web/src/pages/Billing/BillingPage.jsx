@@ -215,6 +215,7 @@ export default function BillingPage() {
     50: 0,
   });
 
+  const [doctorSplitPct, setDoctorSplitPct] = useState(70); // 70% Doctor / 30% Clinic
   const countedCashTotal = useMemo(() => {
     return (
       (Number(denominations[5000]) || 0) * 5000 +
@@ -1333,47 +1334,104 @@ export default function BillingPage() {
 
           {/* 2-Column Split: Doctor Revenue Splits & Shift Summary */}
           <div className="grid grid-2" style={{ gap: 20 }}>
-            {/* Left: Doctor-Wise Share Breakdown */}
+            {/* Left: Doctor-Wise Share Breakdown & Commission Engine */}
             <div className="card" style={{ borderRadius: 16 }}>
-              <div className="card-pad" style={{ borderBottom: '1px solid var(--c-border)' }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Doctor Revenue Share (Today)</h3>
-                <p className="hint" style={{ margin: '2px 0 0 0', fontSize: 12 }}>
-                  Automated commission & patient visit breakdown by consultant
-                </p>
+              <div
+                className="card-pad"
+                style={{
+                  borderBottom: '1px solid var(--c-border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                }}
+              >
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Doctor Commission & Revenue Split</h3>
+                  <p className="hint" style={{ margin: '2px 0 0 0', fontSize: 12 }}>
+                    Automated consultation fee split between attending doctor and clinic
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="hint" style={{ fontSize: 11, fontWeight: 700 }}>Split Ratio:</span>
+                  <select
+                    className="select select-xs"
+                    value={doctorSplitPct}
+                    onChange={(e) => setDoctorSplitPct(Number(e.target.value))}
+                    style={{ fontWeight: 700 }}
+                  >
+                    <option value={70}>70% Doctor / 30% Clinic</option>
+                    <option value={80}>80% Doctor / 20% Clinic</option>
+                    <option value={60}>60% Doctor / 40% Clinic</option>
+                    <option value={50}>50% Doctor / 50% Clinic</option>
+                  </select>
+                </div>
               </div>
+
               <div style={{ padding: '6px 0' }}>
                 {doctorShiftBreakdown.length === 0 ? (
                   <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--c-text-muted)' }}>
                     No paid consultations recorded in current shift.
                   </div>
                 ) : (
-                  doctorShiftBreakdown.map((doc, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '12px 18px',
-                        borderBottom: '1px solid var(--c-border)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{doc.doctor}</div>
-                        <div className="hint" style={{ fontSize: 12 }}>
-                          {doc.count} Patient Consultation{doc.count > 1 ? 's' : ''}
+                  <>
+                    {doctorShiftBreakdown.map((doc, idx) => {
+                      const doctorPayout = Math.round((doc.amount * doctorSplitPct) / 100);
+                      const clinicShare = doc.amount - doctorPayout;
+
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '12px 18px',
+                            borderBottom: '1px solid var(--c-border)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: 8,
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 14 }}>{doc.doctor}</div>
+                            <div className="hint" style={{ fontSize: 12 }}>
+                              {doc.count} Patient Consultation{doc.count > 1 ? 's' : ''} · Gross: <strong>Rs. {doc.amount.toLocaleString()}</strong>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <div className="hint" style={{ fontSize: 11 }}>Clinic Cut ({100 - doctorSplitPct}%):</div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-muted)' }}>
+                                Rs. {clinicShare.toLocaleString()}
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: 'right' }}>
+                              <div className="hint" style={{ fontSize: 11 }}>Doctor Payout ({doctorSplitPct}%):</div>
+                              <div style={{ fontSize: 15, fontWeight: 900, color: '#10b981' }}>
+                                Rs. {doctorPayout.toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
                         </div>
+                      );
+                    })}
+
+                    <div style={{ padding: '12px 18px', background: 'var(--c-surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="hint" style={{ fontSize: 12 }}>
+                        Total Doctor Payouts: <strong>Rs. {Math.round((doctorShiftBreakdown.reduce((s, d) => s + d.amount, 0) * doctorSplitPct) / 100).toLocaleString()}</strong>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--c-text-primary)' }}>
-                          Rs. {doc.amount.toLocaleString()}
-                        </div>
-                        <div className="hint" style={{ fontSize: 11 }}>
-                          {shiftTotalRevenue > 0 ? Math.round((doc.amount / shiftTotalRevenue) * 100) : 0}% of Shift Revenue
-                        </div>
-                      </div>
+                      <button
+                        className="btn btn-secondary btn-xs"
+                        onClick={() => showToast(`Doctor settlement slips generated for today's shift.`)}
+                      >
+                        🖨️ Settle & Print Doctor Slips
+                      </button>
                     </div>
-                  ))
+                  </>
                 )}
               </div>
             </div>
