@@ -4,10 +4,12 @@ import Avatar from '../ui/Avatar.jsx';
 import NotificationPopover from '../notifications/NotificationPopover.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useTheme } from '../../context/ThemeContext.jsx';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
 
 export default function Topbar({ onOpenCommand, onOpenMenu }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const clinic = useClinicProfile();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -97,6 +99,48 @@ export default function Topbar({ onOpenCommand, onOpenMenu }) {
       </div>
 
       <div className="topbar-right">
+        {/* Active Clinic / Platform Owner Badge */}
+        {user?.role === 'Super Admin' ? (
+          <span
+            className="badge badge-purple"
+            style={{
+              padding: '5px 10px',
+              fontSize: 11.5,
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              letterSpacing: '0.02em',
+            }}
+          >
+            <span>👑</span>
+            <span>Super Admin Only</span>
+          </span>
+        ) : (
+          <Link
+            to="/settings"
+            className="btn btn-ghost btn-sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              maxWidth: 190,
+              padding: '4px 10px',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid var(--c-border)',
+              background: 'var(--c-surface)',
+            }}
+            title={`Active Facility: ${clinic?.name || 'Clinic'}. Click to configure.`}
+          >
+            <span>🏢</span>
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {clinic?.name?.split(' ')[0] || 'Clinic'}
+            </span>
+          </Link>
+        )}
+
         {/* Waiting Lounge TV Display Launch Button (Not applicable to SaaS Super Admin) */}
         {user?.role !== 'Super Admin' && (
           <Link

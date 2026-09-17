@@ -7,6 +7,8 @@ import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js';
 import { patientService } from '../../services/patientService.js';
+import { useClinicProfile, switchActiveClinic } from '../../utils/clinicConfig.js';
+import { getTenantClinics } from '../../utils/subscriptionConfig.js';
 import { useToast } from '../../hooks/useToast.js';
 
 const STATUSES = ['Admitted', 'OPD', 'Waiting', 'Discharged', 'Follow-up Due'];
@@ -32,6 +34,8 @@ const EMPTY_FORM = {
 export default function PatientsPage() {
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
+  const clinic = useClinicProfile();
+  const tenants = useMemo(() => getTenantClinics(), []);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -49,19 +53,23 @@ export default function PatientsPage() {
     }, 137);
     return maxId + 1;
   });
-  const [patientsList, setPatientsList] = useState(() => [...PATIENTS]);
+  const [patientsList, setPatientsList] = useState(() =>
+    PATIENTS.filter((p) => !p.clinicId || p.clinicId === (clinic?.id || 'tenant-001'))
+  );
 
   useEffect(() => {
     let active = true;
-    patientService.getPatients().then((data) => {
-      if (active && data && data.length > 0) {
+    const currentClinicId = clinic?.id || 'tenant-001';
+
+    patientService.getPatients(currentClinicId).then((data) => {
+      if (active && data) {
         setPatientsList(data);
       }
     });
 
     const unsubscribe = patientService.subscribe(() => {
-      patientService.getPatients().then((data) => {
-        if (active && data && data.length > 0) {
+      patientService.getPatients(currentClinicId).then((data) => {
+        if (active && data) {
           setPatientsList(data);
         }
       });
@@ -71,7 +79,7 @@ export default function PatientsPage() {
       active = false;
       unsubscribe();
     };
-  }, []);
+  }, [clinic?.id]);
 
   // Quick Clinical Summary Drawer State
   const [quickPatient, setQuickPatient] = useState(null);
@@ -110,6 +118,7 @@ export default function PatientsPage() {
 
     const newRecord = {
       id,
+      clinicId: clinic?.id || 'tenant-001',
       name: form.name.trim(),
       dob: form.dob || '1996-01-01',
       age: calculatedAge,
@@ -132,7 +141,7 @@ export default function PatientsPage() {
     setPatientsList((prev) => [newRecord, ...prev]);
     patientService.createPatient(newRecord);
     setGeneratedId(id);
-    showToast(`Registered patient ${newRecord.name} (${id}).`);
+    showToast(`Registered patient ${newRecord.name} (${id}) for ${clinic?.name || 'Clinic'}.`);
   }
 
   function closeDrawer() {
@@ -197,6 +206,90 @@ export default function PatientsPage() {
           <button className="btn btn-primary" onClick={() => setDrawerOpen(true)}>
             <Icon name="plus" /> Register New Patient
           </button>
+        </div>
+      </div>
+
+      {/* Multi-Tenant Clinic Sandboxing & Quick Switcher Banner */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(15, 23, 42, 0.03) 100%)',
+          border: '1px solid rgba(2, 132, 199, 0.25)',
+          borderRadius: 14,
+          padding: '14px 18px',
+          marginBottom: 18,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              background: 'var(--c-primary)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 18,
+              fontWeight: 800,
+              flexShrink: 0,
+            }}
+          >
+            🏢
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 800, fontSize: 14.5, color: 'var(--c-text-primary)' }}>
+                {clinic?.name || 'Al-Shifa Healthcare Complex'}
+              </span>
+              <span className="badge badge-info" style={{ fontWeight: 700, fontSize: 11 }}>
+                {clinic?.id || 'tenant-001'}
+              </span>
+              <span className="badge badge-success" style={{ fontWeight: 700, fontSize: 11 }}>
+                🔒 Clinic Sandboxed
+              </span>
+            </div>
+            <div className="hint" style={{ fontSize: 12, marginTop: 2 }}>
+              Multi-Tenant Isolation: Viewing {patientsList.length} charts belonging only to this clinic. Other clinics cannot view these patients.
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Clinic Switcher Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-muted)', marginRight: 2 }}>
+            Switch Clinic:
+          </span>
+          {tenants.map((t) => {
+            const isSelected = (clinic?.id || 'tenant-001') === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                className={`btn btn-xs ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
+                style={{
+                  borderRadius: 12,
+                  fontWeight: isSelected ? 800 : 600,
+                  fontSize: 11.5,
+                  padding: '4px 10px',
+                }}
+                onClick={() => {
+                  if (!isSelected) {
+                    switchActiveClinic(t.id);
+                    showToast(`Switched active clinic to ${t.name}. Loaded isolated patient records.`);
+                  }
+                }}
+                title={`Switch workspace to ${t.name} (${t.city})`}
+              >
+                {t.name.split(' ')[0]} {t.city ? `(${t.city})` : ''}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -8,7 +8,8 @@ import { useState, useEffect } from 'react';
  */
 
 export const DEFAULT_CLINIC_PROFILE = {
-  name: 'Medora Healthcare Clinic',
+  id: 'tenant-001',
+  name: 'Al-Shifa Healthcare Complex',
   tagline: 'Outpatient & Specialist Care Complex',
   doctorInCharge: 'Dr. Sarah Khan (MBBS, FCPS)',
   phone: '0300-1234567',
@@ -38,6 +39,11 @@ export function getClinicProfile() {
   }
 }
 
+export function getActiveClinicId() {
+  const profile = getClinicProfile();
+  return profile.id || 'tenant-001';
+}
+
 export function saveClinicProfile(updated) {
   if (typeof window === 'undefined') return DEFAULT_CLINIC_PROFILE;
   const merged = { ...getClinicProfile(), ...updated };
@@ -48,6 +54,51 @@ export function saveClinicProfile(updated) {
     console.error('Failed to save clinic profile:', err);
   }
   return merged;
+}
+
+/**
+ * Switch active clinic to test multi-tenancy isolation
+ */
+export function switchActiveClinic(clinicOrId) {
+  if (typeof window === 'undefined') return DEFAULT_CLINIC_PROFILE;
+  let target = clinicOrId;
+
+  if (typeof clinicOrId === 'string') {
+    try {
+      const raw = localStorage.getItem('medora_saas_tenants');
+      const tenants = raw ? JSON.parse(raw) : [];
+      target = tenants.find((t) => t.id === clinicOrId) || { id: clinicOrId, name: clinicOrId };
+    } catch {
+      target = { id: clinicOrId, name: clinicOrId };
+    }
+  }
+
+  const updatedProfile = {
+    ...getClinicProfile(),
+    id: target.id || 'tenant-001',
+    name: target.name || 'Clinic',
+    doctorInCharge: target.doctorInCharge || 'Attending Physician',
+    phone: target.phone || '0300-1234567',
+    address: `${target.city || 'Islamabad'}, Pakistan`,
+    practiceType: target.practiceType || 'Specialist Clinic',
+  };
+
+  saveClinicProfile(updatedProfile);
+
+  // Sync plan if specified
+  if (target.plan) {
+    try {
+      const subKey = 'medora_clinic_subscription';
+      const existing = JSON.parse(localStorage.getItem(subKey) || '{}');
+      const updatedSub = { ...existing, planId: target.plan };
+      localStorage.setItem(subKey, JSON.stringify(updatedSub));
+      window.dispatchEvent(new CustomEvent('medora-subscription-updated', { detail: updatedSub }));
+    } catch {
+      // ignore
+    }
+  }
+
+  return updatedProfile;
 }
 
 /**

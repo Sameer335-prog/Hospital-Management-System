@@ -30,33 +30,45 @@ const STAFF = [
   {id:'ST-15',name:'Zainab Hussain',role:'Pharmacist',dept:'Pharmacy',status:'Active'},
 ];
 const PATIENTS = [
-  {id:'PT-00109',name:'Tariq Mehmood',age:58,gender:'Male',phone:'0300-8881234',doctor:'Dr. Sarah Khan',lastVisit:'Today (ER)',status:'Admitted',blood:'B+',allergy:'Penicillin',cnic:'36302-1299901-1',ward:'ICU & Critical Care Unit',bed:'ICU-01',dob:'14 Jan 1968'},
-  {id:'PT-00120',name:'Khalid Mansoor',age:64,gender:'Male',phone:'0301-4449876',doctor:'Dr. Imran Malik',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'A+',allergy:'None recorded',cnic:'36302-8812903-2',ward:'ICU & Critical Care Unit',bed:'ICU-04',dob:'22 Aug 1962'},
-  {id:'PT-00121',name:'Zubair Hashmi',age:51,gender:'Male',phone:'0333-7711223',doctor:'Dr. Sarah Khan',lastVisit:'Sep 03, 2026',status:'Admitted',blood:'O+',allergy:'Aspirin',cnic:'36302-6677881-3',ward:'Cardiology Ward',bed:'C-01',dob:'10 Nov 1974'},
-  {id:'PT-00122',name:'Rasheeda Begum',age:60,gender:'Female',phone:'0321-5544332',doctor:'Dr. Sarah Khan',lastVisit:'Sep 02, 2026',status:'Admitted',blood:'AB+',allergy:'None recorded',cnic:'36302-5544112-4',ward:'Cardiology Ward',bed:'C-02',dob:'03 Feb 1966'},
-  {id:'PT-00123',name:'Usman Farooq',age:39,gender:'Male',phone:'0345-6677889',doctor:'Dr. Bilal Ahmed',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'A-',allergy:'Sulfa drugs',cnic:'36302-3322119-5',ward:'Orthopedic Ward',bed:'O-07',dob:'18 Jun 1987'},
-  {id:'PT-00124',name:'Javed Akhtar',age:47,gender:'Male',phone:'0302-9988112',doctor:'Dr. Bilal Ahmed',lastVisit:'Sep 01, 2026',status:'Admitted',blood:'B-',allergy:'None recorded',cnic:'36302-7788992-6',ward:'Orthopedic Ward',bed:'O-09',dob:'09 May 1979'},
-  {id:'PT-00125',name:'Muhammad Ahmed',age:42,gender:'Male',phone:'0333-1122334',doctor:'Dr. Sarah Khan',lastVisit:'Sep 03, 2026',status:'Admitted',blood:'B+',allergy:'Penicillin',cnic:'36302-1234567-1',ward:'Cardiology Ward',bed:'C-04',dob:'12 Mar 1984'},
-  {id:'PT-00126',name:'Ayesha Bibi',age:29,gender:'Female',phone:'0321-9988776',doctor:'Dr. Hina Farooq',lastVisit:'Sep 05, 2026',status:'OPD',blood:'O+',allergy:'None recorded',cnic:'36302-7654321-2',ward:'-',bed:'-',dob:'19 Jul 1997'},
-  {id:'PT-00127',name:'Fahad Iqbal',age:8,gender:'Male',phone:'0345-2233445',doctor:'Dr. Ayesha Raza',lastVisit:'Sep 05, 2026',status:'Waiting',blood:'A+',allergy:'Sulfa drugs',cnic:'Guardian: 36302-1112223-3',ward:'-',bed:'-',dob:'02 Feb 2018'},
-  {id:'PT-00128',name:'Rukhsana Kausar',age:55,gender:'Female',phone:'0300-5566778',doctor:'Dr. Imran Malik',lastVisit:'Aug 28, 2026',status:'Discharged',blood:'AB-',allergy:'None recorded',cnic:'36302-9998887-4',ward:'-',bed:'-',dob:'14 Nov 1970'},
-  {id:'PT-00129',name:'Bilal Chaudhry',age:34,gender:'Male',phone:'0311-6677889',doctor:'Dr. Bilal Ahmed',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'O-',allergy:'None recorded',cnic:'36302-4445556-5',ward:'Orthopedic Ward',bed:'O-11',dob:'23 May 1992'},
-  {id:'PT-00130',name:'Sana Malik',age:61,gender:'Female',phone:'0322-7788990',doctor:'Dr. Sarah Khan',lastVisit:'Sep 02, 2026',status:'Follow-up Due',blood:'B-',allergy:'Aspirin',cnic:'36302-2223334-6',ward:'-',bed:'-',dob:'08 Jan 1965'},
-  {id:'PT-00131',name:'Hamza Sheikh',age:19,gender:'Male',phone:'0334-8899001',doctor:'Dr. Imran Malik',lastVisit:'Sep 05, 2026',status:'OPD',blood:'A-',allergy:'None recorded',cnic:'36302-3334445-7',ward:'-',bed:'-',dob:'30 Sep 2006'},
-  {id:'PT-00132',name:'Nimra Yousaf',age:26,gender:'Female',phone:'0300-1231231',doctor:'Dr. Hina Farooq',lastVisit:'Sep 01, 2026',status:'OPD',blood:'O+',allergy:'None recorded',cnic:'36302-5556667-8',ward:'-',bed:'-',dob:'11 Apr 2000'},
-  {id:'PT-00133',name:'Baby of Amina',age:1,gender:'Female',phone:'0312-3344556',doctor:'Dr. Ayesha Raza',lastVisit:'Sep 05, 2026',status:'Admitted',blood:'O+',allergy:'None recorded',cnic:'Mother: 36302-9988123-7',ward:'Pediatric & Neonatal Ward',bed:'P-05',dob:'15 Aug 2025'},
-  {id:'PT-00134',name:'Abdul Rehman',age:70,gender:'Male',phone:'0305-1122334',doctor:'Dr. Imran Malik',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'B+',allergy:'None recorded',cnic:'36302-4455667-8',ward:'General Medical Ward',bed:'G-15',dob:'12 Dec 1955'},
-  {id:'PT-00136',name:'Ghulam Mustafa',age:53,gender:'Male',phone:'0307-2233445',doctor:'Dr. Imran Malik',lastVisit:'Sep 03, 2026',status:'Admitted',blood:'A+',allergy:'None recorded',cnic:'36302-8877665-9',ward:'General Medical Ward',bed:'G-18',dob:'25 Apr 1973'},
-  {id:'PT-00137',name:'Zain Ali',age:4,gender:'Male',phone:'0346-7788990',doctor:'Dr. Ayesha Raza',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'AB+',allergy:'Peanuts',cnic:'Guardian: 36302-5544332-1',ward:'Pediatric & Neonatal Ward',bed:'P-01',dob:'04 Oct 2021'},
+  // --- TENANT 1: Al-Shifa Healthcare Complex (Islamabad) ---
+  {id:'PT-00109',clinicId:'tenant-001',name:'Tariq Mehmood',age:58,gender:'Male',phone:'0300-8881234',doctor:'Dr. Sarah Khan',lastVisit:'Today (ER)',status:'Admitted',blood:'B+',allergy:'Penicillin',cnic:'36302-1299901-1',ward:'ICU & Critical Care Unit',bed:'ICU-01',dob:'14 Jan 1968'},
+  {id:'PT-00121',clinicId:'tenant-001',name:'Zubair Hashmi',age:51,gender:'Male',phone:'0333-7711223',doctor:'Dr. Sarah Khan',lastVisit:'Sep 03, 2026',status:'Admitted',blood:'O+',allergy:'Aspirin',cnic:'36302-6677881-3',ward:'Cardiology Ward',bed:'C-01',dob:'10 Nov 1974'},
+  {id:'PT-00122',clinicId:'tenant-001',name:'Rasheeda Begum',age:60,gender:'Female',phone:'0321-5544332',doctor:'Dr. Sarah Khan',lastVisit:'Sep 02, 2026',status:'Admitted',blood:'AB+',allergy:'None recorded',cnic:'36302-5544112-4',ward:'Cardiology Ward',bed:'C-02',dob:'03 Feb 1966'},
+  {id:'PT-00125',clinicId:'tenant-001',name:'Muhammad Ahmed',age:42,gender:'Male',phone:'0333-1122334',doctor:'Dr. Sarah Khan',lastVisit:'Sep 03, 2026',status:'Admitted',blood:'B+',allergy:'Penicillin',cnic:'36302-1234567-1',ward:'Cardiology Ward',bed:'C-04',dob:'12 Mar 1984'},
+  {id:'PT-00126',clinicId:'tenant-001',name:'Ayesha Bibi',age:29,gender:'Female',phone:'0321-9988776',doctor:'Dr. Hina Farooq',lastVisit:'Sep 05, 2026',status:'OPD',blood:'O+',allergy:'None recorded',cnic:'36302-7654321-2',ward:'-',bed:'-',dob:'19 Jul 1997'},
+  {id:'PT-00130',clinicId:'tenant-001',name:'Sana Malik',age:61,gender:'Female',phone:'0322-7788990',doctor:'Dr. Sarah Khan',lastVisit:'Sep 02, 2026',status:'Follow-up Due',blood:'B-',allergy:'Aspirin',cnic:'36302-2223334-6',ward:'-',bed:'-',dob:'08 Jan 1965'},
+
+  // --- TENANT 2: City Smile Dental Clinic (Lahore) ---
+  {id:'PT-00201',clinicId:'tenant-002',name:'Zaid Tariq',age:32,gender:'Male',phone:'0321-9876543',doctor:'Dr. Usman Farooq',lastVisit:'Today',status:'OPD',blood:'A+',allergy:'None recorded',cnic:'35201-9876543-1',ward:'-',bed:'-',dob:'18 Jun 1994'},
+  {id:'PT-00202',clinicId:'tenant-002',name:'Maryam Noor',age:24,gender:'Female',phone:'0322-8765432',doctor:'Dr. Usman Farooq',lastVisit:'Yesterday',status:'OPD',blood:'O+',allergy:'Latex',cnic:'35202-8765432-2',ward:'-',bed:'-',dob:'14 Mar 2002'},
+  {id:'PT-00203',clinicId:'tenant-002',name:'Usman Chaudhry',age:41,gender:'Male',phone:'0323-7654321',doctor:'Dr. Usman Farooq',lastVisit:'Today',status:'OPD',blood:'B+',allergy:'Aspirin',cnic:'35203-7654321-3',ward:'-',bed:'-',dob:'29 Nov 1985'},
+  {id:'PT-00204',clinicId:'tenant-002',name:'Sadia Parveen',age:29,gender:'Female',phone:'0324-6543210',doctor:'Dr. Usman Farooq',lastVisit:'Sep 04, 2026',status:'Waiting',blood:'AB+',allergy:'None recorded',cnic:'35204-6543210-4',ward:'-',bed:'-',dob:'12 Aug 1997'},
+
+  // --- TENANT 3: Rawal Pediatric Care Center (Rawalpindi) ---
+  {id:'PT-00127',clinicId:'tenant-003',name:'Fahad Iqbal',age:8,gender:'Male',phone:'0345-2233445',doctor:'Dr. Ayesha Raza',lastVisit:'Sep 05, 2026',status:'Waiting',blood:'A+',allergy:'Sulfa drugs',cnic:'Guardian: 36302-1112223-3',ward:'-',bed:'-',dob:'02 Feb 2018'},
+  {id:'PT-00133',clinicId:'tenant-003',name:'Baby of Amina',age:1,gender:'Female',phone:'0312-3344556',doctor:'Dr. Ayesha Raza',lastVisit:'Sep 05, 2026',status:'Admitted',blood:'O+',allergy:'None recorded',cnic:'Mother: 36302-9988123-7',ward:'Pediatric & Neonatal Ward',bed:'P-05',dob:'15 Aug 2025'},
+  {id:'PT-00137',clinicId:'tenant-003',name:'Zain Ali',age:4,gender:'Male',phone:'0346-7788990',doctor:'Dr. Ayesha Raza',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'AB+',allergy:'Peanuts',cnic:'Guardian: 36302-5544332-1',ward:'Pediatric & Neonatal Ward',bed:'P-01',dob:'04 Oct 2021'},
+
+  // --- TENANT 4: National Medicare Surgical Hospital (Karachi) ---
+  {id:'PT-00128',clinicId:'tenant-004',name:'Rukhsana Kausar',age:55,gender:'Female',phone:'0300-5566778',doctor:'Dr. Imran Malik',lastVisit:'Aug 28, 2026',status:'Discharged',blood:'AB-',allergy:'None recorded',cnic:'36302-9998887-4',ward:'-',bed:'-',dob:'14 Nov 1970'},
+  {id:'PT-00129',clinicId:'tenant-004',name:'Bilal Chaudhry',age:34,gender:'Male',phone:'0311-6677889',doctor:'Dr. Bilal Ahmed',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'O-',allergy:'None recorded',cnic:'36302-4445556-5',ward:'Orthopedic Ward',bed:'O-11',dob:'23 May 1992'},
+  {id:'PT-00136',clinicId:'tenant-004',name:'Ghulam Mustafa',age:53,gender:'Male',phone:'0307-2233445',doctor:'Dr. Imran Malik',lastVisit:'Sep 03, 2026',status:'Admitted',blood:'A+',allergy:'None recorded',cnic:'36302-8877665-9',ward:'General Medical Ward',bed:'G-18',dob:'25 Apr 1973'},
+
+  // --- TENANT 5: Apex Orthopedic & Spine Clinic (Peshawar) ---
+  {id:'PT-00120',clinicId:'tenant-005',name:'Khalid Mansoor',age:64,gender:'Male',phone:'0301-4449876',doctor:'Dr. Tariq Mehmood',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'A+',allergy:'None recorded',cnic:'36302-8812903-2',ward:'ICU & Critical Care Unit',bed:'ICU-04',dob:'22 Aug 1962'},
+  {id:'PT-00123',clinicId:'tenant-005',name:'Usman Farooq',age:39,gender:'Male',phone:'0345-6677889',doctor:'Dr. Tariq Mehmood',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'A-',allergy:'Sulfa drugs',cnic:'36302-3322119-5',ward:'Orthopedic Ward',bed:'O-07',dob:'18 Jun 1987'},
+  {id:'PT-00124',clinicId:'tenant-005',name:'Javed Akhtar',age:47,gender:'Male',phone:'0302-9988112',doctor:'Dr. Tariq Mehmood',lastVisit:'Sep 01, 2026',status:'Admitted',blood:'B-',allergy:'None recorded',cnic:'36302-7788992-6',ward:'Orthopedic Ward',bed:'O-09',dob:'09 May 1979'},
+  {id:'PT-00134',clinicId:'tenant-005',name:'Abdul Rehman',age:70,gender:'Male',phone:'0305-1122334',doctor:'Dr. Tariq Mehmood',lastVisit:'Sep 04, 2026',status:'Admitted',blood:'B+',allergy:'None recorded',cnic:'36302-4455667-8',ward:'General Medical Ward',bed:'G-15',dob:'12 Dec 1955'},
 ];
 const APPOINTMENTS = [
-  {id:'AP-3301',patient:'Muhammad Ahmed',pid:'PT-00125',doctor:'Dr. Sarah Khan',dept:'Cardiology',time:'09:30 AM',type:'Follow-up',priority:'Normal',status:'Checked-in'},
-  {id:'AP-3302',patient:'Ayesha Bibi',pid:'PT-00126',doctor:'Dr. Hina Farooq',dept:'Gynecology',time:'10:00 AM',type:'Consultation',priority:'Normal',status:'Waiting'},
-  {id:'AP-3303',patient:'Fahad Iqbal',pid:'PT-00127',doctor:'Dr. Ayesha Raza',dept:'Pediatrics',time:'10:15 AM',type:'New Visit',priority:'Urgent',status:'Waiting'},
-  {id:'AP-3304',patient:'Hamza Sheikh',pid:'PT-00131',doctor:'Dr. Imran Malik',dept:'General Medicine',time:'11:00 AM',type:'Consultation',priority:'Normal',status:'Confirmed'},
-  {id:'AP-3305',patient:'Nimra Yousaf',pid:'PT-00132',doctor:'Dr. Hina Farooq',dept:'Gynecology',time:'11:30 AM',type:'Follow-up',priority:'Normal',status:'In Consultation'},
-  {id:'AP-3306',patient:'Sana Malik',pid:'PT-00130',doctor:'Dr. Sarah Khan',dept:'Cardiology',time:'12:00 PM',type:'Follow-up',priority:'High',status:'Completed'},
-  {id:'AP-3307',patient:'Rukhsana Kausar',pid:'PT-00128',doctor:'Dr. Imran Malik',dept:'General Medicine',time:'02:00 PM',type:'Consultation',priority:'Normal',status:'Cancelled'},
+  {id:'AP-3301',clinicId:'tenant-001',patient:'Muhammad Ahmed',pid:'PT-00125',doctor:'Dr. Sarah Khan',dept:'Cardiology',time:'09:30 AM',type:'Follow-up',priority:'Normal',status:'Checked-in'},
+  {id:'AP-3302',clinicId:'tenant-001',patient:'Ayesha Bibi',pid:'PT-00126',doctor:'Dr. Hina Farooq',dept:'Gynecology',time:'10:00 AM',type:'Consultation',priority:'Normal',status:'Waiting'},
+  {id:'AP-3306',clinicId:'tenant-001',patient:'Sana Malik',pid:'PT-00130',doctor:'Dr. Sarah Khan',dept:'Cardiology',time:'12:00 PM',type:'Follow-up',priority:'High',status:'Completed'},
+  {id:'AP-4401',clinicId:'tenant-002',patient:'Zaid Tariq',pid:'PT-00201',doctor:'Dr. Usman Farooq',dept:'Dental Surgery',time:'10:30 AM',type:'Root Canal',priority:'Normal',status:'Waiting'},
+  {id:'AP-4402',clinicId:'tenant-002',patient:'Maryam Noor',pid:'PT-00202',doctor:'Dr. Usman Farooq',dept:'Dental Surgery',time:'11:15 AM',type:'Braces Tightening',priority:'Normal',status:'Confirmed'},
+  {id:'AP-3303',clinicId:'tenant-003',patient:'Fahad Iqbal',pid:'PT-00127',doctor:'Dr. Ayesha Raza',dept:'Pediatrics',time:'10:15 AM',type:'New Visit',priority:'Urgent',status:'Waiting'},
+  {id:'AP-3304',clinicId:'tenant-004',patient:'Bilal Chaudhry',pid:'PT-00129',doctor:'Dr. Bilal Ahmed',dept:'Orthopedics',time:'11:00 AM',type:'Post-Op Check',priority:'Normal',status:'Confirmed'},
+  {id:'AP-3307',clinicId:'tenant-005',patient:'Khalid Mansoor',pid:'PT-00120',doctor:'Dr. Tariq Mehmood',dept:'Spine Rehab',time:'02:00 PM',type:'Spine Assessment',priority:'Normal',status:'Confirmed'},
 ];
 const LAB_ORDERS = [
   {id:'LAB-000892',patient:'Muhammad Ahmed',pid:'PT-00125',test:'Lipid Profile',doctor:'Dr. Sarah Khan',status:'Processing',priority:'Normal',ordered:'Sep 05, 09:10 AM'},
@@ -228,7 +240,17 @@ const ROUTE_TITLES = {
 
 export { visibleRoutes, ROLE_ROUTES, ROLE_LANDING, ROUTES, ROUTE_TITLES, navBadgeCount };
 export { PATIENTS, I as ICONS, LAB_ORDERS, NURSING_TASKS, DOCTORS, APPOINTMENTS, MEDICINES, INVOICES, STAFF, WAITING_ROOM };
-export function getPatientById(id) {
-  return PATIENTS.find((p) => p.id === id) || null;
+
+export function getPatientsForClinic(clinicId) {
+  if (!clinicId) return [...PATIENTS];
+  return PATIENTS.filter((p) => !p.clinicId || p.clinicId === clinicId);
 }
+
+export function getPatientById(id, clinicId = null) {
+  const p = PATIENTS.find((item) => item.id === id);
+  if (!p) return null;
+  if (clinicId && p.clinicId && p.clinicId !== clinicId) return null;
+  return p;
+}
+
 
