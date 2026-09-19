@@ -7,8 +7,7 @@ import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js';
 import { patientService } from '../../services/patientService.js';
-import { useClinicProfile, switchActiveClinic } from '../../utils/clinicConfig.js';
-import { getTenantClinics } from '../../utils/subscriptionConfig.js';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { useToast } from '../../hooks/useToast.js';
 
 const STATUSES = ['Admitted', 'OPD', 'Waiting', 'Discharged', 'Follow-up Due'];
@@ -35,7 +34,6 @@ export default function PatientsPage() {
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
   const clinic = useClinicProfile();
-  const tenants = useMemo(() => getTenantClinics(), []);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -260,36 +258,23 @@ export default function PatientsPage() {
           </div>
         </div>
 
-        {/* Quick Clinic Switcher Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-text-muted)', marginRight: 2 }}>
-            Switch Clinic:
+        {/* Private Tenant Data Shield Indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            className="badge badge-success"
+            style={{
+              fontWeight: 700,
+              fontSize: 11.5,
+              padding: '6px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              borderRadius: 999,
+            }}
+          >
+            <span>🔒</span>
+            <span>Private Tenant EHR Database</span>
           </span>
-          {tenants.map((t) => {
-            const isSelected = (clinic?.id || 'tenant-001') === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                className={`btn btn-xs ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
-                style={{
-                  borderRadius: 12,
-                  fontWeight: isSelected ? 800 : 600,
-                  fontSize: 11.5,
-                  padding: '4px 10px',
-                }}
-                onClick={() => {
-                  if (!isSelected) {
-                    switchActiveClinic(t.id);
-                    showToast(`Switched active clinic to ${t.name}. Loaded isolated patient records.`);
-                  }
-                }}
-                title={`Switch workspace to ${t.name} (${t.city})`}
-              >
-                {t.name.split(' ')[0]} {t.city ? `(${t.city})` : ''}
-              </button>
-            );
-          })}
         </div>
       </div>
 
