@@ -1660,10 +1660,13 @@ export default function BillingPage() {
                     <div className="field">
                       <label>Payment Mode</label>
                       <select className="input" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                        <option>Cash</option>
-                        <option>Credit / Debit Card</option>
-                        <option>Online Bank Transfer (Raast)</option>
-                        <option>Pay Order / Cheque</option>
+                        <option value="Cash at Counter">💵 Cash at Counter</option>
+                        <option value="JazzCash (Till / QR)">📱 JazzCash (Till / QR)</option>
+                        <option value="EasyPaisa (QR Mobile)">📱 EasyPaisa (QR Mobile)</option>
+                        <option value="Raast Instant Pay">⚡ Raast Instant Pay (IBFT)</option>
+                        <option value="Card (PayPak / 1Link)">💳 Debit / Credit Card (PayPak / 1Link)</option>
+                        <option value="Sehat Sahulat Card">🛡️ Sehat Sahulat Card / Panel Insurance</option>
+                        <option value="Pay Order / Cheque">📄 Pay Order / Bank Cheque</option>
                       </select>
                     </div>
                   </div>

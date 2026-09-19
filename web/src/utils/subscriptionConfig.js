@@ -338,22 +338,24 @@ export function useSubscription() {
     isTrial,
     daysLeftInTrial,
     isExpired,
-    upgradePlan: (planId, cycle = 'monthly') => {
+    upgradePlan: (planId, cycle = 'monthly', customMethod = null) => {
       const targetPlan = SUBSCRIPTION_PLANS[planId] || SUBSCRIPTION_PLANS.growth;
       const amount = cycle === 'annual' ? targetPlan.priceAnnualPKR : targetPlan.priceMonthlyPKR;
+      const paymentLabel = customMethod || 'JazzCash Business (Direct)';
       const newInvoice = {
         id: `INV-S-${Math.floor(100 + Math.random() * 900)}`,
         date: new Date().toLocaleDateString(),
         plan: `${targetPlan.name} (${cycle === 'annual' ? 'Annual' : 'Monthly'})`,
         amount: `Rs. ${amount.toLocaleString()}`,
         status: 'Paid',
-        method: 'Instant Upgrade Card',
+        method: paymentLabel,
       };
       return saveSubscriptionState({
         planId,
         billingCycle: cycle,
         status: 'active',
         lastPaymentAmount: amount,
+        paymentMethod: paymentLabel,
         trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         renewalDate: new Date(Date.now() + (cycle === 'annual' ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString(),
         invoices: [newInvoice, ...(sub.invoices || [])],

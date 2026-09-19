@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Icon from '../../components/ui/Icon.jsx';
+import QrCode from '../../components/ui/QrCode.jsx';
 import { SUBSCRIPTION_PLANS, useSubscription } from '../../utils/subscriptionConfig.js';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 
@@ -11,7 +12,10 @@ export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState(subscription.billingCycle || 'monthly');
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('jazzcash'); // 'jazzcash' | 'easypaisa' | 'raast' | 'card'
+  const [jazzCashTid, setJazzCashTid] = useState('JC-981240');
+  const [easyPaisaTid, setEasyPaisaTid] = useState('EP-449182');
+  const [raastRef, setRaastRef] = useState('RST-773192');
   const [successToast, setSuccessToast] = useState(null);
 
   const isAnnual = billingCycle === 'annual';
@@ -25,13 +29,19 @@ export default function SubscriptionPage() {
     e.preventDefault();
     if (!selectedPlanForUpgrade) return;
 
+    let methodLabel = 'JazzCash Business (Till: 00291482)';
+    if (paymentMethod === 'jazzcash') methodLabel = `JazzCash Business (TID: ${jazzCashTid || 'JC-981240'})`;
+    else if (paymentMethod === 'easypaisa') methodLabel = `EasyPaisa Merchant (TID: ${easyPaisaTid || 'EP-449182'})`;
+    else if (paymentMethod === 'raast') methodLabel = `Raast Instant Pay · Meezan Bank (Ref: ${raastRef || 'RST-773192'})`;
+    else if (paymentMethod === 'card') methodLabel = 'Debit / Credit Card (PayPak / Visa)';
+
     setIsProcessingPayment(true);
     setTimeout(() => {
-      upgradePlan(selectedPlanForUpgrade, billingCycle);
+      upgradePlan(selectedPlanForUpgrade, billingCycle, methodLabel);
       setIsProcessingPayment(false);
       const targetPlan = SUBSCRIPTION_PLANS[selectedPlanForUpgrade];
       setSelectedPlanForUpgrade(null);
-      setSuccessToast(`🎉 Successfully upgraded to ${targetPlan.name}! Your subscription is active.`);
+      setSuccessToast(`🎉 Successfully upgraded to ${targetPlan.name}! Paid via ${methodLabel}.`);
       setTimeout(() => setSuccessToast(null), 5000);
     }, 1200);
   };
@@ -516,31 +526,161 @@ export default function SubscriptionPage() {
                 </div>
 
                 <div>
-                  <label className="label" style={{ fontWeight: 700 }}>Select Payment Gateway</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <label className="label" style={{ fontWeight: 800, marginBottom: 8 }}>Select Pakistani Payment Gateway</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 14 }}>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${paymentMethod === 'jazzcash' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setPaymentMethod('jazzcash')}
+                      style={{
+                        justifyContent: 'center',
+                        fontSize: 11,
+                        padding: '6px 4px',
+                        background: paymentMethod === 'jazzcash' ? '#b91c1c' : undefined,
+                        borderColor: paymentMethod === 'jazzcash' ? '#ef4444' : undefined,
+                        color: '#fff',
+                        fontWeight: 700,
+                      }}
+                    >
+                      🔴 JazzCash
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${paymentMethod === 'easypaisa' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setPaymentMethod('easypaisa')}
+                      style={{
+                        justifyContent: 'center',
+                        fontSize: 11,
+                        padding: '6px 4px',
+                        background: paymentMethod === 'easypaisa' ? '#059669' : undefined,
+                        borderColor: paymentMethod === 'easypaisa' ? '#10b981' : undefined,
+                        color: '#fff',
+                        fontWeight: 700,
+                      }}
+                    >
+                      🟢 EasyPaisa
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${paymentMethod === 'raast' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setPaymentMethod('raast')}
+                      style={{
+                        justifyContent: 'center',
+                        fontSize: 11,
+                        padding: '6px 4px',
+                        background: paymentMethod === 'raast' ? '#0d9488' : undefined,
+                        borderColor: paymentMethod === 'raast' ? '#14b8a6' : undefined,
+                        color: '#fff',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ⚡ Raast / Bank
+                    </button>
                     <button
                       type="button"
                       className={`btn btn-sm ${paymentMethod === 'card' ? 'btn-primary' : 'btn-secondary'}`}
                       onClick={() => setPaymentMethod('card')}
-                      style={{ justifyContent: 'center' }}
+                      style={{
+                        justifyContent: 'center',
+                        fontSize: 11,
+                        padding: '6px 4px',
+                        fontWeight: 700,
+                      }}
                     >
-                      💳 Credit / Debit Card
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${paymentMethod === 'wallet' ? 'btn-primary' : 'btn-secondary'}`}
-                      onClick={() => setPaymentMethod('wallet')}
-                      style={{ justifyContent: 'center' }}
-                    >
-                      📱 JazzCash / EasyPaisa
+                      💳 Card / PayPak
                     </button>
                   </div>
                 </div>
 
-                {paymentMethod === 'card' ? (
+                {/* 1. JAZZCASH */}
+                {paymentMethod === 'jazzcash' && (
+                  <div style={{ background: 'rgba(185, 28, 28, 0.06)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 14, padding: 14 }}>
+                    <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ background: '#fff', padding: 6, borderRadius: 8, display: 'inline-flex' }}>
+                        <QrCode text={`jazzcash://pay?till=00291482&amount=${isAnnual ? selectedPlanObj?.priceAnnualPKR : selectedPlanObj?.priceMonthlyPKR}&ref=MEDORA`} size={90} />
+                      </div>
+                      <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                        <div style={{ fontWeight: 800, color: '#f87171', fontSize: 13.5 }}>JazzCash Business Merchant</div>
+                        <div>Till / Merchant ID: <strong style={{ fontFamily: 'var(--font-mono)' }}>00291482</strong></div>
+                        <div>Mobile Account: <strong>0300-1234567</strong></div>
+                        <div>Account Title: <strong>Medora Health Tech</strong></div>
+                        <div className="hint" style={{ fontSize: 11, marginTop: 2 }}>Scan with JazzCash app or dial *786#</div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label" style={{ fontWeight: 700, fontSize: 12 }}>Enter JazzCash Transaction ID (TID) *</label>
+                      <input
+                        className="input"
+                        placeholder="e.g. 0928341920"
+                        value={jazzCashTid}
+                        onChange={(e) => setJazzCashTid(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. EASYPAISA */}
+                {paymentMethod === 'easypaisa' && (
+                  <div style={{ background: 'rgba(5, 150, 105, 0.06)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 14, padding: 14 }}>
+                    <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ background: '#fff', padding: 6, borderRadius: 8, display: 'inline-flex' }}>
+                        <QrCode text={`easypaisa://pay?acc=03459876543&amount=${isAnnual ? selectedPlanObj?.priceAnnualPKR : selectedPlanObj?.priceMonthlyPKR}&ref=MEDORA`} size={90} />
+                      </div>
+                      <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                        <div style={{ fontWeight: 800, color: '#34d399', fontSize: 13.5 }}>EasyPaisa Merchant QR</div>
+                        <div>Merchant Account: <strong style={{ fontFamily: 'var(--font-mono)' }}>0345-9876543</strong></div>
+                        <div>Account Title: <strong>Medora Health Tech Pvt Ltd</strong></div>
+                        <div>City / Routing: <strong>Islamabad Branch</strong></div>
+                        <div className="hint" style={{ fontSize: 11, marginTop: 2 }}>Scan QR with EasyPaisa App or dial *786#</div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label" style={{ fontWeight: 700, fontSize: 12 }}>Enter EasyPaisa TID (Transaction ID) *</label>
+                      <input
+                        className="input"
+                        placeholder="e.g. 4819203910"
+                        value={easyPaisaTid}
+                        onChange={(e) => setEasyPaisaTid(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. RAAST INSTANT PAY / IBFT */}
+                {paymentMethod === 'raast' && (
+                  <div style={{ background: 'rgba(13, 148, 136, 0.06)', border: '1px solid rgba(20, 184, 166, 0.3)', borderRadius: 14, padding: 14 }}>
+                    <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ background: '#fff', padding: 6, borderRadius: 8, display: 'inline-flex' }}>
+                        <QrCode text={`PK.RAAST://03001234567/MEDORA?amount=${isAnnual ? selectedPlanObj?.priceAnnualPKR : selectedPlanObj?.priceMonthlyPKR}`} size={90} />
+                      </div>
+                      <div style={{ fontSize: 12, lineHeight: 1.45 }}>
+                        <div style={{ fontWeight: 800, color: '#2dd4bf', fontSize: 13.5 }}>Raast Instant P2M / Corporate IBFT</div>
+                        <div>Raast ID: <strong style={{ fontFamily: 'var(--font-mono)' }}>03001234567</strong> (Zero Fee)</div>
+                        <div>Bank Name: <strong>Meezan Bank Limited</strong></div>
+                        <div>Account Title: <strong>Medora Health Technologies Pvt Ltd</strong></div>
+                        <div>IBAN: <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>PK82MEZN0001040105892188</strong></div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label" style={{ fontWeight: 700, fontSize: 12 }}>Bank Transfer / Raast Reference Number *</label>
+                      <input
+                        className="input"
+                        placeholder="e.g. IBFT-991204 / RST-19283"
+                        value={raastRef}
+                        onChange={(e) => setRaastRef(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. CREDIT / DEBIT / PAYPAK */}
+                {paymentMethod === 'card' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div>
-                      <label className="label">Card Number</label>
+                      <label className="label">Card Number (Visa / Mastercard / PayPak)</label>
                       <input className="input" placeholder="•••• •••• •••• 4082" defaultValue="4242 •••• •••• 4082" required />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -553,16 +693,8 @@ export default function SubscriptionPage() {
                         <input className="input" placeholder="CVC" defaultValue="912" required />
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 10, border: '1px solid var(--c-border)' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Direct Mobile Wallet Transfer:</div>
-                    <div style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>
-                      Send total amount to Till Number: <strong>0300-1234567</strong> (Medora Health Technologies).
-                    </div>
-                    <div style={{ marginTop: 10 }}>
-                      <label className="label">Transaction ID (TID)</label>
-                      <input className="input" placeholder="e.g. 98412849102" defaultValue="TID-882914" required />
+                    <div className="hint" style={{ fontSize: 11 }}>
+                      🔒 Powered by PayFast & 1Link 3D-Secure 2.0. Domestic Pakistani cards supported.
                     </div>
                   </div>
                 )}
