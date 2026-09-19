@@ -295,8 +295,8 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-      {/* 3 Pricing Cards Grid */}
-      <div className="grid grid-3" style={{ marginBottom: 36 }}>
+      {/* 4 Pakistani Market Pricing Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, marginBottom: 36 }}>
         {Object.keys(SUBSCRIPTION_PLANS).map((planKey) => {
           const item = SUBSCRIPTION_PLANS[planKey];
           const isCurrent = subscription.planId === planKey;

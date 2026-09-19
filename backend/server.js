@@ -59,11 +59,12 @@ try {
 const MEMORY_DB = {
   // SaaS Tenants Directory
   tenants: [
-    { id: 'tenant-001', name: 'Al-Shifa Healthcare Complex', slug: 'al-shifa', city: 'Islamabad', doctorInCharge: 'Dr. Sarah Khan', phone: '0300-1234567', plan: 'growth', status: 'active', mrrPKR: 12000, practiceType: 'Polyclinic & Family Care' },
-    { id: 'tenant-002', name: 'City Smile Dental Clinic', slug: 'city-smile', city: 'Lahore', doctorInCharge: 'Dr. Usman Farooq', phone: '0321-7654321', plan: 'starter', status: 'trialing', mrrPKR: 5000, practiceType: 'Dental Aesthetics & Surgery' },
-    { id: 'tenant-003', name: 'Rawal Pediatric Care Center', slug: 'rawal-peds', city: 'Rawalpindi', doctorInCharge: 'Dr. Ayesha Raza', phone: '0333-5554443', plan: 'growth', status: 'active', mrrPKR: 12000, practiceType: 'Pediatrics & Child Care' },
-    { id: 'tenant-004', name: 'National Medicare Surgical Hospital', slug: 'national-medicare', city: 'Karachi', doctorInCharge: 'Dr. Bilal Ahmed', phone: '0312-9988776', plan: 'enterprise', status: 'active', mrrPKR: 25000, practiceType: 'General Surgery & Inpatient' },
-    { id: 'tenant-005', name: 'Apex Orthopedic & Spine Clinic', slug: 'apex-ortho', city: 'Peshawar', doctorInCharge: 'Dr. Tariq Mehmood', phone: '0345-1122334', plan: 'starter', status: 'active', mrrPKR: 5000, practiceType: 'Orthopedics & Spine Care' },
+    { id: 'tenant-001', name: 'Al-Shifa Healthcare Complex', slug: 'al-shifa', city: 'Islamabad', doctorInCharge: 'Dr. Sarah Khan', phone: '0300-1234567', plan: 'growth', status: 'active', mrrPKR: 9500, practiceType: 'Polyclinic & Family Care' },
+    { id: 'tenant-002', name: 'City Smile Dental Clinic', slug: 'city-smile', city: 'Lahore', doctorInCharge: 'Dr. Usman Farooq', phone: '0321-7654321', plan: 'starter', status: 'trialing', mrrPKR: 4500, practiceType: 'Dental Aesthetics & Surgery' },
+    { id: 'tenant-003', name: 'Rawal Pediatric Care Center', slug: 'rawal-peds', city: 'Rawalpindi', doctorInCharge: 'Dr. Ayesha Raza', phone: '0333-5554443', plan: 'growth', status: 'active', mrrPKR: 9500, practiceType: 'Pediatrics & Child Care' },
+    { id: 'tenant-004', name: 'National Medicare Surgical Hospital', slug: 'national-medicare', city: 'Karachi', doctorInCharge: 'Dr. Bilal Ahmed', phone: '0312-9988776', plan: 'enterprise', status: 'active', mrrPKR: 35000, practiceType: 'General Surgery & Inpatient' },
+    { id: 'tenant-005', name: 'LifeCare Daycare & Maternity Home', slug: 'lifecare-maternity', city: 'Faisalabad', doctorInCharge: 'Dr. Hina Farooq', phone: '0302-8877665', plan: 'hospital', status: 'active', mrrPKR: 18500, practiceType: 'Daycare Surgery & Maternity' },
+    { id: 'tenant-006', name: 'Apex Orthopedic & Spine Clinic', slug: 'apex-ortho', city: 'Peshawar', doctorInCharge: 'Dr. Tariq Mehmood', phone: '0345-1122334', plan: 'starter', status: 'active', mrrPKR: 4500, practiceType: 'Orthopedics & Spine Care' },
   ],
 
   patients: [

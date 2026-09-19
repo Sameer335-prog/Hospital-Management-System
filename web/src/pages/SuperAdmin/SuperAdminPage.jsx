@@ -440,9 +440,10 @@ export default function SuperAdminPage() {
                   onChange={(e) => setSelectedPlanFilter(e.target.value)}
                 >
                   <option value="all">All Plans</option>
-                  <option value="starter">Starter</option>
-                  <option value="growth">Growth</option>
-                  <option value="enterprise">Enterprise</option>
+                  <option value="starter">Solo Doctor & Dental (Rs. 4,500)</option>
+                  <option value="growth">Polyclinic & Aesthetics (Rs. 9,500)</option>
+                  <option value="hospital">Daycare & Maternity (Rs. 18,500)</option>
+                  <option value="enterprise">Hospital Network (Rs. 35,000)</option>
                 </select>
 
                 <select
@@ -498,13 +499,15 @@ export default function SuperAdminPage() {
                             className={`badge ${
                               tenant.plan === 'enterprise'
                                 ? 'badge-purple'
+                                : tenant.plan === 'hospital'
+                                ? 'badge-warning'
                                 : tenant.plan === 'growth'
                                 ? 'badge-info'
                                 : 'badge-secondary'
                             }`}
                             style={{ fontWeight: 700, textTransform: 'capitalize' }}
                           >
-                            {tenant.plan}
+                            {SUBSCRIPTION_PLANS[tenant.plan]?.name || tenant.plan}
                           </span>
                         </td>
                         <td>
@@ -525,13 +528,12 @@ export default function SuperAdminPage() {
                           {tenant.expiresAt}
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: 6 }}>
-                            {/* WhatsApp Direct Outreach */}
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                            {/* Direct WhatsApp Contact Button */}
                             <button
-                              className="btn btn-secondary btn-xs"
-                              style={{ color: '#25D366', borderColor: 'rgba(37,211,102,0.35)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                              onClick={() => openWhatsAppOutreach(tenant)}
-                              title="Message clinic doctor directly on WhatsApp"
+                              className="btn btn-ghost btn-icon btn-xs"
+                              onClick={() => handleWhatsAppClinic(tenant)}
+                              title={`Direct WhatsApp to ${tenant.name} (${tenant.phone})`}
                               aria-label="Message clinic doctor directly on WhatsApp"
                             >
                               <WhatsAppIcon size={14} color="#25D366" />
@@ -544,9 +546,10 @@ export default function SuperAdminPage() {
                               onChange={(e) => handleChangePlan(tenant.id, e.target.value)}
                               title="Change subscription plan"
                             >
-                              <option value="starter">Starter</option>
-                              <option value="growth">Growth</option>
-                              <option value="enterprise">Enterprise</option>
+                              <option value="starter">Solo (Rs. 4,500)</option>
+                              <option value="growth">Polyclinic (Rs. 9,500)</option>
+                              <option value="hospital">Hospital (Rs. 18,500)</option>
+                              <option value="enterprise">Enterprise (Rs. 35,000)</option>
                             </select>
 
                             {/* Extend Trial */}
@@ -634,7 +637,7 @@ export default function SuperAdminPage() {
           </div>
 
           {/* Pricing Tiers Contribution Matrix */}
-          <div className="grid grid-3" style={{ marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 16, marginBottom: 24 }}>
             {Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => {
               const countInTier = tenants.filter((t) => t.plan === key).length;
               const mrrInTier = countInTier * plan.priceMonthlyPKR;
@@ -645,8 +648,22 @@ export default function SuperAdminPage() {
                   className="card card-pad"
                   style={{
                     borderRadius: 16,
-                    border: key === 'enterprise' ? '1px solid rgba(147, 51, 234, 0.4)' : '1px solid var(--c-border)',
-                    background: key === 'enterprise' ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, var(--c-surface) 100%)' : 'var(--c-surface)',
+                    border:
+                      key === 'enterprise'
+                        ? '1px solid rgba(147, 51, 234, 0.4)'
+                        : key === 'hospital'
+                        ? '1px solid rgba(245, 158, 11, 0.4)'
+                        : key === 'growth'
+                        ? '1px solid rgba(2, 132, 199, 0.4)'
+                        : '1px solid var(--c-border)',
+                    background:
+                      key === 'enterprise'
+                        ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, var(--c-surface) 100%)'
+                        : key === 'hospital'
+                        ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, var(--c-surface) 100%)'
+                        : key === 'growth'
+                        ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, var(--c-surface) 100%)'
+                        : 'var(--c-surface)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -665,9 +682,9 @@ export default function SuperAdminPage() {
                   </div>
 
                   <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--c-border)', paddingTop: 10 }}>
-                    <div>👨‍⚕️ Doctor Limit: <strong>{plan.maxDoctors}</strong></div>
-                    <div>🎫 Monthly Tokens: <strong>{plan.monthlyTokens.toLocaleString()}</strong></div>
-                    <div>💬 SMS Reminders: <strong>{plan.features.smsAlerts ? 'Cloud Integrated' : 'Manual'}</strong></div>
+                    <div>👨‍⚕️ Doctor Limit: <strong>{plan.maxDoctors === Infinity ? 'Unlimited' : plan.maxDoctors}</strong></div>
+                    <div>🎫 Monthly Tokens: <strong>{plan.monthlyTokens === Infinity ? 'Unlimited' : plan.monthlyTokens.toLocaleString()}</strong></div>
+                    <div>💬 SMS Reminders: <strong>{plan.limits?.smsCreditsPerMonth ? `${plan.limits.smsCreditsPerMonth} Credits` : 'Direct WhatsApp'}</strong></div>
                   </div>
                 </div>
               );
@@ -701,9 +718,10 @@ export default function SuperAdminPage() {
                   onChange={(e) => setSelectedPlanFilter(e.target.value)}
                 >
                   <option value="all">All Plan Tiers</option>
-                  <option value="starter">Starter</option>
-                  <option value="growth">Growth</option>
-                  <option value="enterprise">Enterprise</option>
+                  <option value="starter">Solo Doctor & Dental (Rs. 4,500)</option>
+                  <option value="growth">Polyclinic & Aesthetics (Rs. 9,500)</option>
+                  <option value="hospital">Daycare & Maternity (Rs. 18,500)</option>
+                  <option value="enterprise">Hospital Network (Rs. 35,000)</option>
                 </select>
               </div>
             </div>
@@ -735,13 +753,15 @@ export default function SuperAdminPage() {
                           className={`badge ${
                             tenant.plan === 'enterprise'
                               ? 'badge-purple'
+                              : tenant.plan === 'hospital'
+                              ? 'badge-warning'
                               : tenant.plan === 'growth'
                               ? 'badge-info'
                               : 'badge-secondary'
                           }`}
                           style={{ fontWeight: 700, textTransform: 'capitalize' }}
                         >
-                          {tenant.plan}
+                          {SUBSCRIPTION_PLANS[tenant.plan]?.name || tenant.plan}
                         </span>
                       </td>
                       <td style={{ fontWeight: 800, color: '#10b981' }}>
@@ -774,9 +794,10 @@ export default function SuperAdminPage() {
                           onChange={(e) => handleChangePlan(tenant.id, e.target.value)}
                           title="Change subscription plan"
                         >
-                          <option value="starter">Starter (Rs. 5,000)</option>
-                          <option value="growth">Growth (Rs. 12,000)</option>
-                          <option value="enterprise">Enterprise (Rs. 25,000)</option>
+                          <option value="starter">Solo (Rs. 4,500)</option>
+                          <option value="growth">Polyclinic (Rs. 9,500)</option>
+                          <option value="hospital">Hospital (Rs. 18,500)</option>
+                          <option value="enterprise">Enterprise (Rs. 35,000)</option>
                         </select>
                       </td>
                     </tr>
@@ -942,9 +963,10 @@ export default function SuperAdminPage() {
                       value={newClinicForm.plan}
                       onChange={(e) => setNewClinicForm({ ...newClinicForm, plan: e.target.value })}
                     >
-                      <option value="starter">Starter (Rs. 5,000/mo)</option>
-                      <option value="growth">Growth (Rs. 12,000/mo)</option>
-                      <option value="enterprise">Enterprise (Rs. 25,000/mo)</option>
+                      <option value="starter">Solo Doctor & Dental (Rs. 4,500/mo)</option>
+                      <option value="growth">Polyclinic & Aesthetics (Rs. 9,500/mo)</option>
+                      <option value="hospital">Daycare & Maternity (Rs. 18,500/mo)</option>
+                      <option value="enterprise">Hospital Network (Rs. 35,000/mo)</option>
                     </select>
                   </div>
                 </div>

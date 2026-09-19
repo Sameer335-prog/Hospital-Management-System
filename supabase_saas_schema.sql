@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.clinics (
     country TEXT DEFAULT 'Pakistan',
     currency TEXT DEFAULT 'Rs.',
     paper_width TEXT DEFAULT '80mm',                 -- '80mm' | '58mm' for thermal printer
-    plan TEXT NOT NULL DEFAULT 'starter' CHECK (plan IN ('starter', 'growth', 'enterprise')),
+    plan TEXT NOT NULL DEFAULT 'starter' CHECK (plan IN ('starter', 'growth', 'hospital', 'enterprise')),
     subscription_status TEXT NOT NULL DEFAULT 'trialing' CHECK (subscription_status IN ('trialing', 'active', 'past_due', 'cancelled', 'suspended')),
     trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '14 days'),
     billing_cycle TEXT DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'annual')),
@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_clinics_status ON public.clinics(subscription_sta
 CREATE TABLE IF NOT EXISTS public.subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
-    plan_tier TEXT NOT NULL CHECK (plan_tier IN ('starter', 'growth', 'enterprise')),
+    plan_tier TEXT NOT NULL CHECK (plan_tier IN ('starter', 'growth', 'hospital', 'enterprise')),
     amount_pkr NUMERIC(10, 2) NOT NULL,
     amount_usd NUMERIC(10, 2),
     billing_cycle TEXT NOT NULL DEFAULT 'monthly',

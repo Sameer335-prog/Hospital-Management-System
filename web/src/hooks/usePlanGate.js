@@ -8,14 +8,14 @@ import { useSubscription, SUBSCRIPTION_PLANS } from '../utils/subscriptionConfig
  */
 
 const FEATURE_ENTITLEMENTS = {
-  lobby_tv: ['growth', 'enterprise'],
-  cloud_sms: ['growth', 'enterprise'],
-  lab_module: ['growth', 'enterprise'],
-  pharmacy: ['growth', 'enterprise'],
+  lobby_tv: ['growth', 'hospital', 'enterprise'],
+  cloud_sms: ['growth', 'hospital', 'enterprise'],
+  lab_module: ['growth', 'hospital', 'enterprise'],
+  pharmacy: ['growth', 'hospital', 'enterprise'],
+  multi_doctor: ['growth', 'hospital', 'enterprise'],
+  wards_admissions: ['hospital', 'enterprise'],
+  acute_triage: ['hospital', 'enterprise'],
   ai_copilot: ['enterprise'],
-  wards_admissions: ['enterprise'],
-  acute_triage: ['enterprise'],
-  multi_doctor: ['growth', 'enterprise'],
 };
 
 export function usePlanGate() {
@@ -38,6 +38,7 @@ export function usePlanGate() {
     const allowedTiers = FEATURE_ENTITLEMENTS[featureKey];
     if (!allowedTiers) return 'starter';
     if (allowedTiers.includes('growth')) return 'growth';
+    if (allowedTiers.includes('hospital')) return 'hospital';
     return 'enterprise';
   };
 
