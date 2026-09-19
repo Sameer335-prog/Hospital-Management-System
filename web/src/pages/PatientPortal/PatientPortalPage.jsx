@@ -9,6 +9,7 @@ import { useToast } from '../../hooks/useToast.js';
 import { useNotification } from '../../context/NotificationContext.jsx';
 import { appointmentService } from '../../services/appointmentService.js';
 import { sendWhatsApp, sendNativeSms } from '../../utils/messagingGateway.js';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
 import ThermalReceiptModal from '../../components/common/ThermalReceiptModal.jsx';
 import {
   PATIENTS,
@@ -33,6 +34,7 @@ export default function PatientPortalPage() {
   const { user } = useAuth();
   const { toast, showToast } = useToast();
   const { dispatchBookingNotification, dispatchTwoHourReminder } = useNotification();
+  const clinic = useClinicProfile();
   const [activeTab, setActiveTab] = useState('Live OPD Token & Visits');
 
   // Patient Identity — default to logged in patient or first record (Muhammad Ahmed)
@@ -373,7 +375,8 @@ export default function PatientPortalPage() {
                     className="btn btn-sm"
                     style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 11.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => {
-                      const text = `Medora Hospital Visit Details:\n• Patient: ${patient.name} (${patient.id})\n• Doctor: ${todaysAppointment.doctor} (${todaysAppointment.dept})\n• Token: ${todaysAppointment.token}\n• Time: ${todaysAppointment.time}\n• Room: ${todaysAppointment.room}\nPlease proceed to the waiting lounge.`;
+                      const clinicName = clinic?.name || 'Clinic';
+                      const text = `${clinicName} Visit Details:\n• Patient: ${patient.name} (${patient.id})\n• Doctor: ${todaysAppointment.doctor} (${todaysAppointment.dept})\n• Token: ${todaysAppointment.token}\n• Time: ${todaysAppointment.time}\n• Room: ${todaysAppointment.room}\nPlease proceed to the waiting lounge.`;
                       sendWhatsApp(patient.phone || '0300-1234567', text);
                       showToast('WhatsApp opened with your visit details!');
                     }}
@@ -388,7 +391,8 @@ export default function PatientPortalPage() {
                     className="btn btn-sm"
                     style={{ background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 11.5 }}
                     onClick={() => {
-                      const text = `Medora Hospital Visit Details:\n• Patient: ${patient.name} (${patient.id})\n• Doctor: ${todaysAppointment.doctor} (${todaysAppointment.dept})\n• Token: ${todaysAppointment.token}\n• Time: ${todaysAppointment.time}\n• Room: ${todaysAppointment.room}\nPlease proceed to the waiting lounge.`;
+                      const clinicName = clinic?.name || 'Clinic';
+                      const text = `${clinicName} Visit Details:\n• Patient: ${patient.name} (${patient.id})\n• Doctor: ${todaysAppointment.doctor} (${todaysAppointment.dept})\n• Token: ${todaysAppointment.token}\n• Time: ${todaysAppointment.time}\n• Room: ${todaysAppointment.room}\nPlease proceed to the waiting lounge.`;
                       sendNativeSms(patient.phone || '0300-1234567', text);
                       showToast('SMS app opened with your visit details!');
                     }}
@@ -497,7 +501,8 @@ export default function PatientPortalPage() {
                             title="Share token on WhatsApp"
                             aria-label="Share token on WhatsApp"
                             onClick={() => {
-                              const msg = `Medora Hospital Visit Token: Token ${a.token} with ${a.doctor} (${a.dept}) on ${a.date} at ${a.time}. Room: ${a.room}.`;
+                              const clinicName = clinic?.name || 'Clinic';
+                              const msg = `${clinicName} Visit Token: Token ${a.token} with ${a.doctor} (${a.dept}) on ${a.date} at ${a.time}. Room: ${a.room}.`;
                               sendWhatsApp(patient.phone || '0300-1234567', msg);
                               showToast('WhatsApp opened with Token details!');
                             }}
@@ -839,7 +844,8 @@ export default function PatientPortalPage() {
                   className="btn btn-sm"
                   style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={() => {
-                    const text = `Medora Hospital OPD Token Slip:\n• Patient: ${patient.name} (${patient.id})\n• Token: ${tokenSlipModal.token}\n• Doctor: ${tokenSlipModal.doctor}\n• Room: ${tokenSlipModal.room}\n• Date & Time: ${tokenSlipModal.date} · ${tokenSlipModal.time}\nPlease report 10 minutes before consultation.`;
+                    const clinicName = clinic?.name || 'Clinic';
+                    const text = `${clinicName} OPD Token Slip:\n• Patient: ${patient.name} (${patient.id})\n• Token: ${tokenSlipModal.token}\n• Doctor: ${tokenSlipModal.doctor}\n• Room: ${tokenSlipModal.room}\n• Date & Time: ${tokenSlipModal.date} · ${tokenSlipModal.time}\nPlease report 10 minutes before consultation.`;
                     sendWhatsApp(patient.phone || '0300-1234567', text);
                     showToast('WhatsApp opened with Token Slip!');
                   }}
@@ -853,7 +859,8 @@ export default function PatientPortalPage() {
                   className="btn btn-sm"
                   style={{ background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 700 }}
                   onClick={() => {
-                    const text = `Medora Hospital OPD Token Slip:\n• Patient: ${patient.name} (${patient.id})\n• Token: ${tokenSlipModal.token}\n• Doctor: ${tokenSlipModal.doctor}\n• Room: ${tokenSlipModal.room}\n• Date & Time: ${tokenSlipModal.date} · ${tokenSlipModal.time}\nPlease report 10 minutes before consultation.`;
+                    const clinicName = clinic?.name || 'Clinic';
+                    const text = `${clinicName} OPD Token Slip:\n• Patient: ${patient.name} (${patient.id})\n• Token: ${tokenSlipModal.token}\n• Doctor: ${tokenSlipModal.doctor}\n• Room: ${tokenSlipModal.room}\n• Date & Time: ${tokenSlipModal.date} · ${tokenSlipModal.time}\nPlease report 10 minutes before consultation.`;
                     sendNativeSms(patient.phone || '0300-1234567', text);
                     showToast('SMS app opened with Token Slip!');
                   }}

@@ -1084,7 +1084,8 @@ export default function AppointmentsPage() {
                             onClick={() => {
                               const patientObj = PATIENTS.find((p) => p.name === appt.patient || p.id === appt.pid);
                               const phone = patientObj?.phone || '0300-9876543';
-                              const msg = `Medora Hospital: Dear ${appt.patient}, your appointment with ${appt.doctor} (${appt.dept}) is confirmed. Token: ${appt.token}, Time: ${appt.time}, ${appt.room}. Please report to the waiting lounge.`;
+                              const clinicTitle = clinic?.name || 'Clinic';
+                              const msg = `${clinicTitle}: Dear ${appt.patient}, your appointment with ${appt.doctor} (${appt.dept}) is confirmed. Token: ${appt.token}, Time: ${appt.time}, ${appt.room}. Please report to the waiting lounge.`;
                               sendWhatsApp(phone, msg);
                               showToast(`WhatsApp message opened for ${appt.patient}!`);
                             }}

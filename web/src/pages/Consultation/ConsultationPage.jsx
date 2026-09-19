@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Avatar from '../../components/ui/Avatar.jsx';
-import Icon from '../../components/ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../../components/ui/Icon.jsx';
 import QrCode from '../../components/ui/QrCode.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { getPatientById, PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js';
 import { useToast } from '../../hooks/useToast.js';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { sendWhatsApp } from '../../utils/messagingGateway.js';
 
 const DRUG_ALLERGY_RULES = [
   {
@@ -70,10 +72,20 @@ const VITAL_FIELDS = [
   { key: 'weight', label: 'Weight', placeholder: '65 kg' },
 ];
 
+const URDU_DOSAGE_PRESETS = [
+  { label: 'صبح شام کھانے کے بعد', text: 'صبح شام کھانے کے بعد (Twice daily after meals)' },
+  { label: 'دن میں 3 بار کھانے کے بعد', text: 'دن میں تین بار کھانے کے بعد (3 times daily after meals)' },
+  { label: 'رات کو سوتے وقت', text: 'ایک گولی رات کو سوتے وقت (At bedtime)' },
+  { label: 'نہار منہ ناشتے سے پہلے', text: 'نہار منہ ناشتے سے 30 منٹ پہلے (Before breakfast)' },
+  { label: 'ضرورت کے وقت (درد/بخار)', text: 'درد یا تیز بخار کی صورت میں ضرورت کے وقت (SOS)' },
+  { label: 'ایک چمچ دن میں تین بار', text: 'ایک چمچ دن میں تین بار (1 tsp TDS)' },
+];
+
 export default function ConsultationPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
+  const clinic = useClinicProfile();
 
   // Active Patient in Consultation Chair (defaults to URL param or first waiting patient)
   const [activePatientId, setActivePatientId] = useState(patientId || PATIENTS[0]?.id || 'PT-00125');
@@ -315,6 +327,32 @@ export default function ConsultationPage() {
     }
     showToast(`Encounter completed for ${patient.name}. Digital prescription generated and routed to Pharmacy.`);
     setRxModalOpen(true);
+  }
+
+  function handleSendRxWhatsApp() {
+    const phone = patient.phone || '0300-1234567';
+    let medList = '';
+    medicines.forEach((m, i) => {
+      medList += `${i + 1}. *${m.medicine || 'Medicine'}* — ${m.dose || '1 Dose'} (${m.frequency || '1-0-1'})\n   مدت: ${m.duration || '7 Days'}${m.instructions ? `\n   ہدایات: ${m.instructions}` : ''}\n`;
+    });
+
+    const rxText = `🏥 *${clinic.name || 'Al-Shifa Healthcare Complex'}* — Digital Prescription (Rx)
+━━━━━━━━━━━━━━━━━━━━
+👤 *Patient:* ${patient.name} (MRN: ${patient.id})
+👨‍⚕️ *Doctor:* ${doctorObj.name} (${doctorObj.dept} Specialist)
+📅 *Date:* ${new Date().toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' })}
+🩺 *Vitals:* BP ${vitals.bp || '120/80'} | Pulse ${vitals.pulse || '78'}
+🎯 *Diagnosis:* ${diagnoses.join(', ') || 'Clinical Evaluation'}
+${hasAllergy ? `⚠️ *Allergy Alert:* ${patient.allergy}\n` : ''}
+📋 *Prescribed Medicines (ادویات):*
+${medList || 'No medications prescribed.\n'}
+${labOrders.length > 0 ? `🔬 *Lab Investigations Ordered:*\n${labOrders.map((o) => `• ${o.test}`).join('\n')}\n\n` : ''}📅 *Follow-up:* ${followUpDate || 'In 2 weeks'}
+${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
+📞 *Clinic Helpline:* ${clinic.hotline || clinic.phone}
+📍 *Address:* ${clinic.address}`;
+
+    sendWhatsApp(phone, rxText);
+    showToast(`Prescription dispatched to ${patient.name} on WhatsApp!`);
   }
 
   return (
@@ -628,52 +666,88 @@ export default function ConsultationPage() {
                       style={{
                         border: isConflict ? '1.5px solid #ef4444' : '1px solid var(--c-border)',
                         borderRadius: 'var(--radius-md)',
-                        display: 'grid',
-                        gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto',
+                        display: 'flex',
+                        flexDirection: 'column',
                         gap: 8,
                         background: isConflict ? 'rgba(239, 68, 68, 0.05)' : 'var(--c-surface-hover)',
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      <div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'center' }}>
+                        <div>
+                          <input
+                            className="input"
+                            style={isConflict ? { borderColor: '#ef4444', fontWeight: 600 } : {}}
+                            placeholder="Medicine & Brand"
+                            value={m.medicine}
+                            onChange={(e) => updateMedicine(m.id, 'medicine', e.target.value)}
+                          />
+                          {isConflict && (
+                            <div style={{ color: '#dc2626', fontSize: 11, fontWeight: 700, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span>⚠️</span> Contraindicated ({patient.allergy})
+                            </div>
+                          )}
+                        </div>
                         <input
                           className="input"
-                          style={isConflict ? { borderColor: '#ef4444', fontWeight: 600 } : {}}
-                          placeholder="Medicine & Brand"
-                          value={m.medicine}
-                          onChange={(e) => updateMedicine(m.id, 'medicine', e.target.value)}
+                          placeholder="Dose (e.g. 1 Tab)"
+                          value={m.dose}
+                          onChange={(e) => updateMedicine(m.id, 'dose', e.target.value)}
                         />
-                        {isConflict && (
-                          <div style={{ color: '#dc2626', fontSize: 11, fontWeight: 700, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <span>⚠️</span> Contraindicated ({patient.allergy})
-                          </div>
-                        )}
+                        <input
+                          className="input"
+                          placeholder="Frequency (1-0-1)"
+                          value={m.frequency}
+                          onChange={(e) => updateMedicine(m.id, 'frequency', e.target.value)}
+                        />
+                        <input
+                          className="input"
+                          placeholder="Duration (7 Days)"
+                          value={m.duration}
+                          onChange={(e) => updateMedicine(m.id, 'duration', e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className="btn-icon"
+                          onClick={() => removeMedicine(m.id)}
+                          aria-label="Remove medicine"
+                        >
+                          <Icon name="x" />
+                        </button>
                       </div>
-                      <input
-                        className="input"
-                        placeholder="Dose (e.g. 1 Tab)"
-                        value={m.dose}
-                        onChange={(e) => updateMedicine(m.id, 'dose', e.target.value)}
-                      />
-                      <input
-                        className="input"
-                        placeholder="Frequency (1-0-1)"
-                        value={m.frequency}
-                        onChange={(e) => updateMedicine(m.id, 'frequency', e.target.value)}
-                      />
-                      <input
-                        className="input"
-                        placeholder="Duration (7 Days)"
-                        value={m.duration}
-                        onChange={(e) => updateMedicine(m.id, 'duration', e.target.value)}
-                      />
-                      <button
-                        className="btn-icon"
-                        onClick={() => removeMedicine(m.id)}
-                        aria-label="Remove medicine"
-                      >
-                        <Icon name="x" />
-                      </button>
+
+                      {/* Instructions & Quick Urdu Dosage Presets */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <input
+                          className="input input-sm"
+                          style={{ fontSize: 12 }}
+                          placeholder="Dosage instruction (ہدایات) e.g. کھانے کے بعد یا پانی کے ساتھ"
+                          value={m.instructions || ''}
+                          onChange={(e) => updateMedicine(m.id, 'instructions', e.target.value)}
+                        />
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <span style={{ fontSize: 10.5, color: '#64748b', fontWeight: 600 }}>Quick Urdu (فوری ہدایات):</span>
+                          {URDU_DOSAGE_PRESETS.map((preset, pIdx) => (
+                            <button
+                              key={pIdx}
+                              type="button"
+                              className="btn btn-ghost btn-xs"
+                              style={{
+                                fontSize: 10.5,
+                                padding: '1px 6px',
+                                border: '1px solid var(--c-border)',
+                                borderRadius: 4,
+                                color: 'var(--c-primary-dark)',
+                                background: m.instructions === preset.text ? 'var(--c-primary-light)' : 'transparent',
+                              }}
+                              onClick={() => updateMedicine(m.id, 'instructions', preset.text)}
+                              title={preset.text}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -823,7 +897,24 @@ export default function ConsultationPage() {
               }}
             >
               <div style={{ fontWeight: 700, fontSize: 14 }}>Official Medical Prescription (Rx Slip)</div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  style={{
+                    background: '#25D366',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                  onClick={handleSendRxWhatsApp}
+                  title={`Send Prescription to ${patient.name} on WhatsApp`}
+                >
+                  <WhatsAppIcon size={16} color="#ffffff" /> Send to WhatsApp
+                </button>
                 <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
                   <Icon name="print" /> Print Prescription (A4)
                 </button>
@@ -855,13 +946,13 @@ export default function ConsultationPage() {
                 >
                   <div>
                     <div style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                      AL-SHIFA INTERNATIONAL HOSPITAL
+                      {clinic.name || 'Al-Shifa Healthcare Complex'}
                     </div>
                     <div style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
-                      Outpatient Department (OPD) Clinical Services · Sector H-8/4, Islamabad
+                      {clinic.tagline || 'Outpatient Department (OPD) Clinical Services'} · {clinic.address}
                     </div>
                     <div style={{ fontSize: 11, color: '#64748b' }}>
-                      UAN: +92 (51) 111-222-333 · Web: www.alshifa-hospital.org
+                      UAN / Helpline: {clinic.hotline || clinic.phone} {clinic.website ? `· Web: ${clinic.website}` : ''} {clinic.ntn ? `· NTN: ${clinic.ntn}` : ''}
                     </div>
                   </div>
 

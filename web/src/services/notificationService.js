@@ -6,6 +6,7 @@
  */
 
 import { audioAlert } from '../utils/audioAlert.js';
+import { getClinicProfile } from '../utils/clinicConfig.js';
 
 const STORAGE_KEY = 'medora_notifications_v1';
 const SENT_REMINDERS_KEY = 'medora_sent_reminders_v1';
@@ -196,7 +197,7 @@ class NotificationService {
       token,
       date,
       time,
-      smsText: `Medora Hospital: Dear ${patientName}, your appointment with ${doctorName} is confirmed for ${date} at ${time}. Token: ${token}, ${room}. Please arrive 10 min early.`,
+      smsText: `${getClinicProfile()?.name || 'Clinic'}: Dear ${patientName}, your appointment with ${doctorName} is confirmed for ${date} at ${time}. Token: ${token}, ${room}. Please arrive 10 min early.`,
       smsPhone: '0300-9876543',
       channels: ['in_app', 'sms', 'browser'],
       read: false,
@@ -267,7 +268,7 @@ class NotificationService {
       token,
       date,
       time,
-      smsText: `Medora Hospital: Dear ${patientName}, reminder: your appointment with ${doctorName} is in 2 hours at ${time}. Token: ${token}, ${room}. Please arrive 10 min early.`,
+      smsText: `${getClinicProfile()?.name || 'Clinic'}: Dear ${patientName}, reminder: your appointment with ${doctorName} is in 2 hours at ${time}. Token: ${token}, ${room}. Please arrive 10 min early.`,
       smsPhone: '0300-9876543',
       channels: ['in_app', 'sms', 'browser'],
       read: false,
