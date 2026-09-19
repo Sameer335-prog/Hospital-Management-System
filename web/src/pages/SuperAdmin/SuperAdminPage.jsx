@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import AppShell from '../../components/layout/AppShell.jsx';
 import StatCard from '../../components/ui/StatCard.jsx';
-import Icon from '../../components/ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../../components/ui/Icon.jsx';
 import { getTenantClinics, saveTenantClinics, SUBSCRIPTION_PLANS } from '../../utils/subscriptionConfig.js';
 
 const PAKISTANI_CITIES = ['All Cities', 'Islamabad', 'Rawalpindi', 'Lahore', 'Karachi', 'Peshawar', 'Multan', 'Faisalabad'];
@@ -529,11 +529,12 @@ export default function SuperAdminPage() {
                             {/* WhatsApp Direct Outreach */}
                             <button
                               className="btn btn-secondary btn-xs"
-                              style={{ color: '#25D366', borderColor: 'rgba(37,211,102,0.35)' }}
+                              style={{ color: '#25D366', borderColor: 'rgba(37,211,102,0.35)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                               onClick={() => openWhatsAppOutreach(tenant)}
                               title="Message clinic doctor directly on WhatsApp"
+                              aria-label="Message clinic doctor directly on WhatsApp"
                             >
-                              💬 WhatsApp
+                              <WhatsAppIcon size={14} color="#25D366" />
                             </button>
 
                             {/* Plan Switcher */}
@@ -1058,10 +1059,12 @@ export default function SuperAdminPage() {
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ color: '#25D366' }}
+                style={{ color: '#25D366', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                 onClick={() => openWhatsAppOutreach(inspectClinic)}
+                title="Message clinic doctor directly on WhatsApp"
+                aria-label="Message clinic doctor directly on WhatsApp"
               >
-                💬 WhatsApp Doctor
+                <WhatsAppIcon size={16} color="#25D366" />
               </button>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button

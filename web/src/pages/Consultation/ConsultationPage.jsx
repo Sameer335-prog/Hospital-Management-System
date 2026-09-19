@@ -1,11 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Avatar from '../../components/ui/Avatar.jsx';
 import Icon from '../../components/ui/Icon.jsx';
+import QrCode from '../../components/ui/QrCode.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { getPatientById, PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js';
 import { useToast } from '../../hooks/useToast.js';
+
+const DRUG_ALLERGY_RULES = [
+  {
+    allergyKeyword: 'penicillin',
+    label: 'Penicillin / Beta-lactam Class',
+    drugs: ['amoxicillin', 'augmentin', 'ampicillin', 'penicillin', 'piperacillin', 'cloxacillin', 'unasyn', 'amoxil', 'co-amoxiclav'],
+    safeAlternative: 'Azithromycin 500mg',
+    alternativeDose: '1 Tablet',
+    alternativeFrequency: 'Once Daily',
+    alternativeDuration: '5 Days',
+    riskLevel: 'Severe Anaphylaxis / Hypersensitivity Shock',
+  },
+  {
+    allergyKeyword: 'nsaid',
+    label: 'NSAIDs (Nonsteroidal Anti-inflammatory)',
+    drugs: ['aspirin', 'ibuprofen', 'brufen', 'diclofenac', 'voltral', 'naproxen', 'ketorolac', 'mefenamic', 'ponstan', 'meloxicam'],
+    safeAlternative: 'Panadol 500mg (Paracetamol)',
+    alternativeDose: '1-2 Tablets',
+    alternativeFrequency: 'TDS (Every 8 hours)',
+    alternativeDuration: '5 Days',
+    riskLevel: 'Bronchospasm / Gastric Bleeding & Ulceration',
+  },
+  {
+    allergyKeyword: 'aspirin',
+    label: 'Aspirin / Salicylates',
+    drugs: ['aspirin', 'disprin', 'cardiprin', 'ecotec', 'aspi-cor'],
+    safeAlternative: 'Clopidogrel 75mg',
+    alternativeDose: '1 Tablet',
+    alternativeFrequency: 'Once Daily',
+    alternativeDuration: '30 Days',
+    riskLevel: 'Asthma Exacerbation & Internal Bleeding',
+  },
+  {
+    allergyKeyword: 'sulfa',
+    label: 'Sulfonamides / Sulfa Antibiotics',
+    drugs: ['sulfamethoxazole', 'bactrim', 'septra', 'cotrimoxazole', 'sulfasalazine', 'zonisamide'],
+    safeAlternative: 'Ciprofloxacin 500mg',
+    alternativeDose: '1 Tablet',
+    alternativeFrequency: 'Twice Daily',
+    alternativeDuration: '7 Days',
+    riskLevel: 'Stevens-Johnson Syndrome / Severe Erythema',
+  },
+  {
+    allergyKeyword: 'cephalosporin',
+    label: 'Cephalosporin Class',
+    drugs: ['cefixime', 'ceftriaxone', 'cefalexin', 'keflex', 'cefpodoxime', 'cefspan', 'rocephin'],
+    safeAlternative: 'Levofloxacin 500mg',
+    alternativeDose: '1 Tablet',
+    alternativeFrequency: 'Once Daily',
+    alternativeDuration: '7 Days',
+    riskLevel: 'Cross-reactive Anaphylactic Shock',
+  },
+];
 
 const VITAL_FIELDS = [
   { key: 'bp', label: 'Blood Pressure', placeholder: '120/80' },
@@ -82,6 +136,63 @@ export default function ConsultationPage() {
   const [followUpNotes, setFollowUpNotes] = useState('Review with home blood pressure monitoring record.');
 
   const hasAllergy = Boolean(patient?.allergy && patient.allergy !== 'None recorded');
+
+  // Intelligent Clinical Allergy Safety Guard
+  const allergyConflicts = useMemo(() => {
+    if (!patient?.allergy || patient.allergy === 'None recorded') return [];
+    const patientAllergyLower = patient.allergy.toLowerCase();
+
+    const matchingRules = DRUG_ALLERGY_RULES.filter((rule) =>
+      patientAllergyLower.includes(rule.allergyKeyword)
+    );
+    if (matchingRules.length === 0) return [];
+
+    const conflicts = [];
+    const seenIds = new Set();
+    (medicines || []).forEach((m) => {
+      if (!m || !m.medicine || seenIds.has(m.id)) return;
+      const medLower = String(m.medicine).trim().toLowerCase();
+      for (const rule of matchingRules) {
+        const foundDrug = rule.drugs.find((d) => medLower.includes(d));
+        if (foundDrug) {
+          seenIds.add(m.id);
+          conflicts.push({
+            medicineId: m.id,
+            medicineName: m.medicine,
+            matchedDrug: foundDrug,
+            allergyGroup: rule.label,
+            patientAllergy: patient.allergy,
+            safeAlternative: rule.safeAlternative,
+            alternativeDose: rule.alternativeDose,
+            alternativeFrequency: rule.alternativeFrequency,
+            alternativeDuration: rule.alternativeDuration,
+            riskLevel: rule.riskLevel,
+          });
+          break;
+        }
+      }
+    });
+
+    return conflicts;
+  }, [patient?.allergy, medicines]);
+
+  function handleReplaceWithSafeAlternative(conflict) {
+    setMedicines((prev) =>
+      prev.map((row) =>
+        row.id === conflict.medicineId
+          ? {
+              ...row,
+              medicine: conflict.safeAlternative,
+              dose: conflict.alternativeDose,
+              frequency: conflict.alternativeFrequency,
+              duration: conflict.alternativeDuration,
+              instructions: 'Safe alternative substituted due to patient allergy profile.',
+            }
+          : row
+      )
+    );
+    showToast(`Substituted with safe alternative: ${conflict.safeAlternative}`);
+  }
 
   // Synchronize clinical record per active patient
   useEffect(() => {
@@ -196,6 +307,10 @@ export default function ConsultationPage() {
     }
     if (diagnoses.length === 0) {
       showToast('Add at least one diagnosis before completing the consultation.');
+      return;
+    }
+    if (allergyConflicts.length > 0) {
+      showToast(`⚠️ CANNOT TRANSMIT: Clinical allergy conflict detected (${allergyConflicts[0].medicineName}). Please substitute or remove before completing.`);
       return;
     }
     showToast(`Encounter completed for ${patient.name}. Digital prescription generated and routed to Pharmacy.`);
@@ -398,69 +513,195 @@ export default function ConsultationPage() {
 
           <div className="card card-pad">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <div className="section-title" style={{ margin: 0 }}>
+              <div className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                 Medication Prescription (Rx)
+                {hasAllergy && (
+                  <span
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      color: '#dc2626',
+                      fontSize: 11,
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    🛡️ Allergy Guard: {patient.allergy}
+                  </span>
+                )}
               </div>
               <span className="hint" style={{ fontSize: 11.5 }}>
                 Syncs with Pharmacy Dispensary
               </span>
             </div>
 
+            {/* Active Clinical Allergy Safety Alert Banner */}
+            {allergyConflicts.length > 0 && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(185, 28, 28, 0.08) 100%)',
+                  border: '1.5px solid #ef4444',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '12px 14px',
+                  marginBottom: 12,
+                  boxShadow: '0 4px 16px rgba(239, 68, 68, 0.12)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>⚠️</span>
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        color: '#dc2626',
+                        fontSize: 12.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      Drug Allergy Contraindication Detected
+                      <span
+                        style={{
+                          background: '#ef4444',
+                          color: '#fff',
+                          fontSize: 9.5,
+                          padding: '1px 5px',
+                          borderRadius: 4,
+                          fontWeight: 700,
+                        }}
+                      >
+                        Clinical Risk
+                      </span>
+                    </div>
+                    {allergyConflicts.map((c, i) => (
+                      <div key={i} style={{ marginTop: 6, fontSize: 12, color: 'var(--c-text)' }}>
+                        Patient <strong>{patient.name}</strong> has a documented allergy to <strong>{c.patientAllergy}</strong>.
+                        Prescribing <strong>"{c.medicineName}"</strong> carries a risk of <strong>{c.riskLevel}</strong>.
+                        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            style={{
+                              background: '#10b981',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: 700,
+                              fontSize: 11.5,
+                              padding: '4px 10px',
+                            }}
+                            onClick={() => handleReplaceWithSafeAlternative(c)}
+                          >
+                            ✓ Substitute with Safe Alternative: {c.safeAlternative}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: '#ef4444', fontSize: 11.5 }}
+                            onClick={() => removeMedicine(c.medicineId)}
+                          >
+                            Remove Drug
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {medicines.length === 0 ? (
               <p className="hint" style={{ marginBottom: 10 }}>No medicines added yet.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 10 }}>
-                {medicines.map((m) => (
-                  <div
-                    key={m.id}
-                    className="card-pad"
-                    style={{
-                      border: '1px solid var(--c-border)',
-                      borderRadius: 'var(--radius-md)',
-                      display: 'grid',
-                      gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto',
-                      gap: 8,
-                      background: 'var(--c-surface-hover)',
-                    }}
-                  >
-                    <input
-                      className="input"
-                      placeholder="Medicine & Brand"
-                      value={m.medicine}
-                      onChange={(e) => updateMedicine(m.id, 'medicine', e.target.value)}
-                    />
-                    <input
-                      className="input"
-                      placeholder="Dose (e.g. 1 Tab)"
-                      value={m.dose}
-                      onChange={(e) => updateMedicine(m.id, 'dose', e.target.value)}
-                    />
-                    <input
-                      className="input"
-                      placeholder="Frequency (1-0-1)"
-                      value={m.frequency}
-                      onChange={(e) => updateMedicine(m.id, 'frequency', e.target.value)}
-                    />
-                    <input
-                      className="input"
-                      placeholder="Duration (7 Days)"
-                      value={m.duration}
-                      onChange={(e) => updateMedicine(m.id, 'duration', e.target.value)}
-                    />
-                    <button
-                      className="btn-icon"
-                      onClick={() => removeMedicine(m.id)}
-                      aria-label="Remove medicine"
+                {medicines.map((m) => {
+                  const isConflict = allergyConflicts.find((c) => c.medicineId === m.id);
+                  return (
+                    <div
+                      key={m.id}
+                      className="card-pad"
+                      style={{
+                        border: isConflict ? '1.5px solid #ef4444' : '1px solid var(--c-border)',
+                        borderRadius: 'var(--radius-md)',
+                        display: 'grid',
+                        gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto',
+                        gap: 8,
+                        background: isConflict ? 'rgba(239, 68, 68, 0.05)' : 'var(--c-surface-hover)',
+                        transition: 'all 0.2s ease',
+                      }}
                     >
-                      <Icon name="x" />
-                    </button>
-                  </div>
-                ))}
+                      <div>
+                        <input
+                          className="input"
+                          style={isConflict ? { borderColor: '#ef4444', fontWeight: 600 } : {}}
+                          placeholder="Medicine & Brand"
+                          value={m.medicine}
+                          onChange={(e) => updateMedicine(m.id, 'medicine', e.target.value)}
+                        />
+                        {isConflict && (
+                          <div style={{ color: '#dc2626', fontSize: 11, fontWeight: 700, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span>⚠️</span> Contraindicated ({patient.allergy})
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        className="input"
+                        placeholder="Dose (e.g. 1 Tab)"
+                        value={m.dose}
+                        onChange={(e) => updateMedicine(m.id, 'dose', e.target.value)}
+                      />
+                      <input
+                        className="input"
+                        placeholder="Frequency (1-0-1)"
+                        value={m.frequency}
+                        onChange={(e) => updateMedicine(m.id, 'frequency', e.target.value)}
+                      />
+                      <input
+                        className="input"
+                        placeholder="Duration (7 Days)"
+                        value={m.duration}
+                        onChange={(e) => updateMedicine(m.id, 'duration', e.target.value)}
+                      />
+                      <button
+                        className="btn-icon"
+                        onClick={() => removeMedicine(m.id)}
+                        aria-label="Remove medicine"
+                      >
+                        <Icon name="x" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
-            <button className="btn btn-secondary btn-sm" onClick={addMedicine}>
-              <Icon name="plus" /> Add Pharmaceutical
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn btn-secondary btn-sm" onClick={addMedicine}>
+                <Icon name="plus" /> Add Pharmaceutical
+              </button>
+              {hasAllergy && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs"
+                  style={{ color: '#dc2626', borderColor: 'rgba(239,68,68,0.3)', border: '1px dashed' }}
+                  onClick={() => {
+                    const testDrug = patient.allergy.toLowerCase().includes('penicillin') ? 'Augmentin 625mg' : 'Aspirin 300mg';
+                    setMedicines((prev) => [
+                      ...prev,
+                      { id: Date.now(), medicine: testDrug, dose: '1 Tab', frequency: 'BD', duration: '5 Days', instructions: 'After food' },
+                    ]);
+                    showToast(`Prescribed ${testDrug} to demonstrate the Clinical Allergy Guard!`);
+                  }}
+                  title="Simulate prescribing a contraindicated drug to test the safety guard"
+                >
+                  🧪 Test Allergy Guard ({patient.allergy})
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="card card-pad">
@@ -819,12 +1060,23 @@ export default function ConsultationPage() {
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'center', width: 180 }}>
-                    <div style={{ borderBottom: '1px solid #0f172a', width: '100%', marginBottom: 4 }} />
-                    <div style={{ fontWeight: 800, fontSize: 12, color: '#0f172a' }}>
-                      {doctorObj.name}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <QrCode
+                        value={`https://hospital-management-system-five-amber.vercel.app/patient-portal?rx=${patient.id}`}
+                        size={64}
+                      />
+                      <div style={{ fontSize: 7, fontWeight: 700, color: '#64748b', marginTop: 2, letterSpacing: '0.4px' }}>
+                        SCAN TO VERIFY RX
+                      </div>
                     </div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>Authorized Medical Practitioner</div>
+                    <div style={{ textAlign: 'center', width: 160 }}>
+                      <div style={{ borderBottom: '1px solid #0f172a', width: '100%', marginBottom: 4 }} />
+                      <div style={{ fontWeight: 800, fontSize: 12, color: '#0f172a' }}>
+                        {doctorObj.name}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#64748b' }}>Authorized Medical Practitioner</div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Avatar from '../../components/ui/Avatar.jsx';
-import Icon from '../../components/ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../../components/ui/Icon.jsx';
 import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -371,15 +371,16 @@ export default function PatientPortalPage() {
                   <button
                     type="button"
                     className="btn btn-sm"
-                    style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 11.5 }}
+                    style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 11.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => {
                       const text = `Medora Hospital Visit Details:\n• Patient: ${patient.name} (${patient.id})\n• Doctor: ${todaysAppointment.doctor} (${todaysAppointment.dept})\n• Token: ${todaysAppointment.token}\n• Time: ${todaysAppointment.time}\n• Room: ${todaysAppointment.room}\nPlease proceed to the waiting lounge.`;
                       sendWhatsApp(patient.phone || '0300-1234567', text);
                       showToast('WhatsApp opened with your visit details!');
                     }}
                     title="Send appointment and token directly to my WhatsApp"
+                    aria-label="Send WhatsApp to My Phone"
                   >
-                    💬 WhatsApp to My Phone
+                    <WhatsAppIcon size={16} color="#ffffff" />
                   </button>
 
                   <button
@@ -492,15 +493,16 @@ export default function PatientPortalPage() {
                           <button
                             type="button"
                             className="btn btn-sm"
-                            style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, padding: '4px 8px' }}
+                            style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, padding: '4px 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                             title="Share token on WhatsApp"
+                            aria-label="Share token on WhatsApp"
                             onClick={() => {
                               const msg = `Medora Hospital Visit Token: Token ${a.token} with ${a.doctor} (${a.dept}) on ${a.date} at ${a.time}. Room: ${a.room}.`;
                               sendWhatsApp(patient.phone || '0300-1234567', msg);
                               showToast('WhatsApp opened with Token details!');
                             }}
                           >
-                            💬 WA
+                            <WhatsAppIcon size={14} color="#ffffff" />
                           </button>
                         </div>
                       </td>
@@ -835,15 +837,16 @@ export default function PatientPortalPage() {
                 <button
                   type="button"
                   className="btn btn-sm"
-                  style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700 }}
+                  style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={() => {
                     const text = `Medora Hospital OPD Token Slip:\n• Patient: ${patient.name} (${patient.id})\n• Token: ${tokenSlipModal.token}\n• Doctor: ${tokenSlipModal.doctor}\n• Room: ${tokenSlipModal.room}\n• Date & Time: ${tokenSlipModal.date} · ${tokenSlipModal.time}\nPlease report 10 minutes before consultation.`;
                     sendWhatsApp(patient.phone || '0300-1234567', text);
                     showToast('WhatsApp opened with Token Slip!');
                   }}
                   title="Share token on WhatsApp"
+                  aria-label="Share token on WhatsApp"
                 >
-                  💬 WhatsApp
+                  <WhatsAppIcon size={16} color="#ffffff" />
                 </button>
                 <button
                   type="button"

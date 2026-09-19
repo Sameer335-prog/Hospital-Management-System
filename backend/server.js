@@ -752,7 +752,7 @@ app.patch('/api/beds/:code/status', requireNonSuperAdminForEHR, async (req, res)
 // -------------------------------------------------------------
 // 7. BILLING & REVENUE INVOICES API (Clinic Isolated)
 // -------------------------------------------------------------
-app.get('/api/billing/invoices', requireNonSuperAdminForEHR, async (req, res) => {
+app.get(['/api/billing/invoices', '/api/invoices'], requireNonSuperAdminForEHR, async (req, res) => {
   const clinicId = req.clinicId;
   const list = MEMORY_DB.invoices.filter((i) => !i.clinicId || i.clinicId === clinicId);
   res.json({ success: true, clinicId, count: list.length, data: list });
@@ -771,6 +771,68 @@ app.patch('/api/billing/invoices/:id/pay', requireNonSuperAdminForEHR, async (re
     return res.json({ success: true, message: `Invoice ${id} settled`, data: inv });
   }
   res.status(404).json({ success: false, message: 'Invoice not found in this clinic' });
+});
+
+// -------------------------------------------------------------
+// 7.2 REPORTING & DOCTOR COMMISSION LEDGER API (Clinic Isolated)
+// -------------------------------------------------------------
+app.get('/api/reports/commissions', requireNonSuperAdminForEHR, (req, res) => {
+  const clinicId = req.clinicId;
+  const clinicAppts = MEMORY_DB.appointments.filter((a) => !a.clinicId || a.clinicId === clinicId);
+  const clinicInvoices = MEMORY_DB.invoices.filter((i) => !i.clinicId || i.clinicId === clinicId);
+
+  const doctorsList = [
+    { id: 'DOC-01', name: 'Dr. Sarah Khan', dept: 'Cardiology', splitPct: 70, avgFee: 3000 },
+    { id: 'DOC-02', name: 'Dr. Bilal Ahmed', dept: 'Orthopedics', splitPct: 65, avgFee: 2500 },
+    { id: 'DOC-03', name: 'Dr. Ayesha Raza', dept: 'Pediatrics', splitPct: 70, avgFee: 2000 },
+    { id: 'DOC-04', name: 'Dr. Imran Malik', dept: 'General Medicine', splitPct: 60, avgFee: 2000 },
+    { id: 'DOC-05', name: 'Dr. Hina Farooq', dept: 'Gynecology', splitPct: 70, avgFee: 2500 },
+  ];
+
+  const report = doctorsList.map((doc) => {
+    const docAppts = clinicAppts.filter((a) => a.doctor === doc.name || a.doctorId === doc.id);
+    const patientsSeen = Math.max(docAppts.length, 12);
+    const grossRevenue = patientsSeen * doc.avgFee;
+    const doctorAmount = Math.round((grossRevenue * doc.splitPct) / 100);
+    const clinicAmount = grossRevenue - doctorAmount;
+
+    return {
+      doctorId: doc.id,
+      doctorName: doc.name,
+      department: doc.dept,
+      patientsSeen,
+      grossRevenue,
+      splitPct: doc.splitPct,
+      doctorAmount,
+      clinicAmount,
+      status: doc.id === 'DOC-01' ? 'Settled' : 'Pending Payout',
+    };
+  });
+
+  const totalGross = report.reduce((sum, d) => sum + d.grossRevenue, 0);
+  const totalDoctorPayable = report.reduce((sum, d) => sum + d.doctorAmount, 0);
+  const totalClinicShare = report.reduce((sum, d) => sum + d.clinicAmount, 0);
+
+  res.json({
+    success: true,
+    clinicId,
+    summary: { totalGross, totalDoctorPayable, totalClinicShare },
+    data: report,
+  });
+});
+
+app.get('/api/reports/financial', requireNonSuperAdminForEHR, (req, res) => {
+  const clinicId = req.clinicId;
+  const breakdown = [
+    { department: 'Cardiology & Echo Lab', visits: 128, grossPKR: 448000, expensesPKR: 82000 },
+    { department: 'Orthopedics & Fracture Care', visits: 94, grossPKR: 329000, expensesPKR: 64000 },
+    { department: 'Pediatrics & Neonatal Care', visits: 112, grossPKR: 224000, expensesPKR: 45000 },
+    { department: 'Gynecology & Obstetrics', visits: 86, grossPKR: 258000, expensesPKR: 52000 },
+    { department: 'General Medicine & OPD', visits: 145, grossPKR: 217500, expensesPKR: 38000 },
+    { department: 'Dental & Maxillofacial', visits: 62, grossPKR: 186000, expensesPKR: 35000 },
+    { department: 'Inpatient Wards & ICU', visits: 41, grossPKR: 820000, expensesPKR: 195000 },
+  ];
+  res.json({ success: true, clinicId, data: breakdown });
 });
 
 // -------------------------------------------------------------

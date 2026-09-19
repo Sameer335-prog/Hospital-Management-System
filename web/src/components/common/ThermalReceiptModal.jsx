@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import Icon from '../ui/Icon.jsx';
+import QrCode from '../ui/QrCode.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 
 /**
@@ -403,17 +404,27 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
             <div style={{ borderTop: '1px dashed #000000', margin: '8px 0 6px 0' }} />
 
             {/* Realistic Barcode & QR Code Section */}
-            <div style={{ textAlign: 'center', margin: '6px 0' }}>
+            <div style={{ textAlign: 'center', margin: '8px 0 6px 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <QrCode
+                  value={`https://hospital-management-system-five-amber.vercel.app/patient-portal?ref=${data.token || data.invoiceNo || 'MED-98124501'}`}
+                  size={clinic.paperWidth === '58mm' ? 80 : 96}
+                />
+                <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: '0.5px', marginTop: 2 }}>
+                  SCAN FOR LIVE QUEUE & DIGITAL RECORD
+                </div>
+              </div>
+
               {/* CSS Barcode Simulation */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'stretch',
-                  height: 32,
+                  height: 24,
                   gap: '2px',
-                  margin: '0 auto',
-                  width: '85%',
+                  margin: '8px auto 0 auto',
+                  width: '80%',
                 }}
               >
                 {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 4, 1, 2, 3, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2].map((w, i) => (

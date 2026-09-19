@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Avatar from '../../components/ui/Avatar.jsx';
-import Icon from '../../components/ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../../components/ui/Icon.jsx';
 import StatCard from '../../components/ui/StatCard.jsx';
 import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
@@ -1089,7 +1089,7 @@ export default function AppointmentsPage() {
                               showToast(`WhatsApp message opened for ${appt.patient}!`);
                             }}
                           >
-                            <span>💬</span> WA
+                            <WhatsAppIcon />
                           </button>
 
                           {appt.status === 'Waiting' && (
@@ -1243,7 +1243,7 @@ export default function AppointmentsPage() {
                 <button
                   type="button"
                   className="btn btn-sm"
-                  style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700 }}
+                  style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={() => {
                     const patientObj = PATIENTS.find((p) => p.name === activeTokenSlip.patient || p.id === activeTokenSlip.pid);
                     const phone = patientObj?.phone || '0300-9876543';
@@ -1252,8 +1252,9 @@ export default function AppointmentsPage() {
                     showToast('WhatsApp opened with Token Slip!');
                   }}
                   title="Share token slip directly on WhatsApp"
+                  aria-label="Share token on WhatsApp"
                 >
-                  💬 WhatsApp Token
+                  <WhatsAppIcon size={16} color="#ffffff" />
                 </button>
                 <button
                   type="button"

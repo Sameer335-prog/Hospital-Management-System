@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Avatar from '../../components/ui/Avatar.jsx';
-import Icon from '../../components/ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../../components/ui/Icon.jsx';
 import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { DOCTORS, PATIENTS } from '../../legacy/legacyEngine.js';
@@ -211,11 +211,12 @@ export default function PrescriptionsPage() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
                 <button
                   className="btn btn-secondary btn-sm"
-                  style={{ borderColor: 'rgba(37,211,102,0.4)', color: '#25D366' }}
+                  style={{ borderColor: 'rgba(37,211,102,0.4)', color: '#25D366', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={() => sendViaWhatsApp(rx)}
                   title="Send verified digital prescription directly to patient's WhatsApp"
+                  aria-label="Send WhatsApp Rx"
                 >
-                  <span>💬</span> WhatsApp Rx
+                  <WhatsAppIcon size={16} />
                 </button>
                 {rx.status === 'Active' && (
                   <button className="btn btn-primary btn-sm" onClick={() => sendToPharmacy(rx.id)}>
