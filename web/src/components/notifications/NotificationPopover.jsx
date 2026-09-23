@@ -389,22 +389,23 @@ export default function NotificationPopover() {
                               }}
                               className="btn btn-xs"
                               style={{
-                                padding: '3px 8px',
-                                fontSize: 11,
+                                width: 24,
+                                height: 24,
+                                padding: 0,
                                 background: '#25D366',
                                 color: '#ffffff',
                                 border: 'none',
-                                fontWeight: 700,
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 4,
+                                justifyContent: 'center',
                                 borderRadius: 5,
                                 boxShadow: '0 1px 4px rgba(37, 211, 102, 0.25)',
+                                cursor: 'pointer',
                               }}
                               title="Send directly to WhatsApp"
+                              aria-label="Send to WhatsApp"
                             >
-                              <WhatsAppIcon size={12} color="#ffffff" />
-                              <span>WhatsApp</span>
+                              <WhatsAppIcon size={14} color="#ffffff" />
                             </button>
 
                             <button

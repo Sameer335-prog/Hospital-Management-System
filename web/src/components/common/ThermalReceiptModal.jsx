@@ -508,17 +508,21 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
                 background: '#25D366',
                 color: '#ffffff',
                 border: 'none',
-                fontWeight: 700,
+                width: 32,
+                height: 32,
+                padding: 0,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
+                justifyContent: 'center',
+                borderRadius: 'var(--radius-sm, 6px)',
                 boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+                cursor: 'pointer',
               }}
               onClick={handleSendWhatsApp}
-              title="Send Receipt to Patient on WhatsApp"
+              title="Send via WhatsApp"
+              aria-label="Send via WhatsApp"
             >
-              <WhatsAppIcon size={15} color="#ffffff" />
-              <span>Send via WhatsApp</span>
+              <WhatsAppIcon size={18} color="#ffffff" />
             </button>
             <button
               className="btn btn-primary btn-sm"

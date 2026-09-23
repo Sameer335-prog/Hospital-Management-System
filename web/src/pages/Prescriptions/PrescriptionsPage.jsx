@@ -273,26 +273,28 @@ export default function PrescriptionsPage() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
                 <button
+                  type="button"
                   className="btn btn-sm"
                   style={{
                     background: '#25D366',
                     color: '#ffffff',
                     border: 'none',
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '6px 12px',
+                    width: 32,
+                    height: 32,
+                    padding: 0,
                     borderRadius: 'var(--radius-sm, 6px)',
                     boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
                   onClick={() => sendViaWhatsApp(rx)}
-                  title="Send verified digital prescription directly to patient's WhatsApp"
+                  title="Send digital prescription on WhatsApp"
                   aria-label="Send WhatsApp Rx"
                 >
-                  <WhatsAppIcon size={16} color="#ffffff" />
-                  <span>Send via WhatsApp</span>
+                  <WhatsAppIcon size={17} color="#ffffff" />
                 </button>
                 {rx.status === 'Active' && (
                   <button className="btn btn-primary btn-sm" onClick={() => sendToPharmacy(rx.id)}>

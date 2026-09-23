@@ -1024,26 +1024,23 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                       type="button"
                       onClick={() => handleDispatchWhatsAppToken(latestAppointment)}
                       style={{
-                        flex: 2,
+                        width: '36px',
+                        height: '36px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
-                        padding: '8px 12px',
                         backgroundColor: '#25D366',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: '700',
                         cursor: 'pointer',
                         boxShadow: '0 3px 10px rgba(37, 211, 102, 0.35)',
                         transition: 'transform 0.15s ease, background 0.15s ease',
                       }}
                       title="Send Official Token Slip to WhatsApp"
+                      aria-label="Send to WhatsApp"
                     >
-                      <WhatsAppIcon size={16} color="#ffffff" />
-                      <span>Send to WhatsApp</span>
+                      <WhatsAppIcon size={18} color="#ffffff" />
                     </button>
                     <button
                       type="button"
@@ -1551,26 +1548,23 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                           type="button"
                           onClick={() => handleDispatchWhatsAppToken(msg.appointment)}
                           style={{
-                            flex: 2,
+                            width: '34px',
+                            height: '34px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '7px',
-                            padding: '8px 12px',
                             backgroundColor: '#25D366',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '8px',
-                            fontSize: '11.5px',
-                            fontWeight: '700',
                             cursor: 'pointer',
                             boxShadow: '0 2px 6px rgba(37, 211, 102, 0.3)',
                             transition: 'transform 0.15s ease',
                           }}
                           title="Send Token Slip to WhatsApp"
+                          aria-label="Send to WhatsApp"
                         >
-                          <WhatsAppIcon size={15} color="#ffffff" />
-                          <span>Send to WhatsApp</span>
+                          <WhatsAppIcon size={17} color="#ffffff" />
                         </button>
                         <button
                           type="button"

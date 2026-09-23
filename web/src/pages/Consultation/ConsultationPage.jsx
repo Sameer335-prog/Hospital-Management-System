@@ -974,15 +974,21 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
                     background: '#25D366',
                     color: '#ffffff',
                     border: 'none',
-                    fontWeight: 700,
+                    width: 32,
+                    height: 32,
+                    padding: 0,
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 6,
+                    justifyContent: 'center',
+                    borderRadius: 'var(--radius-sm, 6px)',
+                    boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+                    cursor: 'pointer',
                   }}
                   onClick={handleSendRxWhatsApp}
                   title={`Send Prescription to ${patient.name} on WhatsApp`}
+                  aria-label="Send via WhatsApp"
                 >
-                  <WhatsAppIcon size={16} color="#ffffff" /> Send to WhatsApp
+                  <WhatsAppIcon size={17} color="#ffffff" />
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
                   <Icon name="print" /> Print Prescription (A4)
