@@ -2,7 +2,8 @@ import { useState } from 'react';
 import AppShell from '../../components/layout/AppShell.jsx';
 import StatCard from '../../components/ui/StatCard.jsx';
 import Icon, { WhatsAppIcon } from '../../components/ui/Icon.jsx';
-import { getTenantClinics, saveTenantClinics, SUBSCRIPTION_PLANS } from '../../utils/subscriptionConfig.js';
+import { getTenantClinics, saveTenantClinics, SUBSCRIPTION_PLANS, saveSubscriptionState } from '../../utils/subscriptionConfig.js';
+import { switchActiveClinic } from '../../utils/clinicConfig.js';
 
 const PAKISTANI_CITIES = ['All Cities', 'Islamabad', 'Rawalpindi', 'Lahore', 'Karachi', 'Peshawar', 'Multan', 'Faisalabad'];
 
@@ -67,6 +68,7 @@ export default function SuperAdminPage() {
   // Action: Change Plan Tier
   const handleChangePlan = (tenantId, newPlan) => {
     const planDetails = SUBSCRIPTION_PLANS[newPlan];
+    saveSubscriptionState({ planId: newPlan }, tenantId);
     const updated = tenants.map((t) => {
       if (t.id === tenantId) {
         return {
@@ -88,6 +90,7 @@ export default function SuperAdminPage() {
       if (t.id === tenantId) {
         const currentExp = new Date(t.expiresAt);
         const newExp = new Date(currentExp.getTime() + 14 * 24 * 60 * 60 * 1000);
+        saveSubscriptionState({ trialEndsAt: newExp.toISOString(), status: 'trialing' }, tenantId);
         return {
           ...t,
           expiresAt: newExp.toISOString().split('T')[0],
@@ -1102,9 +1105,22 @@ export default function SuperAdminPage() {
                 <button
                   type="button"
                   className="btn btn-primary"
+                  style={{ background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' }}
+                  onClick={() => {
+                    switchActiveClinic(inspectClinic.id);
+                    setInspectClinic(null);
+                    window.location.href = '/dashboard';
+                  }}
+                  title="Switch to this clinic's workspace"
+                >
+                  🚀 Launch Workspace
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
                   onClick={() => setInspectClinic(null)}
                 >
-                  Done
+                  Close
                 </button>
               </div>
             </div>

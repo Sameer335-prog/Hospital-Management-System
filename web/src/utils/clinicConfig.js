@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
  */
 
 import { SPECIALTY_ARCHETYPES, getSpecialtyConfig } from './specialtyConfig.js';
+import { getSubscriptionState } from './subscriptionConfig.js';
 
 export const DEFAULT_CLINIC_PROFILE = {
   id: 'tenant-001',
@@ -111,17 +112,19 @@ export function switchActiveClinic(clinicOrId) {
 
   saveClinicProfile(updatedProfile);
 
-  // Sync plan if specified
-  if (target.plan) {
-    try {
-      const subKey = 'medora_clinic_subscription';
-      const existing = JSON.parse(localStorage.getItem(subKey) || '{}');
-      const updatedSub = { ...existing, planId: target.plan };
-      localStorage.setItem(subKey, JSON.stringify(updatedSub));
-      window.dispatchEvent(new CustomEvent('medora-subscription-updated', { detail: updatedSub }));
-    } catch {
-      // ignore
+  // Sync per-tenant subscription state
+  try {
+    const tenantId = target.id || 'tenant-001';
+    const sub = getSubscriptionState(tenantId);
+    if (target.plan && sub.planId !== target.plan) {
+      sub.planId = target.plan;
+      localStorage.setItem(`medora_clinic_subscription_${tenantId}`, JSON.stringify(sub));
     }
+    localStorage.setItem('medora_clinic_subscription', JSON.stringify(sub));
+    window.dispatchEvent(new CustomEvent('medora-subscription-updated', { detail: sub, clinicId: tenantId }));
+    window.dispatchEvent(new CustomEvent('medora-clinic-switched', { detail: updatedProfile }));
+  } catch (err) {
+    console.error('Failed to sync tenant subscription on switch:', err);
   }
 
   // Partitioned Tenant Database Isolation

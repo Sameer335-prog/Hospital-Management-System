@@ -15,7 +15,9 @@ export default function PlanGateLock({
   benefits = [],
   children,
 }) {
-  const { canAccess, getRequiredTier, plan } = usePlanGate();
+  const { canAccess, getRequiredTier, plan, upgradePlan } = usePlanGate();
+  const [isUpgrading, setIsUpgrading] = React.useState(false);
+  const [toastMsg, setToastMsg] = React.useState(null);
 
   if (canAccess(featureKey)) {
     return <>{children}</>;
@@ -23,6 +25,16 @@ export default function PlanGateLock({
 
   const requiredTierId = getRequiredTier(featureKey);
   const requiredPlan = SUBSCRIPTION_PLANS[requiredTierId] || SUBSCRIPTION_PLANS.enterprise;
+
+  const handleInstantLiveUpgrade = () => {
+    setIsUpgrading(true);
+    setTimeout(() => {
+      upgradePlan(requiredTierId, 'monthly', 'JazzCash Business (Instant 1-Click)');
+      setIsUpgrading(false);
+      setToastMsg(`🎉 Successfully upgraded to ${requiredPlan.name}! Feature unlocked live.`);
+      setTimeout(() => setToastMsg(null), 4000);
+    }, 700);
+  };
 
   return (
     <div
@@ -37,8 +49,30 @@ export default function PlanGateLock({
         boxShadow: '0 20px 50px rgba(0, 0, 0, 0.45)',
         color: '#f8fafc',
         fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        position: 'relative',
       }}
     >
+      {toastMsg && (
+        <div
+          style={{
+            position: 'absolute',
+            top: -16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#10b981',
+            color: '#fff',
+            padding: '8px 18px',
+            borderRadius: 20,
+            fontSize: 13,
+            fontWeight: 800,
+            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {toastMsg}
+        </div>
+      )}
+
       <div
         style={{
           width: 64,
@@ -97,24 +131,43 @@ export default function PlanGateLock({
       )}
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <Link
-          to="/subscription"
+        <button
+          type="button"
+          onClick={handleInstantLiveUpgrade}
+          disabled={isUpgrading}
           className="btn btn-primary"
           style={{
             padding: '12px 24px',
             fontSize: 14.5,
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
             border: 'none',
-            boxShadow: '0 8px 24px rgba(124, 58, 237, 0.35)',
-            textDecoration: 'none',
+            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)',
+            cursor: 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
           }}
         >
           <span>⚡</span>
-          <span>Upgrade to {requiredPlan.name} (Rs. {requiredPlan.priceMonthlyPKR.toLocaleString()}/mo)</span>
+          <span>{isUpgrading ? 'Activating Live...' : `Instant 1-Click Unlock (${requiredPlan.name})`}</span>
+        </button>
+
+        <Link
+          to="/subscription"
+          className="btn btn-secondary"
+          style={{
+            padding: '12px 20px',
+            fontSize: 14,
+            fontWeight: 700,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span>💳</span>
+          <span>View All Plans & Pakistani Gateways</span>
         </Link>
       </div>
     </div>

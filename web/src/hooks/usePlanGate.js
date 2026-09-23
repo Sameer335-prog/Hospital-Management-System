@@ -13,13 +13,15 @@ const FEATURE_ENTITLEMENTS = {
   lab_module: ['growth', 'hospital', 'enterprise'],
   pharmacy: ['growth', 'hospital', 'enterprise'],
   multi_doctor: ['growth', 'hospital', 'enterprise'],
+  doctor_splits: ['growth', 'hospital', 'enterprise'],
   wards_admissions: ['hospital', 'enterprise'],
   acute_triage: ['hospital', 'enterprise'],
+  discharge_summaries: ['hospital', 'enterprise'],
   ai_copilot: ['enterprise'],
 };
 
 export function usePlanGate() {
-  const { subscription, plan, isTrial, daysLeftInTrial, isExpired } = useSubscription();
+  const { subscription, plan, isTrial, daysLeftInTrial, isExpired, upgradePlan } = useSubscription();
 
   /**
    * Checks if current plan allows a given feature key
@@ -50,6 +52,7 @@ export function usePlanGate() {
     isExpired,
     canAccess,
     getRequiredTier,
+    upgradePlan,
     getRequiredPlanName: (featureKey) => {
       const tierId = getRequiredTier(featureKey);
       return SUBSCRIPTION_PLANS[tierId]?.name || 'Growth Tier';

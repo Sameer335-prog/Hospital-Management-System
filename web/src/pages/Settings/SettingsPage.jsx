@@ -1370,6 +1370,48 @@ function SupabaseCloudTab({ showToast }) {
       setTestingWrite(false);
     }
   };
+  const [isErasing, setIsErasing] = useState(false);
+
+  const handleEraseCloudData = async () => {
+    if (!window.confirm('⚠️ Are you sure you want to erase all test records from the Supabase backend? This will clear all dummy data so you can upload fresh testing data.')) {
+      return;
+    }
+    setIsErasing(true);
+    try {
+      const tables = ['lab_orders', 'invoices', 'appointments', 'medicines', 'beds', 'wards', 'patients', 'doctors'];
+      for (const t of tables) {
+        const { data } = await supabase.from(t).select('id, code');
+        if (data && data.length > 0) {
+          const idCol = 'id' in data[0] ? 'id' : 'code';
+          const ids = data.map((r) => r[idCol]).filter(Boolean);
+          if (ids.length > 0) {
+            await supabase.from(t).delete().in(idCol, ids);
+          }
+        }
+      }
+
+      // Also clear local cached dummy keys
+      try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith('medora_patients_') || k.startsWith('medora_appointments_') || k.startsWith('medora_prescriptions_'))) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+      } catch {
+        // ignore
+      }
+
+      showToast('All Supabase backend records and dummy data cleared! Ready for new testing data.');
+      fetchCloudStats();
+    } catch (err) {
+      showToast(`Error clearing data: ${err.message}`);
+    } finally {
+      setIsErasing(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -1421,6 +1463,16 @@ function SupabaseCloudTab({ showToast }) {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="btn btn-secondary" onClick={fetchCloudStats} disabled={loading}>
               <Icon name="zap" /> {loading ? 'Querying...' : 'Refresh Stats'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleEraseCloudData}
+              disabled={isErasing || loading}
+              style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+              title="Erase all dummy records from Supabase backend to upload fresh testing records"
+            >
+              🗑️ {isErasing ? 'Erasing...' : 'Erase Dummy Data'}
             </button>
             <a
               href="https://supabase.com/dashboard/project/nsqyldvgzsxggnlprwhp/editor"

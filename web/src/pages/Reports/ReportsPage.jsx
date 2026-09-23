@@ -7,6 +7,7 @@ import { DOCTORS, PATIENTS, APPOINTMENTS, MEDICINES, LAB_ORDERS } from '../../le
 import { useToast } from '../../hooks/useToast.js';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
+import PlanGateLock from '../../components/common/PlanGateLock.jsx';
 
 export default function ReportsPage() {
   const { toast, showToast } = useToast();
@@ -345,6 +346,17 @@ export default function ReportsPage() {
       {/* TAB 1: DOCTOR COMMISSION & REVENUE SHARE                      */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'commission' && (
+        <PlanGateLock
+          featureKey="doctor_splits"
+          featureName="Associate & Consultant Revenue Share Ledger"
+          description="Multi-doctor revenue sharing (70/30, 60/40 splits) and visiting consultant payouts require Growth tier or above."
+          benefits={[
+            "Automated doctor revenue splits calculation on OPD tokens and procedures",
+            "One-click settlement tracking with instant payout receipts",
+            "Visiting consultant commission logs with CSV export",
+            "Multi-chair / multi-specialist financial ledger"
+          ]}
+        >
         <div className="card">
           <div className="card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -462,6 +474,7 @@ export default function ReportsPage() {
             </table>
           </div>
         </div>
+        </PlanGateLock>
       )}
 
       {/* ------------------------------------------------------------- */}

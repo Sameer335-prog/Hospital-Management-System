@@ -5,27 +5,30 @@ export const pharmacyService = {
   async getMedicines() {
     try {
       const { data, error } = await supabase.from('medicines').select('*').order('name', { ascending: true });
-      if (error || !data || data.length === 0) {
-        return [...MEDICINES];
+      if (error) {
+        return [];
       }
-      return data.map((r) => ({
-        id: r.id,
-        name: r.name,
-        generic: r.generic,
-        category: r.category,
-        form: r.form,
-        batchNo: r.batch_no,
-        stock: r.stock,
-        minStock: r.min_stock,
-        unit: r.unit,
-        price: r.price,
-        priceN: Number(r.price_num) || 0,
-        expiry: r.expiry,
-        status: r.status,
-        allergyClass: r.allergy_class,
-      }));
+      if (Array.isArray(data)) {
+        return data.map((r) => ({
+          id: r.id,
+          name: r.name,
+          generic: r.generic,
+          category: r.category,
+          form: r.form,
+          batchNo: r.batch_no,
+          stock: r.stock,
+          minStock: r.min_stock,
+          unit: r.unit,
+          price: r.price,
+          priceN: Number(r.price_num) || 0,
+          expiry: r.expiry,
+          status: r.status,
+          allergyClass: r.allergy_class,
+        }));
+      }
+      return [];
     } catch {
-      return [...MEDICINES];
+      return [];
     }
   },
 

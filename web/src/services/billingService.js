@@ -5,10 +5,11 @@ export const billingService = {
   async getInvoices() {
     try {
       const { data, error } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
-      if (error || !data || data.length === 0) {
-        return [...INVOICES];
+      if (error) {
+        return [];
       }
-      return data.map((r) => {
+      if (Array.isArray(data)) {
+        return data.map((r) => {
         const total = Number(r.total) || 0;
         const paid = Number(r.paid) || 0;
         const due = Math.max(0, total - paid);
@@ -30,8 +31,10 @@ export const billingService = {
           items: r.items || [],
         };
       });
+      }
+      return [];
     } catch {
-      return [...INVOICES];
+      return [];
     }
   },
 

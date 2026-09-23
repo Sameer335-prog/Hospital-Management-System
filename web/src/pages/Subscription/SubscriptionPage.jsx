@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import QrCode from '../../components/ui/QrCode.jsx';
-import { SUBSCRIPTION_PLANS, useSubscription } from '../../utils/subscriptionConfig.js';
+import { SUBSCRIPTION_PLANS, useSubscription, getClinicArchetypeFeatures } from '../../utils/subscriptionConfig.js';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 
 export default function SubscriptionPage() {
@@ -85,7 +85,7 @@ export default function SubscriptionPage() {
             </span>
           </div>
           <div className="sub">
-            {clinic.name} · Multi-tenant billing, plan tiers, doctor seat allocations, and invoices
+            🏢 <strong>{clinic.name}</strong> ({clinic.practiceType || 'Specialty Practice'}) · Tenant ID: <code>{clinic.id || 'tenant-001'}</code> · Multi-tenant isolated billing & Pakistani payment gateways
           </div>
         </div>
 
@@ -400,12 +400,12 @@ export default function SubscriptionPage() {
                 </div>
               </div>
 
-              {/* Features List */}
+              {/* Features List Tailored to Practice Specialty */}
               <div className="card-pad" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
                 <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--c-text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>
-                  Included Capabilities:
+                  {clinic.archetype === 'dental' ? 'Dental Capabilities:' : clinic.archetype === 'pediatric' ? 'Pediatric Capabilities:' : clinic.archetype === 'ophthalmology' ? 'Eye Specialty Capabilities:' : 'Included Capabilities:'}
                 </div>
-                {item.features.map((f, fi) => (
+                {getClinicArchetypeFeatures(planKey, clinic.archetype).map((f, fi) => (
                   <div key={fi} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ color: f.included ? '#10b981' : '#64748b', fontSize: 15, fontWeight: 900 }}>
                       {f.included ? '✓' : '—'}

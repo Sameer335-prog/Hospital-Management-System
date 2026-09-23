@@ -5,23 +5,26 @@ export const labService = {
   async getLabOrders() {
     try {
       const { data, error } = await supabase.from('lab_orders').select('*').order('created_at', { ascending: false });
-      if (error || !data || data.length === 0) {
-        return [...LAB_ORDERS];
+      if (error) {
+        return [];
       }
-      return data.map((r) => ({
-        id: r.id,
-        pid: r.pid,
-        patient: r.patient,
-        test: r.test,
-        doctor: r.doctor,
-        status: r.status,
-        priority: r.priority,
-        ordered: r.ordered,
-        verifiedBy: r.verified_by,
-        results: r.results || [],
-      }));
+      if (Array.isArray(data)) {
+        return data.map((r) => ({
+          id: r.id,
+          pid: r.pid,
+          patient: r.patient,
+          test: r.test,
+          doctor: r.doctor,
+          status: r.status,
+          priority: r.priority,
+          ordered: r.ordered,
+          verifiedBy: r.verified_by,
+          results: r.results || [],
+        }));
+      }
+      return [];
     } catch {
-      return [...LAB_ORDERS];
+      return [];
     }
   },
 

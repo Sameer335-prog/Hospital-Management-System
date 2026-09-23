@@ -1,5 +1,6 @@
 import { PATIENTS } from '../legacy/legacyEngine.js';
 import { getActiveClinicId } from '../utils/clinicConfig.js';
+import { supabase } from '../lib/supabase.js';
 
 const BACKEND_URL = 'http://localhost:5000';
 
@@ -50,16 +51,26 @@ export const patientService = {
       // Backend offline or timeout -> gracefully fallback
     }
 
-    // 2. Check local clinic-partitioned cache
+    // 2. Direct Supabase Query (Online Cloud)
+    try {
+      if (supabase) {
+        const { data, error } = await supabase.from('patients').select('*').order('created_at', { ascending: false });
+        if (!error && Array.isArray(data)) {
+          saveStoredClinicPatients(clinicId, data);
+          return data;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // 3. Check local clinic-partitioned cache
     const cached = getStoredClinicPatients(clinicId);
-    if (cached && cached.length > 0) {
+    if (cached !== null) {
       return cached;
     }
 
-    // 3. Fall back to seeded demo patients partitioned by clinicId
-    const seeded = PATIENTS.filter((p) => !p.clinicId || p.clinicId === clinicId);
-    saveStoredClinicPatients(clinicId, seeded);
-    return seeded;
+    return [];
   },
 
   /**
