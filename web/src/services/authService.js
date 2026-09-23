@@ -1,18 +1,22 @@
 import { supabase } from '../lib/supabase.js';
 import { PATIENTS } from '../legacy/legacyEngine.js';
+import { switchActiveClinic, applySpecialtyPreset } from '../utils/clinicConfig.js';
 
 const STORAGE_KEY = 'medora_hms_session';
 const REGISTERED_USERS_KEY = 'medora_hms_custom_users';
 
 const DEV_USERS = [
   { id: 'u-superadmin', name: 'Super Admin (SaaS Platform Owner)', email: 'superadmin@medora.hospital', password: 'superadmin123', role: 'Super Admin' },
-  { id: 'u-admin', name: 'Admin User', email: 'admin@medora.hospital', password: 'admin123', role: 'Administrator' },
-  { id: 'u-recep', name: 'Farah Iqbal', email: 'reception@medora.hospital', password: 'reception123', role: 'Receptionist' },
-  { id: 'u-doctor', name: 'Dr. Sarah Khan', email: 's.khan@medora.hospital', password: 'doctor123', role: 'Doctor' },
-  { id: 'u-nurse', name: 'Nadia Yousaf', email: 'nurse@medora.hospital', password: 'nurse123', role: 'Nurse' },
-  { id: 'u-lab', name: 'Usman Tariq', email: 'lab@medora.hospital', password: 'lab123', role: 'Lab Technician' },
-  { id: 'u-pharma', name: 'Zainab Hussain', email: 'pharmacy@medora.hospital', password: 'pharmacy123', role: 'Pharmacist' },
-  { id: 'u-patient', name: 'Muhammad Ahmed', email: 'patient@medora.hospital', password: 'patient123', role: 'Patient', patientId: 'PT-00125' },
+  { id: 'u-admin', name: 'Admin User', email: 'admin@medora.hospital', password: 'admin123', role: 'Administrator', clinicId: 'tenant-001' },
+  { id: 'u-recep', name: 'Farah Iqbal', email: 'reception@medora.hospital', password: 'reception123', role: 'Receptionist', clinicId: 'tenant-001' },
+  { id: 'u-doctor', name: 'Dr. Sarah Khan', email: 's.khan@medora.hospital', password: 'doctor123', role: 'Doctor', specialty: 'general_hospital', department: 'Cardiology', clinicId: 'tenant-001' },
+  { id: 'u-dentist', name: 'Dr. Ali Raza (Dental Surgeon)', email: 'dentist@medora.dental', password: 'doctor123', role: 'Doctor', specialty: 'dental', department: 'Endodontics & Dental Surgery', clinicId: 'tenant-002' },
+  { id: 'u-pediatrician', name: 'Dr. Ayesha Malik (Pediatrician)', email: 'peds@medora.health', password: 'doctor123', role: 'Doctor', specialty: 'pediatric', department: 'Pediatrics & Neonatology', clinicId: 'tenant-003' },
+  { id: 'u-eye', name: 'Prof. Dr. Tariq Mehmood (Eye Surgeon)', email: 'eye@medora.vision', password: 'doctor123', role: 'Doctor', specialty: 'ophthalmology', department: 'Ophthalmology & Refraction', clinicId: 'tenant-007' },
+  { id: 'u-nurse', name: 'Nadia Yousaf', email: 'nurse@medora.hospital', password: 'nurse123', role: 'Nurse', clinicId: 'tenant-001' },
+  { id: 'u-lab', name: 'Usman Tariq', email: 'lab@medora.hospital', password: 'lab123', role: 'Lab Technician', clinicId: 'tenant-001' },
+  { id: 'u-pharma', name: 'Zainab Hussain', email: 'pharmacy@medora.hospital', password: 'pharmacy123', role: 'Pharmacist', clinicId: 'tenant-001' },
+  { id: 'u-patient', name: 'Muhammad Ahmed', email: 'patient@medora.hospital', password: 'patient123', role: 'Patient', patientId: 'PT-00125', clinicId: 'tenant-001' },
 ];
 
 function delay(ms) {
@@ -113,6 +117,14 @@ export const authService = {
     }
 
     const publicUser = toPublicUser(user);
+
+    // Multi-tenant activation: bind clinic and partitioned database to logged in user
+    if (publicUser.clinicId) {
+      switchActiveClinic(publicUser.clinicId);
+    } else if (publicUser.specialty) {
+      applySpecialtyPreset(publicUser.specialty);
+    }
+
     const serialized = JSON.stringify(publicUser);
     sessionStorage.setItem(STORAGE_KEY, serialized);
     if (remember) {

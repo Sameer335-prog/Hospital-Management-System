@@ -137,15 +137,22 @@ function getSpecialtyDefaultAppointments() {
   return specialty?.archetypeAppointments || DEFAULT_APPOINTMENTS;
 }
 
+function getClinicQueueKey() {
+  const profile = getClinicProfile();
+  const cid = profile?.id || 'tenant-001';
+  return `medora_appointments_queue_${cid}`;
+}
+
 function getStoredQueue() {
   const defaults = getSpecialtyDefaultAppointments();
   if (typeof window === 'undefined') return [...defaults];
   try {
-    const saved = localStorage.getItem(QUEUE_STORAGE_KEY);
+    const key = getClinicQueueKey();
+    const saved = localStorage.getItem(key) || localStorage.getItem(QUEUE_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Specialty isolation check: If active facility is dental, ensure no adult cardiac/orthopedic hospital appointments
+        // Specialty isolation check: If active facility is dental/peds/eye, ensure no adult cardiac/orthopedic hospital appointments
         const profile = getClinicProfile();
         const specialty = getSpecialtyConfig(profile);
         const isDental = specialty?.id === 'dental';
@@ -154,6 +161,7 @@ function getStoredQueue() {
 
         const hasCardiology = parsed.some((a) => a.dept === 'Cardiology' || a.dept === 'Gynecology');
         if ((isDental || isPediatric || isEye) && hasCardiology) {
+          localStorage.setItem(key, JSON.stringify(defaults));
           localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(defaults));
           return [...defaults];
         }
@@ -169,6 +177,8 @@ function getStoredQueue() {
 function saveStoredQueue(list) {
   if (typeof window === 'undefined') return;
   try {
+    const key = getClinicQueueKey();
+    localStorage.setItem(key, JSON.stringify(list));
     localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(list));
     if (syncChannel) {
       syncChannel.postMessage(list);
@@ -189,10 +199,13 @@ export const appointmentService = {
 
   async getAppointments() {
     const localQueue = getStoredQueue();
+    const profile = getClinicProfile();
+    const clinicId = profile?.id || 'tenant-001';
     try {
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
+        .eq('clinic_id', clinicId)
         .order('time', { ascending: true });
 
       if (error || !data || data.length === 0) {

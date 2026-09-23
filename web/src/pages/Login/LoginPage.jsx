@@ -318,14 +318,38 @@ export default function LoginPage() {
                 <button
                   type="button"
                   className="btn btn-xs btn-secondary"
-                  style={{ borderRadius: 14, fontWeight: 600 }}
+                  style={{ borderRadius: 14, fontWeight: 700, borderColor: 'rgba(14, 165, 233, 0.4)', background: 'rgba(14, 165, 233, 0.08)', color: '#38bdf8' }}
                   onClick={() => {
-                    setLoginEmail('admin@medora.hospital');
-                    setLoginPassword('admin123');
+                    setLoginEmail('dentist@medora.dental');
+                    setLoginPassword('doctor123');
                   }}
-                  title="Sign in as Hospital Administrator"
+                  title="Sign in as Dental Surgeon (Dr. Ali Raza - Isolated Dental Clinic Database)"
                 >
-                  🏥 Admin
+                  🦷 Dentist (Dr. Ali)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 700, borderColor: 'rgba(234, 88, 12, 0.4)', background: 'rgba(234, 88, 12, 0.08)', color: '#fb923c' }}
+                  onClick={() => {
+                    setLoginEmail('peds@medora.health');
+                    setLoginPassword('doctor123');
+                  }}
+                  title="Sign in as Consultant Pediatrician (Dr. Ayesha Malik - Isolated Pediatric Database)"
+                >
+                  👶 Pediatrician
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 700, borderColor: 'rgba(16, 185, 129, 0.4)', background: 'rgba(16, 185, 129, 0.08)', color: '#34d399' }}
+                  onClick={() => {
+                    setLoginEmail('eye@medora.vision');
+                    setLoginPassword('doctor123');
+                  }}
+                  title="Sign in as Eye Surgeon (Prof. Dr. Tariq Mehmood - Isolated Vision Center Database)"
+                >
+                  👁️ Eye Surgeon
                 </button>
                 <button
                   type="button"
@@ -335,9 +359,21 @@ export default function LoginPage() {
                     setLoginEmail('s.khan@medora.hospital');
                     setLoginPassword('doctor123');
                   }}
-                  title="Sign in as Doctor"
+                  title="Sign in as Hospital Physician (Dr. Sarah Khan - Tertiary Hospital)"
                 >
-                  🩺 Doctor
+                  🩺 Hospital Dr.
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-secondary"
+                  style={{ borderRadius: 14, fontWeight: 600 }}
+                  onClick={() => {
+                    setLoginEmail('admin@medora.hospital');
+                    setLoginPassword('admin123');
+                  }}
+                  title="Sign in as Hospital Administrator"
+                >
+                  🏥 Admin
                 </button>
                 <button
                   type="button"

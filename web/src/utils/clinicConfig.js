@@ -78,14 +78,35 @@ export function switchActiveClinic(clinicOrId) {
     }
   }
 
+  // Detect archetype
+  let archetypeId = target.archetype;
+  if (!archetypeId) {
+    const combined = `${target.name || ''} ${target.practiceType || ''}`.toLowerCase();
+    if (combined.includes('dent') || combined.includes('tooth') || combined.includes('orthodont')) archetypeId = 'dental';
+    else if (combined.includes('pediat') || combined.includes('child') || combined.includes('kid')) archetypeId = 'pediatric';
+    else if (combined.includes('eye') || combined.includes('ophthalm') || combined.includes('vision')) archetypeId = 'ophthalmology';
+    else if (combined.includes('poly') || combined.includes('family') || combined.includes('diagnost')) archetypeId = 'polyclinic';
+    else archetypeId = 'general_hospital';
+  }
+
+  const arch = SPECIALTY_ARCHETYPES[archetypeId] || SPECIALTY_ARCHETYPES.general_hospital;
+
   const updatedProfile = {
     ...getClinicProfile(),
     id: target.id || 'tenant-001',
-    name: target.name || 'Clinic',
-    doctorInCharge: target.doctorInCharge || 'Attending Physician',
-    phone: target.phone || '0300-1234567',
-    address: `${target.city || 'Islamabad'}, Pakistan`,
-    practiceType: target.practiceType || 'Specialist Clinic',
+    archetype: arch.id,
+    name: target.name || arch.name,
+    tagline: arch.tagline,
+    logoIcon: arch.logoIcon,
+    doctorInCharge: target.doctorInCharge || arch.doctorInCharge,
+    accreditation: arch.accreditation,
+    phone: target.phone || arch.phone,
+    hotline: arch.hotline,
+    address: target.address || (target.city ? `${target.city}, Pakistan` : arch.address),
+    practiceType: target.practiceType || arch.practiceType,
+    currency: arch.currency || 'Rs.',
+    receiptFooter: arch.receiptFooter,
+    thankYouMessage: arch.thankYouMessage,
   };
 
   saveClinicProfile(updatedProfile);
@@ -101,6 +122,46 @@ export function switchActiveClinic(clinicOrId) {
     } catch {
       // ignore
     }
+  }
+
+  // Partitioned Tenant Database Isolation
+  try {
+    if (typeof window !== 'undefined') {
+      const tenantId = target.id || 'tenant-001';
+
+      // 1. Appointments Queue: isolated per tenant
+      const queueKey = `medora_appointments_queue_${tenantId}`;
+      let queue = null;
+      const rawQueue = localStorage.getItem(queueKey);
+      if (rawQueue) {
+        queue = JSON.parse(rawQueue);
+      } else {
+        queue = arch.archetypeAppointments || [];
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+      }
+      localStorage.setItem('medora_appointments_queue', JSON.stringify(queue));
+      window.dispatchEvent(new CustomEvent('medora-queue-reset', { detail: queue }));
+      if ('BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('medora_queue_sync');
+        bc.postMessage(queue);
+        bc.close();
+      }
+
+      // 2. Prescriptions: isolated per tenant
+      const rxKey = `medora_prescriptions_list_${tenantId}`;
+      let rxs = null;
+      const rawRxs = localStorage.getItem(rxKey);
+      if (rawRxs) {
+        rxs = JSON.parse(rawRxs);
+      } else {
+        rxs = arch.archetypePrescriptions || [];
+        localStorage.setItem(rxKey, JSON.stringify(rxs));
+      }
+      localStorage.setItem('medora_prescriptions_list', JSON.stringify(rxs));
+      window.dispatchEvent(new CustomEvent('medora-prescriptions-reset', { detail: rxs }));
+    }
+  } catch {
+    // safe fallback
   }
 
   return updatedProfile;
@@ -153,7 +214,9 @@ export function applySpecialtyPreset(archetypeId) {
   // Automatically reset appointments queue to match specialty (zero hospital bleed-through)
   try {
     if (typeof window !== 'undefined') {
+      const tenantId = current.id || 'tenant-001';
       if (archetype.archetypeAppointments) {
+        localStorage.setItem(`medora_appointments_queue_${tenantId}`, JSON.stringify(archetype.archetypeAppointments));
         localStorage.setItem('medora_appointments_queue', JSON.stringify(archetype.archetypeAppointments));
         window.dispatchEvent(new CustomEvent('medora-queue-reset', { detail: archetype.archetypeAppointments }));
         if ('BroadcastChannel' in window) {
@@ -163,6 +226,7 @@ export function applySpecialtyPreset(archetypeId) {
         }
       }
       if (archetype.archetypePrescriptions) {
+        localStorage.setItem(`medora_prescriptions_list_${tenantId}`, JSON.stringify(archetype.archetypePrescriptions));
         localStorage.setItem('medora_prescriptions_list', JSON.stringify(archetype.archetypePrescriptions));
         window.dispatchEvent(new CustomEvent('medora-prescriptions-reset', { detail: archetype.archetypePrescriptions }));
       }

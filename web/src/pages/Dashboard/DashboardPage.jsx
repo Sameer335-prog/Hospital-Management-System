@@ -92,9 +92,9 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const clinic = useClinicProfile();
   const specialty = getSpecialtyConfig(clinic);
-  const isDental = specialty?.id === 'dental';
-  const isPediatric = specialty?.id === 'pediatric';
-  const isEye = specialty?.id === 'ophthalmology';
+  const isDental = specialty?.id === 'dental' || user?.specialty === 'dental' || String(user?.department).toLowerCase().includes('dent');
+  const isPediatric = specialty?.id === 'pediatric' || user?.specialty === 'pediatric' || String(user?.department).toLowerCase().includes('pediat');
+  const isEye = specialty?.id === 'ophthalmology' || user?.specialty === 'ophthalmology' || String(user?.department).toLowerCase().includes('eye') || String(user?.department).toLowerCase().includes('ophth');
   const role = user?.role;
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 

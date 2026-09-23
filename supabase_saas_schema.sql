@@ -111,6 +111,35 @@ BEGIN
         ALTER TABLE public.lab_orders ADD COLUMN clinic_id UUID REFERENCES public.clinics(id) ON DELETE CASCADE;
     END IF;
 
+    -- prescriptions
+    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='prescriptions') THEN
+        CREATE TABLE public.prescriptions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
+            patient_id TEXT NOT NULL,
+            patient_name TEXT NOT NULL,
+            doctor_name TEXT NOT NULL,
+            doctor_specialty TEXT,
+            items JSONB NOT NULL DEFAULT '[]'::jsonb,
+            status TEXT NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Dispensed', 'Cancelled')),
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+    ELSIF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prescriptions' AND column_name='clinic_id') THEN
+        ALTER TABLE public.prescriptions ADD COLUMN clinic_id UUID REFERENCES public.clinics(id) ON DELETE CASCADE;
+    END IF;
+
+    -- odontograms (dental tooth charts)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='odontograms') THEN
+        CREATE TABLE public.odontograms (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
+            patient_id TEXT NOT NULL,
+            teeth JSONB NOT NULL DEFAULT '{}'::jsonb,
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            CONSTRAINT unq_patient_odontogram UNIQUE (clinic_id, patient_id)
+        );
+    END IF;
+
     -- pharmacy_inventory
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pharmacy_inventory' AND column_name='clinic_id') THEN
         ALTER TABLE public.pharmacy_inventory ADD COLUMN clinic_id UUID REFERENCES public.clinics(id) ON DELETE CASCADE;
@@ -127,6 +156,8 @@ CREATE INDEX IF NOT EXISTS idx_patients_clinic ON public.patients(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_clinic ON public.appointments(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_doctors_clinic ON public.doctors(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_clinic ON public.invoices(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_prescriptions_clinic ON public.prescriptions(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_odontograms_clinic ON public.odontograms(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_lab_orders_clinic ON public.lab_orders(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_pharmacy_clinic ON public.pharmacy_inventory(clinic_id);
 
@@ -141,6 +172,8 @@ ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.doctors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.prescriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.odontograms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lab_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pharmacy_inventory ENABLE ROW LEVEL SECURITY;
 
@@ -174,6 +207,20 @@ CREATE POLICY "tenant_invoices_isolation" ON public.invoices
 -- RLS Policy: Lab Orders Isolation
 DROP POLICY IF EXISTS "tenant_lab_isolation" ON public.lab_orders;
 CREATE POLICY "tenant_lab_isolation" ON public.lab_orders
+    FOR ALL
+    USING (clinic_id = public.get_tenant_clinic_id() OR clinic_id IS NULL)
+    WITH CHECK (clinic_id = public.get_tenant_clinic_id() OR clinic_id IS NULL);
+
+-- RLS Policy: Prescriptions Isolation
+DROP POLICY IF EXISTS "tenant_prescriptions_isolation" ON public.prescriptions;
+CREATE POLICY "tenant_prescriptions_isolation" ON public.prescriptions
+    FOR ALL
+    USING (clinic_id = public.get_tenant_clinic_id() OR clinic_id IS NULL)
+    WITH CHECK (clinic_id = public.get_tenant_clinic_id() OR clinic_id IS NULL);
+
+-- RLS Policy: Odontograms (Dental Tooth Chart) Isolation
+DROP POLICY IF EXISTS "tenant_odontograms_isolation" ON public.odontograms;
+CREATE POLICY "tenant_odontograms_isolation" ON public.odontograms
     FOR ALL
     USING (clinic_id = public.get_tenant_clinic_id() OR clinic_id IS NULL)
     WITH CHECK (clinic_id = public.get_tenant_clinic_id() OR clinic_id IS NULL);
