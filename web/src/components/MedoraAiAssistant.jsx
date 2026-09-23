@@ -3,6 +3,7 @@ import { aiAgentService } from '../services/aiAgentService';
 import { useAuth } from '../context/AuthContext.jsx';
 import { audioFeedback } from '../utils/audioFeedback.js';
 import { sendWhatsApp, sendNativeSms, generateWhatsAppTokenSlip } from '../utils/messagingGateway.js';
+import { WhatsAppIcon } from './ui/Icon.jsx';
 
 const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   const { user } = useAuth();
@@ -1027,7 +1028,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px',
+                        gap: '8px',
                         padding: '8px 12px',
                         backgroundColor: '#25D366',
                         color: '#ffffff',
@@ -1036,11 +1037,13 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                         fontSize: '12px',
                         fontWeight: '700',
                         cursor: 'pointer',
-                        boxShadow: '0 3px 10px rgba(37, 211, 102, 0.35)'
+                        boxShadow: '0 3px 10px rgba(37, 211, 102, 0.35)',
+                        transition: 'transform 0.15s ease, background 0.15s ease',
                       }}
                       title="Send Official Token Slip to WhatsApp"
                     >
-                      <span>💬 Send to WhatsApp</span>
+                      <WhatsAppIcon size={16} color="#ffffff" />
+                      <span>Send to WhatsApp</span>
                     </button>
                     <button
                       type="button"
@@ -1552,7 +1555,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '5px',
+                            gap: '7px',
                             padding: '8px 12px',
                             backgroundColor: '#25D366',
                             color: '#ffffff',
@@ -1561,11 +1564,13 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                             fontSize: '11.5px',
                             fontWeight: '700',
                             cursor: 'pointer',
-                            boxShadow: '0 2px 6px rgba(37, 211, 102, 0.3)'
+                            boxShadow: '0 2px 6px rgba(37, 211, 102, 0.3)',
+                            transition: 'transform 0.15s ease',
                           }}
                           title="Send Token Slip to WhatsApp"
                         >
-                          <span>💬 Send to WhatsApp</span>
+                          <WhatsAppIcon size={15} color="#ffffff" />
+                          <span>Send to WhatsApp</span>
                         </button>
                         <button
                           type="button"

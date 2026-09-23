@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Icon from '../ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../ui/Icon.jsx';
 import { sendWhatsApp, sendNativeSms, sendCloudMessage, normalizePhoneNumber } from '../../utils/messagingGateway.js';
 
 export default function SmsPreviewModal({ notification, onClose }) {
@@ -225,7 +225,7 @@ export default function SmsPreviewModal({ notification, onClose }) {
                   transition: 'transform 0.15s ease',
                 }}
               >
-                <span style={{ fontSize: 16 }}>💬</span>
+                <WhatsAppIcon size={18} color="#ffffff" />
                 <span>Send via WhatsApp</span>
               </button>
 

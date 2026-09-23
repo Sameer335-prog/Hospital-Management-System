@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Icon from '../ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../ui/Icon.jsx';
 import { useNotification } from '../../context/NotificationContext.jsx';
 import SmsPreviewModal from './SmsPreviewModal.jsx';
 import { sendWhatsApp } from '../../utils/messagingGateway.js';
@@ -379,7 +379,7 @@ export default function NotificationPopover() {
                             </span>
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -389,16 +389,22 @@ export default function NotificationPopover() {
                               }}
                               className="btn btn-xs"
                               style={{
-                                padding: '2px 7px',
-                                fontSize: 10.5,
+                                padding: '3px 8px',
+                                fontSize: 11,
                                 background: '#25D366',
                                 color: '#ffffff',
                                 border: 'none',
                                 fontWeight: 700,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                borderRadius: 5,
+                                boxShadow: '0 1px 4px rgba(37, 211, 102, 0.25)',
                               }}
                               title="Send directly to WhatsApp"
                             >
-                              💬 WhatsApp
+                              <WhatsAppIcon size={12} color="#ffffff" />
+                              <span>WhatsApp</span>
                             </button>
 
                             <button

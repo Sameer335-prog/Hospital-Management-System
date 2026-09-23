@@ -373,7 +373,19 @@ export default function PatientPortalPage() {
                   <button
                     type="button"
                     className="btn btn-sm"
-                    style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 11.5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{
+                      background: '#25D366',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 700,
+                      fontSize: 12,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '6px 12px',
+                      borderRadius: 'var(--radius-sm, 6px)',
+                      boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+                    }}
                     onClick={() => {
                       const clinicName = clinic?.name || 'Clinic';
                       const text = `${clinicName} Visit Details:\n• Patient: ${patient.name} (${patient.id})\n• Doctor: ${todaysAppointment.doctor} (${todaysAppointment.dept})\n• Token: ${todaysAppointment.token}\n• Time: ${todaysAppointment.time}\n• Room: ${todaysAppointment.room}\nPlease proceed to the waiting lounge.`;
@@ -384,6 +396,7 @@ export default function PatientPortalPage() {
                     aria-label="Send WhatsApp to My Phone"
                   >
                     <WhatsAppIcon size={16} color="#ffffff" />
+                    <span>Send to WhatsApp</span>
                   </button>
 
                   <button
@@ -497,7 +510,18 @@ export default function PatientPortalPage() {
                           <button
                             type="button"
                             className="btn btn-sm"
-                            style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, padding: '4px 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                            style={{
+                              background: '#25D366',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: 700,
+                              padding: '4px 10px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              borderRadius: 'var(--radius-sm, 6px)',
+                              fontSize: 12,
+                            }}
                             title="Share token on WhatsApp"
                             aria-label="Share token on WhatsApp"
                             onClick={() => {
@@ -508,6 +532,7 @@ export default function PatientPortalPage() {
                             }}
                           >
                             <WhatsAppIcon size={14} color="#ffffff" />
+                            <span>WhatsApp</span>
                           </button>
                         </div>
                       </td>
@@ -842,7 +867,18 @@ export default function PatientPortalPage() {
                 <button
                   type="button"
                   className="btn btn-sm"
-                  style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{
+                    background: '#25D366',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 14px',
+                    borderRadius: 'var(--radius-sm, 6px)',
+                    boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+                  }}
                   onClick={() => {
                     const clinicName = clinic?.name || 'Clinic';
                     const text = `${clinicName} OPD Token Slip:\n• Patient: ${patient.name} (${patient.id})\n• Token: ${tokenSlipModal.token}\n• Doctor: ${tokenSlipModal.doctor}\n• Room: ${tokenSlipModal.room}\n• Date & Time: ${tokenSlipModal.date} · ${tokenSlipModal.time}\nPlease report 10 minutes before consultation.`;
@@ -853,6 +889,7 @@ export default function PatientPortalPage() {
                   aria-label="Share token on WhatsApp"
                 >
                   <WhatsAppIcon size={16} color="#ffffff" />
+                  <span>Send WhatsApp Slip</span>
                 </button>
                 <button
                   type="button"

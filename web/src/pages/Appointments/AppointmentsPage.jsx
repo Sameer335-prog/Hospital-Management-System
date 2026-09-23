@@ -1158,10 +1158,13 @@ export default function AppointmentsPage() {
                               color: '#ffffff',
                               border: 'none',
                               fontWeight: 700,
-                              padding: '4px 8px',
-                              display: 'flex',
+                              padding: '4px 10px',
+                              display: 'inline-flex',
                               alignItems: 'center',
-                              gap: 4,
+                              gap: 5,
+                              borderRadius: 'var(--radius-sm, 6px)',
+                              fontSize: 12,
+                              boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
                             }}
                             title={`Send Token details to ${appt.patient} on WhatsApp`}
                             onClick={() => {
@@ -1173,7 +1176,8 @@ export default function AppointmentsPage() {
                               showToast(`WhatsApp message opened for ${appt.patient}!`);
                             }}
                           >
-                            <WhatsAppIcon />
+                            <WhatsAppIcon size={14} color="#ffffff" />
+                            <span>WhatsApp</span>
                           </button>
 
                           {appt.status === 'Waiting' && (
@@ -1327,7 +1331,18 @@ export default function AppointmentsPage() {
                 <button
                   type="button"
                   className="btn btn-sm"
-                  style={{ background: '#25D366', color: '#ffffff', border: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{
+                    background: '#25D366',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 14px',
+                    borderRadius: 'var(--radius-sm, 6px)',
+                    boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)',
+                  }}
                   onClick={() => {
                     const patientObj = PATIENTS.find((p) => p.name === activeTokenSlip.patient || p.id === activeTokenSlip.pid);
                     const phone = patientObj?.phone || '0300-9876543';
@@ -1339,6 +1354,7 @@ export default function AppointmentsPage() {
                   aria-label="Share token on WhatsApp"
                 >
                   <WhatsAppIcon size={16} color="#ffffff" />
+                  <span>Send WhatsApp Slip</span>
                 </button>
                 <button
                   type="button"

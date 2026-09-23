@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import Icon from '../ui/Icon.jsx';
+import Icon, { WhatsAppIcon } from '../ui/Icon.jsx';
 import QrCode from '../ui/QrCode.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { sendWhatsApp } from '../../utils/messagingGateway.js';
 
 /**
  * ThermalReceiptModal.jsx
@@ -36,6 +37,22 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
     window.print();
     // Safety timeout in case browser does not fire afterprint event
     setTimeout(cleanup, 2000);
+  };
+
+  const handleSendWhatsApp = () => {
+    const phone = data.patientPhone || data.phone || '0300-1234567';
+    let text = `🧾 *${clinic.name}* — Official Counter Receipt\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+    if (data.token) text += `🎫 *Token Number:* #${data.token}\n`;
+    if (data.invoiceNo) text += `🔢 *Receipt / Invoice:* ${data.invoiceNo}\n`;
+    if (data.patientName || data.name) text += `👤 *Patient:* ${data.patientName || data.name} (${data.mrn || data.patientId || 'OPD'})\n`;
+    if (data.doctorName || data.doctor) text += `👨‍⚕️ *Doctor:* ${data.doctorName || data.doctor} (${data.dept || clinic.specialty || 'General'})\n`;
+    if (data.date || data.time) text += `📅 *Date:* ${data.date || 'Today'} ${data.time || ''}\n`;
+    if (data.total || data.fee) text += `💳 *Amount Paid:* Rs. ${Number(data.total || data.fee || 0).toLocaleString()}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `📞 *Helpline:* ${clinic.hotline || clinic.phone}\n`;
+    text += `📍 *Address:* ${clinic.address}`;
+    sendWhatsApp(phone, text);
   };
 
   return (
@@ -480,9 +497,28 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
             Preset for <strong>80mm / 3.15"</strong> continuous roll
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button className="btn btn-secondary btn-sm" onClick={onClose}>
               Close
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{
+                background: '#25D366',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+              }}
+              onClick={handleSendWhatsApp}
+              title="Send Receipt to Patient on WhatsApp"
+            >
+              <WhatsAppIcon size={15} color="#ffffff" />
+              <span>Send via WhatsApp</span>
             </button>
             <button
               className="btn btn-primary btn-sm"
