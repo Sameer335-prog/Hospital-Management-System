@@ -40,6 +40,11 @@ export const SPECIALTY_ARCHETYPES = {
       consultation: 'Dental Operatory & Chart',
       appointments: 'Chair Schedule',
       prescriptions: 'Dental Rx & Mouthwashes',
+      laboratory: 'Dental Radiography & Lab',
+      pharmacy: 'Dental Pharmacy & Materials',
+      patients: 'Dental Patients',
+      reports: 'Practice & Chair Analytics',
+      staff: 'Dental Surgeons & Assistants',
     },
 
     // Default Specialty Departments
@@ -224,6 +229,83 @@ export const SPECIALTY_ARCHETYPES = {
       },
     ],
 
+    // Dental Lab & Radiography Configuration
+    labTitle: 'Dental Radiography & CAD/CAM Prosthetic Lab',
+    labSub: 'Intraoral Digital Sensors (IOPA) · Panoramic OPG · 3D CBCT · Zirconia Milling Tracking',
+    labTests: [
+      { name: 'Intraoral Periapical Radiograph (IOPA)', code: 'IOPA', turnaround: '10 min', range: 'Normal alveolar bone crest, intact lamina dura, no periapical radiolucency' },
+      { name: 'Orthopantomogram (Full Mouth OPG)', code: 'OPG', turnaround: '15 min', range: 'Symmetric mandibular condyles, no radiopaque lesions, third molars visible' },
+      { name: 'Bitewing Radiograph (Caries Detection)', code: 'BWX', turnaround: '10 min', range: 'Zero interproximal enamel demineralization' },
+      { name: 'Cone Beam Computed Tomography (CBCT 3D)', code: 'CBCT', turnaround: '45 min', range: 'Adequate bone height (>12mm) and thickness (>6mm) for implant fixture' },
+      { name: 'CAD/CAM Zirconia Crown Milling', code: 'CAD-ZR', turnaround: '24 hrs', range: 'Precision marginal adaptation (<40µm), shade A2 glaze passed' },
+      { name: 'Ceramic Porcelain Veneer Fabrication', code: 'VNR', turnaround: '48 hrs', range: 'Shade match OM2 bleached, interior etched with 9% HF acid' },
+      { name: 'Lateral Cephalometric Tracing & Analysis', code: 'CEPH', turnaround: '30 min', range: 'SNA 82° (±2), SNB 80° (±2), ANB 2° (Class I skeletal)' },
+      { name: 'Endodontic Working Length Radiograph', code: 'WLR', turnaround: '10 min', range: 'Apical constriction verified 0.5mm coronal to radiographic apex' },
+      { name: 'Dental Study Model & Alginate Cast', code: 'CAST', turnaround: '4 hrs', range: 'Type IV dental stone cast, zero air voids, centric occlusion indexed' },
+      { name: 'Oral Soft Tissue Incisional Biopsy', code: 'BIO-D', turnaround: '3 days', range: 'Benign hyperkeratosis, negative for dysplastic changes' },
+    ],
+    archetypeLabOrders: [
+      { id: 'LAB-D101', patient: 'Muhammad Ahmed', pid: 'PT-00125', test: 'Intraoral Periapical Radiograph (IOPA)', doctor: 'Dr. Ali Raza', status: 'Result Ready', priority: 'Urgent', ordered: 'Today, 09:30 AM', value: 'Periapical radiolucency on distal root of Tooth #19 (Apical Periodontitis)', range: 'Normal periapex' },
+      { id: 'LAB-D102', patient: 'Fahad Iqbal', pid: 'PT-00127', test: 'Orthopantomogram (Full Mouth OPG)', doctor: 'Dr. Bilal Qureshi', status: 'Processing', priority: 'Urgent', ordered: 'Today, 10:15 AM', value: 'Horizontally impacted lower right 3rd molar (#32) in close proximity to IAC', range: 'Normal eruption path' },
+      { id: 'LAB-D103', patient: 'Ayesha Bibi', pid: 'PT-00126', test: 'Lateral Cephalometric Tracing & Analysis', doctor: 'Dr. Fatima Noor', status: 'Sample Collected', priority: 'Normal', ordered: 'Today, 10:45 AM', value: 'Tracing in progress', range: 'ANB 2° ± 1°' },
+      { id: 'LAB-D104', patient: 'Sana Malik', pid: 'PT-00130', test: 'CAD/CAM Zirconia Crown Milling', doctor: 'Dr. Ali Raza', status: 'Verified', priority: 'Normal', ordered: 'Yesterday, 02:00 PM', value: 'Crown sintered & glazed (Tooth #8, Vita Shade A1, contact points verified)', range: 'Pass' },
+      { id: 'LAB-D105', patient: 'Bilal Chaudhry', pid: 'PT-00129', test: 'Bitewing Radiograph (Caries Detection)', doctor: 'Dr. Ali Raza', status: 'Result Ready', priority: 'Normal', ordered: 'Today, 11:20 AM', value: 'Incipient D1 interproximal enamel lesion on mesial surface of Tooth #14', range: 'No radiolucency' },
+    ],
+
+    // Dental Pharmacy & Consumables
+    pharmacyTitle: 'Dental Pharmacy & Operatory Consumables',
+    pharmacySub: 'Local Anesthetics · Antibiotics · Endodontic Sealers · Composite Resins & Restorative Cements',
+    pharmacyMedicines: [
+      { id: 'MED-D01', name: 'Lignocaine 2% + Adrenaline (1:80,000)', generic: 'Lidocaine HCl + Epinephrine', category: 'Local Anesthetic', form: 'Cartridge 1.8ml', batchNo: 'LA-2026A', stock: 120, minStock: 30, unit: 'Cartridges', price: 'Rs 150/unit', priceN: 150, expiry: 'Dec 2027', daysToExpiry: 450, status: 'In Stock', allergyClass: 'Amide Anesthetic' },
+      { id: 'MED-D02', name: 'Articaine 4% + Adrenaline (1:100,000)', generic: 'Articaine HCl', category: 'Local Anesthetic', form: 'Cartridge 1.7ml', batchNo: 'ART-991', stock: 85, minStock: 25, unit: 'Cartridges', price: 'Rs 320/unit', priceN: 320, expiry: 'Oct 2027', daysToExpiry: 390, status: 'In Stock', allergyClass: 'Amide Anesthetic' },
+      { id: 'MED-D03', name: 'Topical Benzocaine 20% Gel (Fast Numbing)', generic: 'Benzocaine Gel', category: 'Local Anesthetic', form: 'Gel Tube 30g', batchNo: 'BEN-44', stock: 14, minStock: 5, unit: 'Tubes', price: 'Rs 650/unit', priceN: 650, expiry: 'May 2027', daysToExpiry: 240, status: 'In Stock', allergyClass: 'Ester Anesthetic' },
+      { id: 'MED-D04', name: 'Augmentin 625mg (Co-Amoxiclav)', generic: 'Amoxicillin + Clavulanic Acid', category: 'Antibiotic', form: 'Tablet', batchNo: 'AUG-882', stock: 180, minStock: 40, unit: 'Tablets', price: 'Rs 45/unit', priceN: 45, expiry: 'Jan 2028', daysToExpiry: 480, status: 'In Stock', allergyClass: 'Penicillin' },
+      { id: 'MED-D05', name: 'Flagyl 400mg (Metronidazole)', generic: 'Metronidazole', category: 'Antibiotic', form: 'Tablet', batchNo: 'FLG-102', stock: 240, minStock: 50, unit: 'Tablets', price: 'Rs 8/unit', priceN: 8, expiry: 'Nov 2027', daysToExpiry: 420, status: 'In Stock', allergyClass: 'Nitroimidazole' },
+      { id: 'MED-D06', name: 'Brufen 400mg (Ibuprofen)', generic: 'Ibuprofen', category: 'Analgesic', form: 'Tablet', batchNo: 'BRU-330', stock: 320, minStock: 60, unit: 'Tablets', price: 'Rs 5/unit', priceN: 5, expiry: 'Feb 2028', daysToExpiry: 510, status: 'In Stock', allergyClass: 'NSAID' },
+      { id: 'MED-D07', name: 'Synflex 550mg (Naproxen Sodium)', generic: 'Naproxen Sodium', category: 'Analgesic', form: 'Tablet', batchNo: 'SYN-71', stock: 95, minStock: 30, unit: 'Tablets', price: 'Rs 22/unit', priceN: 22, expiry: 'Sep 2027', daysToExpiry: 360, status: 'In Stock', allergyClass: 'NSAID' },
+      { id: 'MED-D08', name: 'Hexidine 0.2% Chlorhexidine Mouthwash', generic: 'Chlorhexidine Gluconate', category: 'Antiseptic', form: 'Bottle 300ml', batchNo: 'HEX-509', stock: 65, minStock: 20, unit: 'Bottles', price: 'Rs 350/unit', priceN: 350, expiry: 'Aug 2027', daysToExpiry: 330, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-D09', name: 'Filtek Z250 Universal Composite (Shade A2)', generic: 'Nano-Hybrid Composite Resin', category: 'Restorative Material', form: 'Syringe 4g', batchNo: 'FLT-11', stock: 18, minStock: 6, unit: 'Syringes', price: 'Rs 4,200/unit', priceN: 4200, expiry: 'Jun 2028', daysToExpiry: 620, status: 'In Stock', allergyClass: 'Methacrylate' },
+      { id: 'MED-D10', name: 'Single Bond Universal Adhesive 5ml', generic: 'Dental Bonding Adhesive', category: 'Restorative Material', form: 'Vial 5ml', batchNo: 'SBD-90', stock: 8, minStock: 3, unit: 'Vials', price: 'Rs 7,500/unit', priceN: 7500, expiry: 'Apr 2027', daysToExpiry: 210, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-D11', name: '3M Ketac Molar Glass Ionomer (GIC)', generic: 'Glass Ionomer Restorative Cement', category: 'Restorative Material', form: 'Powder/Liquid Kit', batchNo: 'KTC-42', stock: 12, minStock: 4, unit: 'Kits', price: 'Rs 5,800/unit', priceN: 5800, expiry: 'Oct 2027', daysToExpiry: 395, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-D12', name: 'AH Plus Jet Endodontic Root Canal Sealer', generic: 'Epoxy Resin Root Canal Sealer', category: 'Endodontic Material', form: 'Automix Syringe 15g', batchNo: 'AHP-09', stock: 6, minStock: 2, unit: 'Syringes', price: 'Rs 11,500/unit', priceN: 11500, expiry: 'Mar 2028', daysToExpiry: 540, status: 'In Stock', allergyClass: 'Epoxy' },
+      { id: 'MED-D13', name: 'Gutta Percha Points (Assorted 15–40)', generic: 'Standardized Gutta Percha Cones', category: 'Endodontic Material', form: 'Box 120 Points', batchNo: 'GP-602', stock: 24, minStock: 8, unit: 'Boxes', price: 'Rs 1,200/unit', priceN: 1200, expiry: 'Dec 2029', daysToExpiry: 1180, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-D14', name: 'Sodium Hypochlorite 5.25% Irrigant (500ml)', generic: 'NaOCl Solution', category: 'Endodontic Material', form: 'Bottle 500ml', batchNo: 'HYP-31', stock: 15, minStock: 5, unit: 'Bottles', price: 'Rs 450/unit', priceN: 450, expiry: 'Nov 2026', daysToExpiry: 65, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-D15', name: 'Surgical Silk Suture 3-0 Reverse Cutting', generic: 'Braided Non-Absorbable Silk Suture', category: 'Surgical Consumable', form: 'Box 12 Packets', batchNo: 'SLK-22', stock: 16, minStock: 5, unit: 'Boxes', price: 'Rs 2,400/unit', priceN: 2400, expiry: 'Jan 2029', daysToExpiry: 850, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-D16', name: 'Alvogyl Dry Socket Antiseptic Paste', generic: 'Iodoform + Butamben Dressing', category: 'Surgical Consumable', form: 'Jar 12g', batchNo: 'ALV-05', stock: 4, minStock: 2, unit: 'Jars', price: 'Rs 6,800/unit', priceN: 6800, expiry: 'Sep 2027', daysToExpiry: 360, status: 'Low Stock', allergyClass: 'Iodine' },
+    ],
+
+    // Dental Patient Directory
+    archetypePatients: [
+      { id: 'PT-00125', name: 'Muhammad Ahmed', age: 34, gender: 'Male', phone: '0300-1234567', blood: 'B+', allergy: 'Penicillin', condition: 'Acute Pulpitis (Tooth #19)', doctor: 'Dr. Ali Raza', status: 'OPD', room: 'Dental Chair 1 · Operatory A', registered: 'Jan 12, 2026' },
+      { id: 'PT-00126', name: 'Ayesha Bibi', age: 22, gender: 'Female', phone: '0312-3456789', blood: 'O+', allergy: 'None', condition: 'Class II Division 1 Malocclusion', doctor: 'Dr. Fatima Noor', status: 'Waiting', room: 'Dental Chair 2 · Operatory B', registered: 'Feb 03, 2026' },
+      { id: 'PT-00127', name: 'Fahad Iqbal', age: 28, gender: 'Male', phone: '0333-9876543', blood: 'A+', allergy: 'Aspirin', condition: 'Impacted 3rd Molar (#32) Pericoronitis', doctor: 'Dr. Bilal Qureshi', status: 'OPD', room: 'Surgical Operatory D', registered: 'Mar 19, 2026' },
+      { id: 'PT-00129', name: 'Bilal Chaudhry', age: 41, gender: 'Male', phone: '0345-1122334', blood: 'AB+', allergy: 'None', condition: 'Generalized Chronic Marginal Gingivitis', doctor: 'Dr. Ali Raza', status: 'Follow-up Due', room: 'Dental Chair 1 · Operatory A', registered: 'Apr 02, 2026' },
+      { id: 'PT-00130', name: 'Sana Malik', age: 26, gender: 'Female', phone: '0321-5544332', blood: 'A-', allergy: 'Sulfa', condition: 'Diastema & Anterior Discoloration', doctor: 'Dr. Fatima Noor', status: 'OPD', room: 'Dental Chair 2 · Operatory B', registered: 'May 11, 2026' },
+    ],
+
+    // Financial & Departmental Streams for Reports
+    financialStreams: [
+      { dept: 'Endodontics & Root Canal Therapy', visits: 142, grossPKR: 1207000, expensesPKR: 185000 },
+      { dept: 'Orthodontics & Dentofacial Braces', visits: 98, grossPKR: 490000, expensesPKR: 72000 },
+      { dept: 'Oral & Maxillofacial Surgery', visits: 64, grossPKR: 1024000, expensesPKR: 160000 },
+      { dept: 'Cosmetic Dentistry & Smile Design', visits: 52, grossPKR: 1144000, expensesPKR: 195000 },
+      { dept: 'Dental Prophylaxis & Periodontics', visits: 118, grossPKR: 413000, expensesPKR: 48000 },
+      { dept: 'Prosthodontics & Zirconia Crowns', visits: 46, grossPKR: 828000, expensesPKR: 140000 },
+      { dept: 'Dental Radiography & 3D CBCT', visits: 184, grossPKR: 294400, expensesPKR: 38000 },
+    ],
+
+    // Dental Staff Roster
+    staffMembers: [
+      { id: 'DOC-D01', name: 'Dr. Ali Raza', role: 'Doctor', dept: 'Endodontics & Root Canal', contact: '0300-9876543', schedule: 'Mon–Sat, 9:00–5:00', status: 'Active' },
+      { id: 'DOC-D02', name: 'Dr. Fatima Noor', role: 'Doctor', dept: 'Orthodontics & Braces', contact: '0300-5551234', schedule: 'Tue, Thu, Sat, 11:00–7:00', status: 'Active' },
+      { id: 'DOC-D03', name: 'Dr. Bilal Qureshi', role: 'Doctor', dept: 'Oral & Maxillofacial Surgery', contact: '0321-4447788', schedule: 'Mon, Wed, Fri, 2:00–8:00', status: 'Active' },
+      { id: 'ST-D01', name: 'Zahra Batool', role: 'Nurse', dept: 'Operatory A (Sterilization & Suction)', contact: '0301-8889911', schedule: 'Daily 9:00–5:00', status: 'Active' },
+      { id: 'ST-D02', name: 'Usman Ghani', role: 'Nurse', dept: 'Hygiene & Prophylaxis Bay', contact: '0302-7776655', schedule: 'Daily 10:00–6:00', status: 'Active' },
+      { id: 'ST-D03', name: 'Khadija Bibi', role: 'Receptionist', dept: 'Front Desk & Patient Triage', contact: '0303-4443322', schedule: 'Daily 8:30–5:30', status: 'Active' },
+      { id: 'ST-D04', name: 'Tariq Mehmood', role: 'Lab Technician', dept: 'CBCT & OPG Imaging Suite', contact: '0304-2221100', schedule: 'Daily 9:00–5:00', status: 'Active' },
+      { id: 'ST-D05', name: 'Sadia Imran', role: 'Pharmacist', dept: 'Dental Materials & Dispensary', contact: '0305-9990011', schedule: 'Daily 9:00–6:00', status: 'Active' },
+    ],
+
     // AI Voice Persona Overrides
     aiPrompt: {
       roleGreeting: "Hello! I am Maya, your dental healthcare concierge at Dr. Ali Advanced Dental Surgery. How may I assist your smile today? You can schedule a dental checkup, book teeth scaling, consult for braces, or report an urgent toothache.",
@@ -263,6 +345,11 @@ export const SPECIALTY_ARCHETYPES = {
       consultation: 'Child Checkup & Growth',
       prescriptions: 'Pediatric Drops & Syrups',
       appointments: 'Baby Clinic Schedule',
+      laboratory: 'Pediatric Micro-Sample Lab',
+      pharmacy: 'Pediatric Pharmacy & Vaccines',
+      patients: 'Pediatric Patients (Kids)',
+      reports: 'Growth & Vaccine Analytics',
+      staff: 'Pediatricians & Nurses',
     },
 
     departments: [
@@ -422,6 +509,62 @@ export const SPECIALTY_ARCHETYPES = {
           { medicine: 'Pediatric Saline Nebulization Solution', dose: '3 ml', frequency: 'Twice daily via nebulizer', duration: '3 days' },
         ],
       },
+    ],
+
+    // Pediatric Lab & Diagnostics
+    labTitle: 'Pediatric Diagnostic & Micro-Sample Lab',
+    labSub: 'Finger-prick Micro-Volumes · Neonatal Bilirubin · Stool Reducing Substances · EPI Mantoux',
+    labTests: [
+      { name: 'Pediatric Micro-CBC & Differential', code: 'P-CBC', turnaround: '45 min', range: 'Hb 11.5–15.5 g/dL, WBC 5,000–12,000/µL, Platelets 150k–450k' },
+      { name: 'Neonatal Bilirubin (Total & Direct)', code: 'BILI-N', turnaround: '30 min', range: 'Total < 12.0 mg/dL (Physiological safe range)' },
+      { name: 'Serum Ferritin & Pediatric Iron Panel', code: 'FER-P', turnaround: '2 hrs', range: '20–200 ng/mL' },
+      { name: 'Stool Routine & Reducing Substances', code: 'STL-R', turnaround: '1 hr', range: 'Negative for reducing sugars, zero RBCs, no parasites' },
+      { name: 'Mantoux Tuberculin Skin Test (5 TU)', code: 'PPD', turnaround: '48 hrs', range: 'Induration < 5mm (Negative in immunocompetent child)' },
+      { name: 'Micro-Sample Electrolytes (Na, K, Cl)', code: 'ELEC-P', turnaround: '45 min', range: 'Na 135–145 mmol/L, K 3.5–5.0 mmol/L' },
+      { name: 'Urine Routine & Pediatric Dipstick', code: 'URN-P', turnaround: '30 min', range: 'Specific gravity 1.010–1.025, Protein Nil, Sugar Nil' },
+    ],
+    archetypeLabOrders: [
+      { id: 'LAB-P101', patient: 'Baby of Sana (Infant)', pid: 'PT-P01', test: 'Neonatal Bilirubin (Total & Direct)', doctor: 'Dr. Ayesha Malik', status: 'Result Ready', priority: 'Urgent', ordered: 'Today, 08:45 AM', value: 'Total Bilirubin 8.4 mg/dL (Direct 0.6 mg/dL) — Phototherapy not required', range: 'Safe (< 12 mg/dL)' },
+      { id: 'LAB-P102', patient: 'Zain Ali (3 yrs)', pid: 'PT-P02', test: 'Pediatric Micro-CBC & Differential', doctor: 'Dr. Bilal Qureshi', status: 'Processing', priority: 'Urgent', ordered: 'Today, 09:15 AM', value: 'Micro-sample drawn via finger-prick, running automated impedance count', range: 'Hb 12.0 g/dL' },
+      { id: 'LAB-P103', patient: 'Fatima Zahra (1 yr)', pid: 'PT-P03', test: 'Stool Routine & Reducing Substances', doctor: 'Dr. Ayesha Malik', status: 'Verified', priority: 'Normal', ordered: 'Yesterday, 04:00 PM', value: 'Negative for rotavirus antigen, reducing substances absent, no Giardia cysts', range: 'Negative' },
+    ],
+
+    // Pediatric Pharmacy & Cold-Chain Store
+    pharmacyTitle: 'Pediatric Pharmacy & Immunization Store',
+    pharmacySub: 'WHO Pre-qualified Vaccines · Oral Suspensions · Rehydration Salts · Growth Supplements',
+    pharmacyMedicines: [
+      { id: 'MED-P01', name: 'Panadol Infant Drops (100mg/ml)', generic: 'Paracetamol Drops', category: 'Pediatric Antipyretic', form: 'Drops 15ml', batchNo: 'PAN-D01', stock: 150, minStock: 30, unit: 'Bottles', price: 'Rs 120/unit', priceN: 120, expiry: 'Dec 2027', daysToExpiry: 450, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-P02', name: 'Brufen Pediatric Suspension (100mg/5ml)', generic: 'Ibuprofen Suspension', category: 'Pediatric Analgesic', form: 'Syrup 120ml', batchNo: 'BRU-S1', stock: 80, minStock: 25, unit: 'Bottles', price: 'Rs 140/unit', priceN: 140, expiry: 'Oct 2027', daysToExpiry: 390, status: 'In Stock', allergyClass: 'NSAID' },
+      { id: 'MED-P03', name: 'Augmentin DS Suspension (312.5mg/5ml)', generic: 'Co-Amoxiclav Powder for Oral Susp', category: 'Pediatric Antibiotic', form: 'Bottle 70ml', batchNo: 'AUG-DS', stock: 65, minStock: 20, unit: 'Bottles', price: 'Rs 310/unit', priceN: 310, expiry: 'May 2027', daysToExpiry: 240, status: 'In Stock', allergyClass: 'Penicillin' },
+      { id: 'MED-P04', name: 'Hexavalent Vaccine (DTaP-IPV-HepB-Hib)', generic: 'Combination Pediatric Vaccine', category: 'Vaccine (Cold-Chain 2°–8°C)', form: 'Prefilled Syringe 0.5ml', batchNo: 'HEX-V09', stock: 45, minStock: 15, unit: 'Vials', price: 'Rs 4,800/unit', priceN: 4800, expiry: 'Jan 2028', daysToExpiry: 480, status: 'In Stock', allergyClass: 'Vaccine' },
+      { id: 'MED-P05', name: 'Rotarix Oral Rotavirus Vaccine', generic: 'Live Attenuated Rotavirus', category: 'Vaccine (Cold-Chain 2°–8°C)', form: 'Oral Applicator 1.5ml', batchNo: 'ROT-33', stock: 30, minStock: 10, unit: 'Doses', price: 'Rs 3,200/unit', priceN: 3200, expiry: 'Nov 2027', daysToExpiry: 420, status: 'In Stock', allergyClass: 'Vaccine' },
+      { id: 'MED-P06', name: 'Zincat Pediatric Syrup (20mg/5ml)', generic: 'Zinc Sulfate Monohydrate', category: 'Pediatric Supplement', form: 'Syrup 60ml', batchNo: 'ZNC-12', stock: 90, minStock: 20, unit: 'Bottles', price: 'Rs 95/unit', priceN: 95, expiry: 'Feb 2028', daysToExpiry: 510, status: 'In Stock', allergyClass: 'None' },
+      { id: 'MED-P07', name: 'Pediatric Oral Electrolyte Salts (ORS)', generic: 'WHO Oral Rehydration Formula', category: 'Electrolyte Solution', form: 'Box 20 Sachets', batchNo: 'ORS-99', stock: 120, minStock: 40, unit: 'Boxes', price: 'Rs 380/unit', priceN: 380, expiry: 'Sep 2028', daysToExpiry: 720, status: 'In Stock', allergyClass: 'None' },
+    ],
+
+    // Pediatric Patient Directory
+    archetypePatients: [
+      { id: 'PT-P01', name: 'Baby of Sana (Infant 3 mos)', age: 0, gender: 'Male', phone: '0300-4441122', blood: 'O+', allergy: 'None', condition: 'Routine 10-Week Immunization (Hexavalent-2)', doctor: 'Dr. Ayesha Malik', status: 'OPD', room: 'Consultation Room 1 (Yellow Bay)', registered: 'Aug 10, 2026' },
+      { id: 'PT-P02', name: 'Zain Ali (Child 3 yrs)', age: 3, gender: 'Male', phone: '0321-9988776', blood: 'B+', allergy: 'Penicillin', condition: 'Acute Viral Bronchiolitis with Wheeze', doctor: 'Dr. Bilal Qureshi', status: 'OPD', room: 'Well-Baby Nursery', registered: 'Sep 01, 2026' },
+      { id: 'PT-P03', name: 'Fatima Zahra (1 yr)', age: 1, gender: 'Female', phone: '0333-1122445', blood: 'A+', allergy: 'None', condition: 'Acute Gastroenteritis & Mild Dehydration', doctor: 'Dr. Ayesha Malik', status: 'Waiting', room: 'Consultation Room 1 (Yellow Bay)', registered: 'Sep 04, 2026' },
+    ],
+
+    // Financial Streams
+    financialStreams: [
+      { dept: 'Child Vaccination & Cold-Chain EPI', visits: 184, grossPKR: 883200, expensesPKR: 125000 },
+      { dept: 'General Outpatient Pediatrics', visits: 165, grossPKR: 495000, expensesPKR: 62000 },
+      { dept: 'Neonatal & Well-Baby Nursery', visits: 72, grossPKR: 360000, expensesPKR: 48000 },
+      { dept: 'Pediatric Allergy & Nutrition', visits: 54, grossPKR: 216000, expensesPKR: 32000 },
+      { dept: 'Pediatric Micro-Sample Laboratory', visits: 142, grossPKR: 284000, expensesPKR: 41000 },
+    ],
+
+    // Staff Roster
+    staffMembers: [
+      { id: 'DOC-P01', name: 'Dr. Ayesha Malik', role: 'Doctor', dept: 'General Pediatrics', contact: '0333-5551234', schedule: 'Mon–Sat, 9:00–4:00', status: 'Active' },
+      { id: 'DOC-P02', name: 'Dr. Bilal Qureshi', role: 'Doctor', dept: 'Neonatal & Infant Care', contact: '0300-8884433', schedule: 'Mon, Wed, Fri, 10:00–6:00', status: 'Active' },
+      { id: 'ST-P01', name: 'Sister Maryam', role: 'Nurse', dept: 'Child Vaccination & Cold-Chain', contact: '0301-4445566', schedule: 'Daily 8:30–4:30', status: 'Active' },
+      { id: 'ST-P02', name: 'Rashid Khan', role: 'Lab Technician', dept: 'Pediatric Micro-Sample Lab', contact: '0302-3332211', schedule: 'Daily 9:00–5:00', status: 'Active' },
+      { id: 'ST-P03', name: 'Saima Bano', role: 'Pharmacist', dept: 'Pediatric Dispensary', contact: '0303-6667788', schedule: 'Daily 9:00–6:00', status: 'Active' },
     ],
 
     aiPrompt: {

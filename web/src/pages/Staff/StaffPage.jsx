@@ -6,6 +6,8 @@ import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { DOCTORS, STAFF } from '../../legacy/legacyEngine.js';
 import { useToast } from '../../hooks/useToast.js';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 const TABS = ['All', 'Doctors', 'Nurses', 'Receptionists', 'Lab Technicians', 'Pharmacists'];
 const TAB_ROLE = { Doctors: 'Doctor', Nurses: 'Nurse', Receptionists: 'Receptionist', 'Lab Technicians': 'Lab Technician', Pharmacists: 'Pharmacist' };
@@ -13,20 +15,35 @@ const TAB_ROLE = { Doctors: 'Doctor', Nurses: 'Nurse', Receptionists: 'Reception
 const EMPTY_STAFF = {
   name: '',
   role: 'Doctor',
-  dept: 'Cardiology',
+  dept: 'Dental Surgery',
   contact: '0300-0000000',
   schedule: 'Mon–Fri, 9:00–4:00',
 };
 
 export default function StaffPage() {
   const { toast, showToast } = useToast();
-  const [people, setPeople] = useState(() => [
+  const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
+
+  const activeStaff = specialty?.staffMembers || [
     ...DOCTORS.map((d) => ({ id: d.id, name: d.name, role: 'Doctor', dept: d.dept, contact: d.phone, schedule: d.schedule, status: d.status })),
     ...STAFF.map((s) => ({ id: s.id, name: s.name, role: s.role, dept: s.dept, contact: '0301-1231231', schedule: 'Rotating shift', status: s.status })),
-  ]);
+  ];
+
+  const [people, setPeople] = useState(() => activeStaff);
+
+  useEffect(() => {
+    if (specialty?.staffMembers) {
+      setPeople(specialty.staffMembers);
+    }
+  }, [specialty?.id]);
+
   const [tab, setTab] = useState('All');
   const [modalOpen, setModalOpen] = useState(false);
-  const [newStaff, setNewStaff] = useState(EMPTY_STAFF);
+  const [newStaff, setNewStaff] = useState({
+    ...EMPTY_STAFF,
+    dept: specialty?.departments?.[0]?.name || 'Clinical Dept',
+  });
 
   const filtered = useMemo(() => {
     if (tab === 'All') return people;
@@ -70,8 +87,8 @@ export default function StaffPage() {
     <AppShell>
       <div className="page-header">
         <div>
-          <h1>Doctors & Staff</h1>
-          <div className="sub">{people.length} medical and clinical personnel across the hospital</div>
+          <h1>{specialty?.terminology?.providerShort ? `${specialty.terminology.providerShort} Clinical Team & Staff` : 'Doctors & Staff'}</h1>
+          <div className="sub">{clinic.name} · {people.length} active clinical & administrative personnel</div>
         </div>
         <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
           <Icon name="plus" /> Add Staff Member

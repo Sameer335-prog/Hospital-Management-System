@@ -9,6 +9,8 @@ import Toast from '../../components/ui/Toast.jsx';
 import { LAB_ORDERS, PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js';
 import { labService } from '../../services/labService.js';
 import { useToast } from '../../hooks/useToast.js';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 const TABS = ['Test Orders', 'Sample Collection', 'Processing', 'Results', 'Verification', 'Test Master'];
 
@@ -35,34 +37,56 @@ const EMPTY_ORDER = {
 export default function LaboratoryPage() {
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
-  const [orders, setOrders] = useState(() => LAB_ORDERS.map((o) => ({ ...o })));
+  const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
+
+  const testMaster = specialty?.labTests || TEST_MASTER;
+  const activeDoctors = specialty?.doctors || DOCTORS;
+
+  const [orders, setOrders] = useState(() => {
+    if (specialty?.archetypeLabOrders) {
+      return specialty.archetypeLabOrders.map((o) => ({ ...o }));
+    }
+    return LAB_ORDERS.map((o) => ({ ...o }));
+  });
 
   useEffect(() => {
     let active = true;
-    labService.getLabOrders().then((data) => {
-      if (active && data && data.length > 0) {
-        setOrders(data);
-      }
-    });
-
-    const unsubscribe = labService.subscribe(() => {
+    if (specialty?.archetypeLabOrders) {
+      setOrders(specialty.archetypeLabOrders.map((o) => ({ ...o })));
+    } else {
       labService.getLabOrders().then((data) => {
         if (active && data && data.length > 0) {
           setOrders(data);
         }
       });
+    }
+
+    const unsubscribe = labService.subscribe(() => {
+      if (!specialty?.archetypeLabOrders) {
+        labService.getLabOrders().then((data) => {
+          if (active && data && data.length > 0) {
+            setOrders(data);
+          }
+        });
+      }
     });
 
     return () => {
       active = false;
       unsubscribe();
     };
-  }, []);
+  }, [specialty?.id]);
 
   const [tab, setTab] = useState('Test Orders');
   const [resultDraft, setResultDraft] = useState(null); // { orderId, value, range, comments }
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [newOrder, setNewOrder] = useState(EMPTY_ORDER);
+  const [newOrder, setNewOrder] = useState({
+    patientId: '',
+    test: testMaster[0]?.name || 'Complete Blood Count',
+    doctor: activeDoctors[0]?.name || 'Dr. Sarah Khan',
+    priority: 'Normal',
+  });
 
   const counts = {
     orders: orders.length,
@@ -146,11 +170,11 @@ export default function LaboratoryPage() {
     <AppShell>
       <div className="page-header">
         <div>
-          <h1>Laboratory</h1>
-          <div className="sub">Diagnostic Orders & Sample Workflow · Central Pathology Lab</div>
+          <h1>{specialty?.labTitle || 'Diagnostic Laboratory'}</h1>
+          <div className="sub">{specialty?.labSub || 'Diagnostic Orders & Sample Workflow · Central Pathology Lab'}</div>
         </div>
         <button className="btn btn-primary" onClick={() => setCreateModalOpen(true)}>
-          <Icon name="plus" /> New Test Order
+          <Icon name="plus" /> New Diagnostic Order
         </button>
       </div>
 
@@ -173,13 +197,14 @@ export default function LaboratoryPage() {
         <div className="card" style={{ overflow: 'hidden' }}>
           <div className="table-wrap">
             <table className="data-table">
-              <thead><tr><th>Test Name</th><th>Test Code</th><th>Turnaround Window</th><th>Status</th></tr></thead>
+              <thead><tr><th>Test / Diagnostic Name</th><th>Code</th><th>Turnaround Window</th><th>Reference Range / Calibration Standard</th><th>Status</th></tr></thead>
               <tbody>
-                {TEST_MASTER.map((m) => (
+                {testMaster.map((m) => (
                   <tr key={m.code}>
                     <td style={{ fontWeight: 600 }}>{m.name}</td>
                     <td style={{ fontFamily: 'var(--font-mono)' }}>{m.code}</td>
                     <td>{m.turnaround}</td>
+                    <td style={{ fontSize: 12, color: 'var(--c-text-muted)' }}>{m.range || 'Standardized calibration'}</td>
                     <td><span className="badge badge-success">Available</span></td>
                   </tr>
                 ))}
@@ -293,7 +318,7 @@ export default function LaboratoryPage() {
                     value={newOrder.test}
                     onChange={(e) => setNewOrder({ ...newOrder, test: e.target.value })}
                   >
-                    {TEST_MASTER.map((m) => (
+                    {testMaster.map((m) => (
                       <option key={m.code} value={m.name}>
                         {m.name} ({m.code}) — {m.turnaround}
                       </option>
@@ -308,7 +333,7 @@ export default function LaboratoryPage() {
                     value={newOrder.doctor}
                     onChange={(e) => setNewOrder({ ...newOrder, doctor: e.target.value })}
                   >
-                    {DOCTORS.map((d) => (
+                    {activeDoctors.map((d) => (
                       <option key={d.id} value={d.name}>
                         {d.name} ({d.dept})
                       </option>

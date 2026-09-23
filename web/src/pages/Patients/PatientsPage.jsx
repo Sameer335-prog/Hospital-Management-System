@@ -8,6 +8,7 @@ import Toast from '../../components/ui/Toast.jsx';
 import { PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js';
 import { patientService } from '../../services/patientService.js';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 import { useToast } from '../../hooks/useToast.js';
 
 const STATUSES = ['Admitted', 'OPD', 'Waiting', 'Discharged', 'Follow-up Due'];
@@ -34,6 +35,8 @@ export default function PatientsPage() {
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
   const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
+  const activeDoctors = specialty?.doctors || DOCTORS;
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -42,7 +45,10 @@ export default function PatientsPage() {
   const [doctorFilter, setDoctorFilter] = useState('All');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState({
+    ...EMPTY_FORM,
+    doctor: activeDoctors[0]?.name || 'Dr. Sarah Khan',
+  });
   const [generatedId, setGeneratedId] = useState(null);
   const [nextIdCounter, setNextIdCounter] = useState(() => {
     const maxId = PATIENTS.reduce((max, p) => {
@@ -51,33 +57,42 @@ export default function PatientsPage() {
     }, 137);
     return maxId + 1;
   });
-  const [patientsList, setPatientsList] = useState(() =>
-    PATIENTS.filter((p) => !p.clinicId || p.clinicId === (clinic?.id || 'tenant-001'))
-  );
+  const [patientsList, setPatientsList] = useState(() => {
+    if (specialty?.archetypePatients) {
+      return specialty.archetypePatients.map((p) => ({ ...p, clinicId: clinic?.id }));
+    }
+    return PATIENTS.filter((p) => !p.clinicId || p.clinicId === (clinic?.id || 'tenant-001'));
+  });
 
   useEffect(() => {
     let active = true;
     const currentClinicId = clinic?.id || 'tenant-001';
 
-    patientService.getPatients(currentClinicId).then((data) => {
-      if (active && data) {
-        setPatientsList(data);
-      }
-    });
-
-    const unsubscribe = patientService.subscribe(() => {
+    if (specialty?.archetypePatients) {
+      setPatientsList(specialty.archetypePatients.map((p) => ({ ...p, clinicId: currentClinicId })));
+    } else {
       patientService.getPatients(currentClinicId).then((data) => {
         if (active && data) {
           setPatientsList(data);
         }
       });
+    }
+
+    const unsubscribe = patientService.subscribe(() => {
+      if (!specialty?.archetypePatients) {
+        patientService.getPatients(currentClinicId).then((data) => {
+          if (active && data) {
+            setPatientsList(data);
+          }
+        });
+      }
     });
 
     return () => {
       active = false;
       unsubscribe();
     };
-  }, [clinic?.id]);
+  }, [clinic?.id, specialty?.id]);
 
   // Quick Clinical Summary Drawer State
   const [quickPatient, setQuickPatient] = useState(null);
@@ -188,13 +203,13 @@ export default function PatientsPage() {
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <h1>Patient Master Directory & EHR</h1>
+            <h1>{specialty?.terminology?.providerShort ? `${specialty.terminology.providerShort} Patient Directory & Records` : 'Patient Master Directory & EHR'}</h1>
             <span className="badge badge-primary" style={{ fontWeight: 700 }}>
               {patientsList.length} Registered Charts
             </span>
           </div>
           <div className="sub">
-            Central Electronic Health Records (EHR), clinical intake, patient wristbands, and master index auditing
+            {clinic.name} · {specialty?.terminology?.procedureTitle ? `${specialty.terminology.procedureTitle} History, Dental Charts & EMR` : 'Central Electronic Health Records (EHR), clinical intake, and master index auditing'}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -313,7 +328,7 @@ export default function PatientsPage() {
           aria-label="Filter patients by attending doctor"
         >
           <option value="All">All Attending Doctors</option>
-          {DOCTORS.map((d) => (
+          {activeDoctors.map((d) => (
             <option key={d.id} value={d.name}>{d.name}</option>
           ))}
         </select>
@@ -537,7 +552,7 @@ export default function PatientsPage() {
                       <div className="field">
                         <label>Attending Consultant</label>
                         <select className="input" value={form.doctor} onChange={(e) => updateForm('doctor', e.target.value)}>
-                          {DOCTORS.map((d) => (
+                          {activeDoctors.map((d) => (
                             <option key={d.id} value={d.name}>{d.name} ({d.dept})</option>
                           ))}
                         </select>

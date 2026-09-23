@@ -7,6 +7,8 @@ import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { pharmacyService } from '../../services/pharmacyService.js';
 import { useToast } from '../../hooks/useToast.js';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 const INITIAL_MEDICINES = [
   {
@@ -216,34 +218,47 @@ const EMPTY_MEDICINE_FORM = {
 
 export default function PharmacyPage() {
   const { toast, showToast } = useToast();
+  const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
 
   // Active Tab: 'queue' | 'formulary' | 'watchlist'
   const [activeTab, setActiveTab] = useState('queue');
 
   // Main State
-  const [medicines, setMedicines] = useState(INITIAL_MEDICINES);
+  const [medicines, setMedicines] = useState(() => {
+    if (specialty?.pharmacyMedicines) {
+      return specialty.pharmacyMedicines.map((m) => ({ ...m }));
+    }
+    return INITIAL_MEDICINES;
+  });
 
   useEffect(() => {
     let active = true;
-    pharmacyService.getMedicines().then((data) => {
-      if (active && data && data.length > 0) {
-        setMedicines(data);
-      }
-    });
-
-    const unsubscribe = pharmacyService.subscribe(() => {
+    if (specialty?.pharmacyMedicines) {
+      setMedicines(specialty.pharmacyMedicines.map((m) => ({ ...m })));
+    } else {
       pharmacyService.getMedicines().then((data) => {
         if (active && data && data.length > 0) {
           setMedicines(data);
         }
       });
+    }
+
+    const unsubscribe = pharmacyService.subscribe(() => {
+      if (!specialty?.pharmacyMedicines) {
+        pharmacyService.getMedicines().then((data) => {
+          if (active && data && data.length > 0) {
+            setMedicines(data);
+          }
+        });
+      }
     });
 
     return () => {
       active = false;
       unsubscribe();
     };
-  }, []);
+  }, [specialty?.id]);
 
   const [queue, setQueue] = useState(INITIAL_PENDING_QUEUE);
   const [dispensedTodayUnits, setDispensedTodayUnits] = useState(42);
@@ -578,11 +593,11 @@ export default function PharmacyPage() {
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h1>Pharmacy Operations & Formulary</h1>
+            <h1>{specialty?.pharmacyTitle || 'Pharmacy Operations & Formulary'}</h1>
             <span className="badge badge-success" style={{ fontSize: 12 }}>● Live Sync</span>
           </div>
           <div className="sub">
-            Al-Shifa Central Dispensary · 24/7 Prescription fulfillment, formulary inventory, and batch expiry surveillance
+            {clinic.name || 'Clinic Dispensary'} · {specialty?.pharmacySub || 'Prescription fulfillment, formulary inventory, and batch expiry surveillance'}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

@@ -6,10 +6,13 @@ import Toast from '../../components/ui/Toast.jsx';
 import { DOCTORS, PATIENTS, APPOINTMENTS, MEDICINES, LAB_ORDERS } from '../../legacy/legacyEngine.js';
 import { useToast } from '../../hooks/useToast.js';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 export default function ReportsPage() {
   const { toast, showToast } = useToast();
   const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
+  const activeDoctors = specialty?.doctors || DOCTORS;
 
   // Filters State
   const [activeTab, setActiveTab] = useState('commission'); // 'commission' | 'financial' | 'patients' | 'pharmacy' | 'lab'
@@ -22,18 +25,31 @@ export default function ReportsPage() {
   // Settlement Tracker State (allows marking doctor commissions as paid)
   const [settledDoctors, setSettledDoctors] = useState({
     'DOC-01': true, // Dr. Sarah Khan settled
+    'doc-d1': true, // Dr. Ali Raza settled
   });
 
   const coverage = `${formatDate(from)} – ${formatDate(to)}`;
 
   // Doctor Split Percentages (Configurable per clinic: default 70% Doctor / 30% Hospital)
   const [splits, setSplits] = useState({
-    'DOC-01': 70, // 70% to Dr. Sarah Khan
-    'DOC-02': 65, // 65% to Dr. Bilal Ahmed
-    'DOC-03': 70, // 70% to Dr. Ayesha Raza
-    'DOC-04': 60, // 60% to Dr. Imran Malik
-    'DOC-05': 70, // 70% to Dr. Hina Farooq
+    'DOC-01': 70,
+    'DOC-02': 65,
+    'DOC-03': 70,
+    'DOC-04': 60,
+    'DOC-05': 70,
+    'doc-d1': 70,
+    'doc-d2': 65,
+    'doc-d3': 70,
+    'doc-p1': 75,
+    'doc-p2': 70,
   });
+
+  const availableDepts = useMemo(() => {
+    if (specialty?.departments) {
+      return specialty.departments.map((d) => d.name);
+    }
+    return ['Cardiology', 'Orthopedics', 'Pediatrics', 'Gynecology', 'General Medicine', 'Dental Surgery'];
+  }, [specialty?.id]);
 
   // -------------------------------------------------------------
   // COMPUTED REPORT DATA (Filtered by active selections)
@@ -41,15 +57,15 @@ export default function ReportsPage() {
 
   // 1. Doctor Commission Data
   const doctorReportData = useMemo(() => {
-    return DOCTORS.filter((d) => {
+    return activeDoctors.filter((d) => {
       if (department !== 'All Departments' && d.dept !== department) return false;
       if (selectedDoctor !== 'All Doctors' && d.name !== selectedDoctor) return false;
       return true;
     }).map((d) => {
       // Find appointments/consultations for this doctor
-      const appts = APPOINTMENTS.filter((a) => a.doctor === d.name || a.doctorId === d.id);
+      const appts = (specialty?.archetypeAppointments || APPOINTMENTS).filter((a) => a.doctor === d.name || a.doctorId === d.id);
       const patientsSeen = appts.length > 0 ? appts.length + 8 : 12; // Baseline realistic consultations
-      const avgFee = d.dept === 'Cardiology' ? 3000 : d.dept === 'Orthopedics' ? 2500 : 2000;
+      const avgFee = d.fee || (d.dept === 'Cardiology' ? 3000 : d.dept === 'Orthopedics' ? 2500 : 2000);
       const grossRevenue = patientsSeen * avgFee;
       const doctorPct = splits[d.id] || 70;
       const doctorAmount = Math.round((grossRevenue * doctorPct) / 100);
@@ -71,11 +87,11 @@ export default function ReportsPage() {
         appts,
       };
     });
-  }, [department, selectedDoctor, splits, settledDoctors]);
+  }, [activeDoctors, department, selectedDoctor, splits, settledDoctors, specialty?.archetypeAppointments]);
 
   // 2. Financial & Departmental Summary
   const departmentRevenueData = useMemo(() => {
-    const base = [
+    const base = specialty?.financialStreams || [
       { dept: 'Cardiology & Echo Lab', visits: 128, grossPKR: 448000, expensesPKR: 82000 },
       { dept: 'Orthopedics & Fracture Care', visits: 94, grossPKR: 329000, expensesPKR: 64000 },
       { dept: 'Pediatrics & Neonatal Care', visits: 112, grossPKR: 224000, expensesPKR: 45000 },
@@ -85,7 +101,7 @@ export default function ReportsPage() {
       { dept: 'Inpatient Wards & ICU', visits: 41, grossPKR: 820000, expensesPKR: 195000 },
     ];
     return base.filter((item) => department === 'All Departments' || item.dept.toLowerCase().includes(department.toLowerCase()));
-  }, [department]);
+  }, [department, specialty?.financialStreams]);
 
   // Overall Financial KPIs
   const totalDoctorGross = doctorReportData.reduce((acc, d) => acc + d.grossRevenue, 0);
@@ -221,12 +237,9 @@ export default function ReportsPage() {
             aria-label="Filter by department"
           >
             <option>All Departments</option>
-            <option>Cardiology</option>
-            <option>Orthopedics</option>
-            <option>Pediatrics</option>
-            <option>Gynecology</option>
-            <option>General Medicine</option>
-            <option>Dental Surgery</option>
+            {availableDepts.map((deptName) => (
+              <option key={deptName}>{deptName}</option>
+            ))}
           </select>
         </div>
 
@@ -240,7 +253,7 @@ export default function ReportsPage() {
             aria-label="Filter by doctor"
           >
             <option>All Doctors</option>
-            {DOCTORS.map((d) => (
+            {activeDoctors.map((d) => (
               <option key={d.id}>{d.name}</option>
             ))}
           </select>
