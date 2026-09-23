@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { aiAgentService } from '../services/aiAgentService';
 import { useAuth } from '../context/AuthContext.jsx';
+import { audioFeedback } from '../utils/audioFeedback.js';
+import { sendWhatsApp, sendNativeSms } from '../utils/messagingGateway.js';
 
 const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   const { user } = useAuth();
@@ -32,6 +34,35 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   const [speakerEnabled, setSpeakerEnabled] = useState(true);
   const [currentCaption, setCurrentCaption] = useState({ speaker: 'ai', text: '' });
   const [latestAppointment, setLatestAppointment] = useState(null);
+
+  // 1-Click WhatsApp & SMS Dispatch Handlers
+  const handleDispatchWhatsAppToken = (appt) => {
+    const targetAppt = appt || latestAppointment;
+    if (!targetAppt) return;
+    const patientPhone = user?.phone || '0300-1234567';
+    const msg = `🏥 *MEDORA HEALTHCARE COMPLEX - APPOINTMENT TOKEN*
+━━━━━━━━━━━━━━━━━━━━━━
+🎫 *Token Number*: ${targetAppt.token}
+👨‍⚕️ *Consultant*: ${targetAppt.doctor} (${targetAppt.dept || 'OPD'})
+🕒 *Date & Time*: ${targetAppt.date || 'Today'} at ${targetAppt.time}
+📍 *Clinic Room*: ${targetAppt.room || 'OPD Consulting Room'}
+👤 *Patient Name*: ${targetAppt.patient || currentPatientName || 'Valued Patient'}
+💳 *Consultation Fee*: Rs. ${targetAppt.fee || 2000}
+📊 *Queue Status*: Waiting in OPD Queue
+━━━━━━━━━━━━━━━━━━━━━━
+⚠️ *Instructions*: Please report to ${targetAppt.room || 'the consultation desk'} 10 minutes prior to your slot.
+🚨 *24/7 Emergency*: 0300-9998888 | Ambulance: 1122
+📍 *Location*: Medora Hospital Main Complex`;
+    sendWhatsApp(patientPhone, msg);
+  };
+
+  const handleDispatchSmsToken = (appt) => {
+    const targetAppt = appt || latestAppointment;
+    if (!targetAppt) return;
+    const patientPhone = user?.phone || '0300-1234567';
+    const msg = `MEDORA HOSPITAL: Token ${targetAppt.token} confirmed for ${targetAppt.patient} with ${targetAppt.doctor}. Time: ${targetAppt.time} in ${targetAppt.room}. Fee: Rs. ${targetAppt.fee}. Emergency: 0300-9998888.`;
+    sendNativeSms(patientPhone, msg);
+  };
 
   // References for Speech Recognition & Voice Synthesis
   const callRecognitionRef = useRef(null);
@@ -241,6 +272,8 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
       if (result.appointment) {
         setLatestAppointment(result.appointment);
         setPendingBooking(null);
+        // Play crystal success confirmation chime
+        audioFeedback.playSuccessChime();
       } else if (result.action === 'CONFIRMATION_REQUIRED' && result.pendingAppointment) {
         setPendingBooking(result.pendingAppointment);
       } else if (result.action === 'CANCELLED') {
@@ -286,21 +319,29 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
     setPendingBooking(null);
     setIsMuted(false);
 
+    // Play authentic telephony dial/ring tone before Maya answers
+    audioFeedback.playDialTone(1100);
+
     const greeting = "Hello! I am Maya, your personal healthcare concierge at Medora Hospital. It is a pleasure to speak with you today. What operation would you like to perform? For example, would you like to schedule an appointment with a specialist doctor, check our consultation hours, or learn about our hospital services?";
 
     setCurrentCaption({
       speaker: 'ai',
-      text: greeting
+      text: 'Connecting to Medora Clinical Line...'
     });
 
     setTimeout(() => {
+      setCurrentCaption({
+        speaker: 'ai',
+        text: greeting
+      });
       speakText(greeting, () => {
         startCallListeningLoop();
       });
-    }, 450);
+    }, 1150);
   };
 
   const handleEndCall = () => {
+    audioFeedback.playSoftClick();
     isCallActiveRef.current = false;
     window.speechSynthesis?.cancel();
     if (callRecognitionRef.current) {
@@ -311,6 +352,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   };
 
   const toggleMute = () => {
+    audioFeedback.playSoftClick();
     if (isMuted) {
       setIsMuted(false);
       startCallListeningLoop();
@@ -342,6 +384,9 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
       setLatestAppointment(response.appointment || null);
       setPendingBooking(null);
 
+      // Play crystal success confirmation chime
+      audioFeedback.playSuccessChime();
+
       setMessages((prev) => [
         ...prev,
         {
@@ -367,6 +412,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   };
 
   const handleCancelPendingBooking = () => {
+    audioFeedback.playSoftClick();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setMessages((prev) => [
       ...prev,
@@ -907,6 +953,54 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                 <div style={{ fontSize: '11px', color: '#a7f3d0', marginTop: '5px', fontStyle: 'italic' }}>
                   "We look forward to taking great care of you. Wishing you wonderful health!"
                 </div>
+
+                {/* 1-Click WhatsApp & SMS Dispatch */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleDispatchWhatsAppToken(latestAppointment)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '7px 12px',
+                      backgroundColor: '#25D366',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '11.5px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)'
+                    }}
+                    title="Send Token Slip to WhatsApp"
+                  >
+                    <span>💬 WhatsApp Slip</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDispatchSmsToken(latestAppointment)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      padding: '7px 12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      color: '#e2e8f0',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '8px',
+                      fontSize: '11.5px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                    title="Send Token via SMS"
+                  >
+                    <span>📱 SMS</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1306,6 +1400,54 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                     </div>
                     <div style={{ fontSize: '11px', color: '#059669', marginTop: '6px', fontStyle: 'italic', borderTop: '1px solid #a7f3d0', paddingTop: '4px' }}>
                       "We look forward to welcoming you at Medora Hospital. Please arrive 10 minutes early. Wishing you wonderful health!"
+                    </div>
+
+                    {/* 1-Click WhatsApp & SMS Dispatch */}
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleDispatchWhatsAppToken(msg.appointment)}
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '5px',
+                          padding: '7px 12px',
+                          backgroundColor: '#25D366',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '11.5px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)'
+                        }}
+                        title="Send Token Slip to WhatsApp"
+                      >
+                        <span>💬 WhatsApp Token</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDispatchSmsToken(msg.appointment)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          padding: '7px 12px',
+                          backgroundColor: '#f1f5f9',
+                          color: '#334155',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '8px',
+                          fontSize: '11.5px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                        title="Send Token via SMS"
+                      >
+                        <span>📱 SMS</span>
+                      </button>
                     </div>
                   </div>
                 )}
