@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 import { appointmentService } from '../../services/appointmentService.js';
 import { audioAlert } from '../../utils/audioAlert.js';
 import { usePlanGate } from '../../hooks/usePlanGate.js';
@@ -12,6 +13,11 @@ import { usePlanGate } from '../../hooks/usePlanGate.js';
  */
 export default function LobbyDisplayPage() {
   const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
+  const isDental = specialty?.id === 'dental';
+  const isPediatric = specialty?.id === 'pediatric';
+  const isEye = specialty?.id === 'ophthalmology';
+
   const { canAccess, plan } = usePlanGate();
   const [appointments, setAppointments] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -87,10 +93,10 @@ export default function LobbyDisplayPage() {
     if (announcementVoice && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
-        const docName = targetToken.doctor || 'attending specialist';
-        const chamber = targetToken.room || 'Examination Room 1';
+        const docName = targetToken.doctor || (isDental ? 'attending dentist' : isPediatric ? 'attending pediatrician' : isEye ? 'attending eye surgeon' : 'attending specialist');
+        const chamber = targetToken.room || (isDental ? 'Dental Chair 1' : isPediatric ? 'Pediatric Bay 1' : isEye ? 'Refraction Lane 1' : 'Examination Room 1');
         const msg = new SpeechSynthesisUtterance(
-          `Token number ${targetToken.token}. Patient ${targetToken.patient}, please proceed to ${docName} in ${chamber}.`
+          `Token number ${targetToken.token}. Patient ${targetToken.patient}, please proceed to ${chamber} for ${docName}.`
         );
         msg.rate = 0.88;
         msg.pitch = 1.05;
@@ -467,10 +473,12 @@ export default function LobbyDisplayPage() {
                     boxShadow: '0 0 12px #ef4444',
                   }}
                 />
-                NOW SERVING IN ROOM
+                NOW SERVING IN {isDental ? 'DENTAL CHAIR' : isPediatric ? 'PEDIATRIC BAY' : isEye ? 'VISION LANE' : (specialty.terminology?.resourceUnit?.toUpperCase() || 'ROOM')}
               </div>
 
-              <div style={{ fontSize: 13, color: '#64748b' }}>Live Consultation Routing</div>
+              <div style={{ fontSize: 13, color: '#64748b' }}>
+                {isDental ? 'Live Dental Chair & Operatory Routing' : isPediatric ? 'Live Pediatric Bay & Vaccination Routing' : isEye ? 'Live Refraction & Slit-Lamp Routing' : 'Live Consultation Routing'}
+              </div>
             </div>
 
             {currentCalling ? (
@@ -515,22 +523,22 @@ export default function LobbyDisplayPage() {
                 >
                   <div>
                     <div style={{ fontSize: 13, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>
-                      Consultant Doctor
+                      {specialty.terminology?.providerTitle || 'Consultant Doctor'}
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginTop: 4 }}>
                       {currentCalling.doctor}
                     </div>
                     <div style={{ fontSize: 14, color: '#38bdf8', marginTop: 2 }}>
-                      {currentCalling.dept || 'General OPD'}
+                      {currentCalling.dept || (isDental ? 'General Dentistry' : isPediatric ? 'Child Care' : isEye ? 'Comprehensive Ophthalmology' : 'General OPD')}
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 13, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>
-                      Consultation Chamber
+                      {isDental ? 'Assigned Dental Chair / Operatory' : isPediatric ? 'Assigned Pediatric Bay' : isEye ? 'Assigned Vision Lane' : (specialty.terminology?.resourceUnit || 'Consultation Chamber')}
                     </div>
                     <div style={{ fontSize: 32, fontWeight: 900, color: '#10b981', marginTop: 4 }}>
-                      {currentCalling.room || 'Room 102'}
+                      {currentCalling.room || (isDental ? 'Dental Chair 1' : isPediatric ? 'Bay 1' : 'Room 102')}
                     </div>
                   </div>
                 </div>
@@ -557,7 +565,15 @@ export default function LobbyDisplayPage() {
               justifyContent: 'space-between',
             }}
           >
-            <span>📢 Please keep your thermal slip ready when your token is announced.</span>
+            <span>
+              {isDental
+                ? '🦷 Brush & floss daily. All handpieces and dental burs are Class-B vacuum autoclave sterilized for your safety.'
+                : isPediatric
+                ? '👶 Keep your immunization cards ready. WHO-compliant 2°C–8°C cold chain monitored vaccines.'
+                : isEye
+                ? '👁️ Protect your eyesight. Comprehensive dilated fundus exams prevent silent glaucoma and diabetic retinopathy.'
+                : '📢 Please keep your thermal slip ready when your token is announced.'}
+            </span>
             <span style={{ color: '#38bdf8', fontWeight: 600 }}>Helpline: {clinic.phone}</span>
           </div>
         </div>
@@ -577,7 +593,9 @@ export default function LobbyDisplayPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
               <div style={{ fontWeight: 800, fontSize: 20, color: '#f8fafc' }}>Next In Queue</div>
-              <div style={{ fontSize: 12, color: '#94a3b8' }}>Please wait in the lounge until your token is called</div>
+              <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                {isDental ? 'Please wait in the dental lounge until your token is called' : isPediatric ? 'Please relax in the kids play & waiting zone' : 'Please wait in the lounge until your token is called'}
+              </div>
             </div>
             <div
               style={{
@@ -659,7 +677,15 @@ export default function LobbyDisplayPage() {
             }}
           >
             <span>⚠️</span>
-            <span>Emergency / Priority patients will be called ahead of routine tokens.</span>
+            <span>
+              {isDental
+                ? 'Dental emergencies (acute facial abscess, severe toothache, dental trauma) receive priority chair allocation.'
+                : isPediatric
+                ? 'High unyielding fever (>103°F), febrile seizures, and infant respiratory distress are fast-tracked.'
+                : isEye
+                ? 'Sudden vision loss, chemical splash to the eyes, and acute ocular trauma are routed immediately.'
+                : 'Emergency / Priority patients will be called ahead of routine tokens.'}
+            </span>
           </div>
         </div>
       </main>

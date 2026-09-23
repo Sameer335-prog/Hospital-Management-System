@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase.js';
 import { APPOINTMENTS, WAITING_ROOM } from '../legacy/legacyEngine.js';
+import { getClinicProfile } from '../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../utils/specialtyConfig.js';
 
 const QUEUE_STORAGE_KEY = 'medora_appointments_queue';
 const listeners = new Set();
@@ -129,18 +131,39 @@ export const DEFAULT_APPOINTMENTS = [
   },
 ];
 
+function getSpecialtyDefaultAppointments() {
+  const profile = getClinicProfile();
+  const specialty = getSpecialtyConfig(profile);
+  return specialty?.archetypeAppointments || DEFAULT_APPOINTMENTS;
+}
+
 function getStoredQueue() {
-  if (typeof window === 'undefined') return [...DEFAULT_APPOINTMENTS];
+  const defaults = getSpecialtyDefaultAppointments();
+  if (typeof window === 'undefined') return [...defaults];
   try {
     const saved = localStorage.getItem(QUEUE_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Specialty isolation check: If active facility is dental, ensure no adult cardiac/orthopedic hospital appointments
+        const profile = getClinicProfile();
+        const specialty = getSpecialtyConfig(profile);
+        const isDental = specialty?.id === 'dental';
+        const isPediatric = specialty?.id === 'pediatric';
+        const isEye = specialty?.id === 'ophthalmology';
+
+        const hasCardiology = parsed.some((a) => a.dept === 'Cardiology' || a.dept === 'Gynecology');
+        if ((isDental || isPediatric || isEye) && hasCardiology) {
+          localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(defaults));
+          return [...defaults];
+        }
+        return parsed;
+      }
     }
   } catch {
     // fallback
   }
-  return [...DEFAULT_APPOINTMENTS];
+  return [...defaults];
 }
 
 function saveStoredQueue(list) {
@@ -157,6 +180,13 @@ function saveStoredQueue(list) {
 }
 
 export const appointmentService = {
+  resetQueueForSpecialty(archetypeId) {
+    const specialty = getSpecialtyConfig(archetypeId);
+    const list = specialty?.archetypeAppointments || DEFAULT_APPOINTMENTS;
+    saveStoredQueue(list);
+    return list;
+  },
+
   async getAppointments() {
     const localQueue = getStoredQueue();
     try {

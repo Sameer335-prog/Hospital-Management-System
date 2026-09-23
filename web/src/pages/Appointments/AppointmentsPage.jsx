@@ -12,6 +12,7 @@ import { useNotification } from '../../context/NotificationContext.jsx';
 import { sendWhatsApp, sendNativeSms } from '../../utils/messagingGateway.js';
 import ThermalReceiptModal from '../../components/common/ThermalReceiptModal.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 const INITIAL_DOCTORS = [
   {
@@ -176,8 +177,31 @@ const INITIAL_APPOINTMENTS = [
   },
 ];
 
+const resolveSpecialtyDoctors = (spec) => {
+  if (spec?.doctors && spec.doctors.length > 0) {
+    return spec.doctors.map((d, idx) => ({
+      id: d.id || `DOC-SPEC-${idx + 1}`,
+      name: d.name,
+      dept: d.dept || spec.departments?.[0]?.name || 'Specialty Care',
+      room: d.room || `${spec.terminology?.resourceUnit || 'Room'} ${idx + 1}`,
+      hours: d.days && d.days.includes('(') ? d.days.split('(')[1].replace(')', '') : '09:00 AM – 05:00 PM',
+      fee: d.fee || 2500,
+      days: d.days && d.days.includes('(') ? d.days.split('(')[0].trim() : (d.days || 'Mon–Sat'),
+      maxTokens: 25,
+      phone: d.phone || '0300-1234567',
+      status: 'Active',
+    }));
+  }
+  return INITIAL_DOCTORS;
+};
+
 export default function AppointmentsPage() {
   const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
+  const isDental = specialty?.id === 'dental';
+  const isPediatric = specialty?.id === 'pediatric';
+  const isEye = specialty?.id === 'ophthalmology';
+
   const { toast, showToast } = useToast();
   const { dispatchBookingNotification, dispatchTwoHourReminder } = useNotification();
 
@@ -185,7 +209,7 @@ export default function AppointmentsPage() {
   const [activeTab, setActiveTab] = useState('desk');
 
   // Appointments State
-  const [appointments, setAppointments] = useState(INITIAL_APPOINTMENTS);
+  const [appointments, setAppointments] = useState(specialty?.archetypeAppointments || INITIAL_APPOINTMENTS);
   const [thermalSlipData, setThermalSlipData] = useState(null);
 
   useEffect(() => {
@@ -204,6 +228,13 @@ export default function AppointmentsPage() {
       });
     });
 
+    const handleQueueReset = (e) => {
+      if (e.detail && Array.isArray(e.detail) && active) {
+        setAppointments(e.detail);
+      }
+    };
+    window.addEventListener('medora-queue-reset', handleQueueReset);
+
     const handleAppointmentCreated = (e) => {
       const created = e.detail?.appointment;
       if (created && active) {
@@ -219,17 +250,18 @@ export default function AppointmentsPage() {
     return () => {
       active = false;
       unsubscribe();
+      window.removeEventListener('medora-queue-reset', handleQueueReset);
       window.removeEventListener('medora-appointment-created', handleAppointmentCreated);
     };
   }, [showToast]);
 
   // Doctors State & Onboarding (Managed by Receptionist)
-  const [doctors, setDoctors] = useState(INITIAL_DOCTORS);
+  const [doctors, setDoctors] = useState(() => resolveSpecialtyDoctors(specialty));
   const [addDocModalOpen, setAddDocModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [newDocForm, setNewDocForm] = useState({
     name: '',
-    dept: 'Cardiology',
+    dept: specialty.departments?.[0]?.name || 'General Care',
     room: '',
     hours: '09:00 AM – 03:00 PM',
     fee: 2500,
@@ -239,8 +271,22 @@ export default function AppointmentsPage() {
     status: 'Active',
   });
 
+  // Re-sync doctors when specialty archetype changes
+  useEffect(() => {
+    const resolved = resolveSpecialtyDoctors(specialty);
+    setDoctors(resolved);
+    if (resolved.length > 0) {
+      setSelectedDoctorId(resolved[0].id);
+    }
+    setNewDocForm((prev) => ({
+      ...prev,
+      dept: specialty.departments?.[0]?.name || 'General Care',
+      room: `${specialty.terminology?.resourceUnit || 'Room'} 1`,
+    }));
+  }, [clinic.archetype, clinic.practiceType]);
+
   // Booking Desk State
-  const [selectedDoctorId, setSelectedDoctorId] = useState('DOC-01');
+  const [selectedDoctorId, setSelectedDoctorId] = useState(() => resolveSpecialtyDoctors(specialty)[0]?.id || 'DOC-01');
   const [selectedDate, setSelectedDate] = useState('2026-09-14');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [selectedPatientId, setSelectedPatientId] = useState(PATIENTS[0]?.id || 'PT-00125');
@@ -525,9 +571,9 @@ export default function AppointmentsPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1>Appointments & Reception Desk</h1>
+          <h1>{specialty.terminology?.appointmentNoun ? `${specialty.terminology.appointmentNoun} & Reception Desk` : 'Appointments & Reception Desk'}</h1>
           <div className="sub">
-            Al-Shifa OPD Clinic · Doctor consultation availability, live slot booking, and instant patient token routing
+            {clinic.name || 'Clinic'} · {specialty.terminology?.providerShort || 'Specialist'} consultation availability, live {specialty.terminology?.resourceUnit || 'slot'} booking, and instant patient token routing
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -548,7 +594,7 @@ export default function AppointmentsPage() {
             className="btn btn-secondary"
             onClick={() => setAddDocModalOpen(true)}
           >
-            <Icon name="plus" /> Onboard Doctor
+            <Icon name="plus" /> Onboard {specialty.terminology?.providerShort || 'Doctor'}
           </button>
         </div>
       </div>
@@ -556,27 +602,27 @@ export default function AppointmentsPage() {
       {/* KPI Stats */}
       <div className="grid grid-4" style={{ marginBottom: 20 }}>
         <StatCard
-          label="Today's Appointments"
+          label={`Today's ${specialty.terminology?.appointmentNoun || 'Appointments'}`}
           value={appointments.length}
           iconName="calendar"
           trend="Scheduled"
-          sub="Booked across OPD"
+          sub={`Booked across ${specialty.terminology?.resourceUnitPlural || 'clinic'}`}
         />
         <StatCard
-          label="Waiting in Lounge"
+          label={`Waiting in ${specialty.terminology?.queueLocation || 'Lounge'}`}
           value={waitingLoungeAppointments.length}
           color="var(--c-warning)"
           iconName="alert"
           trend="Live Queue"
-          sub="Ready for doctor intake"
+          sub="Ready for intake"
         />
         <StatCard
-          label="In Consultation"
+          label={`In ${specialty.terminology?.resourceUnit || 'Consultation'}`}
           value={appointments.filter((a) => a.status === 'In Consultation').length}
           color="var(--c-info)"
           iconName="stetho"
           trend="Active"
-          sub="Currently with physician"
+          sub={`With ${specialty.terminology?.providerShort || 'doctor'}`}
         />
         <StatCard
           label="Today's Counter Cash"
@@ -594,19 +640,19 @@ export default function AppointmentsPage() {
           className={`tab ${activeTab === 'desk' ? 'active' : ''}`}
           onClick={() => setActiveTab('desk')}
         >
-          📅 Reception Booking Desk (Doctor Free Slots Finder)
+          📅 {specialty.terminology?.appointmentNoun || 'Booking'} Desk ({specialty.terminology?.resourceUnit || 'Slot'} Finder)
         </button>
         <button
           className={`tab ${activeTab === 'queue' ? 'active' : ''}`}
           onClick={() => setActiveTab('queue')}
         >
-          📋 Live OPD Waiting Lounge ({waitingLoungeAppointments.length})
+          📋 Live {specialty.terminology?.queueLocation || 'Waiting Lounge'} ({waitingLoungeAppointments.length})
         </button>
         <button
           className={`tab ${activeTab === 'roster' ? 'active' : ''}`}
           onClick={() => setActiveTab('roster')}
         >
-          👨‍⚕️ Doctor Duty Rosters & Timetable ({doctors.length})
+          👨‍⚕️ {specialty.terminology?.providerShort || 'Specialist'} Duty Rosters & {specialty.terminology?.resourceUnitPlural || 'Chambers'} ({doctors.length})
         </button>
       </div>
 
@@ -883,17 +929,46 @@ export default function AppointmentsPage() {
                 </div>
 
                 <div className="field">
-                  <label>Visit Category</label>
+                  <label>{specialty.terminology?.appointmentNoun || 'Visit'} Category</label>
                   <select
                     className="input"
                     value={visitType}
                     onChange={(e) => setVisitType(e.target.value)}
                   >
-                    <option>Specialist Consultation</option>
-                    <option>Routine Follow-up</option>
-                    <option>Second Opinion</option>
-                    <option>Pre-Op Assessment</option>
-                    <option>Urgent / Priority Intake</option>
+                    {isDental ? (
+                      <>
+                        <option>Root Canal Therapy (RCT)</option>
+                        <option>Routine Dental Checkup & Scaling</option>
+                        <option>Composite Filling & Restoration</option>
+                        <option>Orthodontic / Braces Tightening</option>
+                        <option>Tooth Extraction / Wisdom Surgery</option>
+                        <option>Cosmetic Teeth Whitening</option>
+                      </>
+                    ) : isPediatric ? (
+                      <>
+                        <option>Routine EPI Vaccination</option>
+                        <option>Well-Child Milestone & Growth</option>
+                        <option>Acute Illness / Pyrexia Intake</option>
+                        <option>Pediatric Nebulization</option>
+                        <option>Nutrition & Weaning Guidance</option>
+                      </>
+                    ) : isEye ? (
+                      <>
+                        <option>Comprehensive Slit-Lamp Exam</option>
+                        <option>Refraction & Power Check</option>
+                        <option>Pre-Op Cataract Workup</option>
+                        <option>Laser Vision / LASIK Screen</option>
+                        <option>Glaucoma Tonometry Check</option>
+                      </>
+                    ) : (
+                      <>
+                        <option>Specialist Consultation</option>
+                        <option>Routine Follow-up</option>
+                        <option>Second Opinion</option>
+                        <option>Pre-Op Assessment</option>
+                        <option>Urgent / Priority Intake</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
@@ -905,7 +980,15 @@ export default function AppointmentsPage() {
                     id="apt-complaint-input"
                     aria-label="Chief Complaint or Clinical Notes"
                     className="input"
-                    placeholder="e.g. Chest tightness, blood pressure re-evaluation"
+                    placeholder={
+                      isDental
+                        ? 'e.g. Severe nocturnal throbbing pain Tooth #19, bleeding gums'
+                        : isPediatric
+                        ? 'e.g. 9-Month EPI booster, fever 102°F with cough'
+                        : isEye
+                        ? 'e.g. Clouded vision right eye, distant blurring'
+                        : 'e.g. Chest tightness, blood pressure re-evaluation'
+                    }
                     value={complaint}
                     onChange={(e) => setComplaint(e.target.value)}
                   />
@@ -993,8 +1076,8 @@ export default function AppointmentsPage() {
                   <tr>
                     <th>Token #</th>
                     <th>Patient (MRN)</th>
-                    <th>Attending Doctor</th>
-                    <th>Room</th>
+                    <th>{specialty.terminology?.providerTitle || 'Attending Doctor'}</th>
+                    <th>{specialty.terminology?.resourceUnit || 'Room'}</th>
                     <th>Time Slot</th>
                     <th>Clinical Reason</th>
                     <th>Priority</th>
@@ -1352,8 +1435,8 @@ export default function AppointmentsPage() {
           <div className="modal" style={{ maxWidth: 520 }}>
             <div className="modal-head">
               <div>
-                <div style={{ fontWeight: 800, fontSize: 16 }}>Onboard New Doctor to Hospital</div>
-                <div className="hint" style={{ fontSize: 12 }}>Register clinician into OPD Chambers & Live Scheduling Desk</div>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>Onboard New {specialty.terminology?.providerShort || 'Doctor'} to Practice</div>
+                <div className="hint" style={{ fontSize: 12 }}>Register clinician into {specialty.terminology?.resourceUnitPlural || 'Chambers'} & Live Scheduling Desk</div>
               </div>
               <button className="btn-icon" onClick={() => setAddDocModalOpen(false)} aria-label="Close">
                 <Icon name="x" />
@@ -1362,11 +1445,19 @@ export default function AppointmentsPage() {
             <form onSubmit={handleAddDoctor}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div className="field">
-                  <label>Doctor Full Name *</label>
+                  <label>{specialty.terminology?.providerShort || 'Doctor'} Full Name *</label>
                   <input
                     className="input"
-                    aria-label="Doctor Full Name"
-                    placeholder="e.g. Dr. Tariq Jamil"
+                    aria-label={`${specialty.terminology?.providerShort || 'Doctor'} Full Name`}
+                    placeholder={
+                      isDental
+                        ? 'e.g. Dr. Bilal Qureshi (Oral Surgeon)'
+                        : isPediatric
+                        ? 'e.g. Dr. Ayesha Malik (Consultant Pediatrician)'
+                        : isEye
+                        ? 'e.g. Prof. Dr. Tariq Mehmood (Eye Surgeon)'
+                        : 'e.g. Dr. Tariq Jamil'
+                    }
                     value={newDocForm.name}
                     onChange={(e) => setNewDocForm({ ...newDocForm, name: e.target.value })}
                     required
@@ -1382,23 +1473,33 @@ export default function AppointmentsPage() {
                       value={newDocForm.dept}
                       onChange={(e) => setNewDocForm({ ...newDocForm, dept: e.target.value })}
                     >
-                      <option>Cardiology</option>
-                      <option>Orthopedics</option>
-                      <option>Pediatrics</option>
-                      <option>General Medicine</option>
-                      <option>Gynecology</option>
-                      <option>Dermatology</option>
-                      <option>Neurology</option>
-                      <option>ENT & Surgery</option>
-                      <option>Ophthalmology</option>
+                      {specialty.departments && specialty.departments.length > 0 ? (
+                        specialty.departments.map((dep) => (
+                          <option key={dep.id || dep.name} value={dep.name}>{dep.name}</option>
+                        ))
+                      ) : (
+                        <>
+                          <option>General Care</option>
+                          <option>Pediatrics</option>
+                          <option>Cardiology</option>
+                        </>
+                      )}
                     </select>
                   </div>
                   <div className="field">
-                    <label>Assigned Chamber / Room</label>
+                    <label>Assigned {specialty.terminology?.resourceUnit || 'Chamber / Room'}</label>
                     <input
                       className="input"
-                      aria-label="Assigned Chamber or Room"
-                      placeholder="e.g. Room 208 · OPD Wing"
+                      aria-label={`Assigned ${specialty.terminology?.resourceUnit || 'Chamber or Room'}`}
+                      placeholder={
+                        isDental
+                          ? 'e.g. Dental Chair 1 · Operatory A'
+                          : isPediatric
+                          ? 'e.g. Pediatric Bay 1 (Yellow Bay)'
+                          : isEye
+                          ? 'e.g. Exam Lane 1'
+                          : 'e.g. Room 208 · OPD Wing'
+                      }
                       value={newDocForm.room}
                       onChange={(e) => setNewDocForm({ ...newDocForm, room: e.target.value })}
                     />
