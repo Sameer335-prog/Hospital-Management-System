@@ -5,13 +5,26 @@ import { visibleRoutes } from '../../legacy/legacyEngine.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { useSubscription } from '../../utils/subscriptionConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const clinic = useClinicProfile();
+  const specialty = getSpecialtyConfig(clinic);
   const { plan, isTrial, daysLeftInTrial, isExpired } = useSubscription();
-  const groups = visibleRoutes(user?.role);
+  const rawGroups = visibleRoutes(user?.role);
+
+  // Filter out specialty-disabled routes (e.g. Wards/Beds for Dental Clinics)
+  const disabledRoutes = specialty?.disabledRoutes || [];
+  const customNavLabels = specialty?.customNavLabels || {};
+
+  const groups = rawGroups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) => !disabledRoutes.includes(item.id)),
+    }))
+    .filter((g) => g.items.length > 0);
 
   const logoText = clinic.name
     ? clinic.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
@@ -58,7 +71,7 @@ export default function Sidebar() {
               >
                 <Icon name={iconKeyFor(item.id)} />
                 <span className="label" style={{ flex: 1 }}>
-                  {item.label}
+                  {customNavLabels[item.id] || item.label}
                 </span>
               </NavLink>
             ))}

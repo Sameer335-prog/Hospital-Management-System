@@ -7,8 +7,11 @@ import { useState, useEffect } from 'react';
  * thermal receipt headers, and WhatsApp templates from /settings.
  */
 
+import { SPECIALTY_ARCHETYPES, getSpecialtyConfig } from './specialtyConfig.js';
+
 export const DEFAULT_CLINIC_PROFILE = {
   id: 'tenant-001',
+  archetype: 'general_hospital', // 'dental' | 'pediatric' | 'ophthalmology' | 'polyclinic' | 'general_hospital'
   name: 'Al-Shifa Healthcare Complex',
   tagline: 'Outpatient & Specialist Care Complex',
   doctorInCharge: 'Dr. Sarah Khan (MBBS, FCPS)',
@@ -119,3 +122,35 @@ export function useClinicProfile() {
 
   return profile;
 }
+
+/**
+ * 1-Click apply a complete specialty archetype preset
+ */
+export function applySpecialtyPreset(archetypeId) {
+  const archetype = SPECIALTY_ARCHETYPES[archetypeId];
+  if (!archetype) return getClinicProfile();
+
+  const current = getClinicProfile();
+  const updated = {
+    ...current,
+    archetype: archetype.id,
+    name: archetype.name,
+    tagline: archetype.tagline,
+    logoIcon: archetype.logoIcon,
+    doctorInCharge: archetype.doctorInCharge,
+    accreditation: archetype.accreditation,
+    practiceType: archetype.practiceType,
+    phone: archetype.phone,
+    hotline: archetype.hotline,
+    address: archetype.address,
+    currency: archetype.currency,
+    receiptFooter: archetype.receiptFooter,
+    thankYouMessage: archetype.thankYouMessage,
+  };
+
+  saveClinicProfile(updated);
+  return updated;
+}
+
+export { SPECIALTY_ARCHETYPES, getSpecialtyConfig };
+

@@ -9,6 +9,8 @@ import { getPatientById, PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js'
 import { useToast } from '../../hooks/useToast.js';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { sendWhatsApp } from '../../utils/messagingGateway.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
+import DentalOdontogram from '../../components/dental/DentalOdontogram.jsx';
 
 const DRUG_ALLERGY_RULES = [
   {
@@ -91,6 +93,9 @@ export default function ConsultationPage() {
   const [activePatientId, setActivePatientId] = useState(patientId || PATIENTS[0]?.id || 'PT-00125');
   const [rxModalOpen, setRxModalOpen] = useState(false);
 
+  const specialty = getSpecialtyConfig(clinic);
+  const isDental = specialty?.id === 'dental';
+
   // Sync if URL param changes
   useEffect(() => {
     if (patientId) {
@@ -146,6 +151,24 @@ export default function ConsultationPage() {
   ]);
   const [followUpDate, setFollowUpDate] = useState('2026-09-28');
   const [followUpNotes, setFollowUpNotes] = useState('Review with home blood pressure monitoring record.');
+
+  function handleAddDentalProcedure(proc) {
+    setClinicalNotes((prev) => {
+      const line = `• Dental Procedure: ${proc.name} (Fee: Rs. ${proc.fee})`;
+      return prev ? `${prev}\n${line}` : line;
+    });
+
+    setLabOrders((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        test: proc.name,
+        instructions: `Scheduled in ${specialty.terminology?.resourceUnit || 'Dental Chair'} · Est: Rs. ${proc.fee}`,
+      },
+    ]);
+
+    showToast(`Added ${proc.name} (Rs. ${proc.fee}) to clinical treatment plan!`);
+  }
 
   const hasAllergy = Boolean(patient?.allergy && patient.allergy !== 'None recorded');
 
@@ -460,6 +483,11 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
         </div>
       </div>
 
+      {/* Specialty Module: Interactive Dental Odontogram */}
+      {isDental && (
+        <DentalOdontogram onAddProcedure={handleAddDentalProcedure} />
+      )}
+
       {/* 2-Step Clinical Examination Layout */}
       <div className="grid grid-2">
         {/* Column 1: Step 1 Assess */}
@@ -753,6 +781,47 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
                 })}
               </div>
             )}
+            {/* Specialty Quick Prescription Presets */}
+            {specialty?.prescriptionPresets?.length > 0 && (
+              <div style={{
+                marginBottom: 12,
+                padding: '10px 12px',
+                background: 'var(--c-surface-hover, #f8fafc)',
+                borderRadius: 10,
+                border: '1px solid var(--c-border, #e2e8f0)',
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-primary, #0ea5e9)', marginBottom: 6 }}>
+                  ⚡ {specialty.practiceType} Quick Prescriptions:
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {specialty.prescriptionPresets.map((rx, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="btn btn-ghost btn-xs"
+                      style={{ fontSize: 11, fontWeight: 600, background: 'var(--c-bg, #ffffff)', border: '1px solid var(--c-border, #cbd5e1)' }}
+                      onClick={() => {
+                        setMedicines((prev) => [
+                          ...prev,
+                          {
+                            id: Date.now(),
+                            medicine: rx.name,
+                            dose: rx.dose,
+                            frequency: rx.freq,
+                            duration: rx.dur,
+                            instructions: rx.note,
+                          },
+                        ]);
+                        showToast(`Prescribed ${rx.name.split('(')[0]}`);
+                      }}
+                    >
+                      + {rx.name.split('(')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <button className="btn btn-secondary btn-sm" onClick={addMedicine}>
                 <Icon name="plus" /> Add Pharmaceutical

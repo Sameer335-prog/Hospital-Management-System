@@ -1,7 +1,6 @@
-/**
- * messagingGateway.js
- * Utility to normalize phone numbers and dispatch direct WhatsApp and SMS messages.
- */
+import { getClinicProfile } from './clinicConfig.js';
+import { getSpecialtyConfig } from './specialtyConfig.js';
+
 
 /**
  * Normalizes a phone string (e.g., "0300-1234567", "03001234567", "+92 300 1234567")
@@ -101,36 +100,45 @@ export async function sendCloudMessage({ to, message, channel = 'whatsapp', reci
  * Generates an official, highly optimized WhatsApp appointment token slip.
  */
 export function generateWhatsAppTokenSlip(appt = {}) {
-  const clinicName = 'Medora Healthcare Complex';
+  const profile = getClinicProfile();
+  const specialty = getSpecialtyConfig(profile);
+
+  const clinicName = profile.name || 'Medora Healthcare Complex';
+  const logoIcon = profile.logoIcon || specialty.logoIcon || '🏥';
+  const resourceLabel = specialty.terminology?.resourceUnit || 'Clinic Chamber';
+  const queueLocation = specialty.terminology?.queueLocation || 'Active in OPD Waiting Lounge';
+  const emergencyTitle = specialty.terminology?.emergencyTitle || '24/7 EMERGENCY & AMBULANCE';
+  const hotline = profile.hotline || profile.phone || '0300-9998888';
+
   const token = appt.token || 'TK-01';
-  const doctor = appt.doctor || 'Attending Physician';
-  const dept = appt.dept || 'OPD';
-  const room = appt.room || 'Room 204 · East Wing';
+  const doctor = appt.doctor || profile.doctorInCharge || 'Attending Physician';
+  const dept = appt.dept || profile.practiceType || 'OPD';
+  const room = appt.room || `${resourceLabel} 1`;
   const time = appt.time || '10:30 AM';
   const date = appt.date || 'Today';
   const patient = appt.patient || 'Valued Patient';
   const fee = appt.fee || 2000;
 
-  return `🏥 *${clinicName}* — Official OPD Appointment Token
+  return `${logoIcon} *${clinicName}* — Official Appointment Token
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 🎫 *TOKEN NUMBER:* *${token}*
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 *Patient Name:* ${patient}
 👨‍⚕️ *Consultant:* ${doctor} (${dept})
 🕒 *Consultation Time:* ${time} (${date})
-📍 *Clinic Chamber:* ${room}
+📍 *${resourceLabel}:* ${room}
 💳 *Consultation Fee:* Rs. ${fee} (Pay at Reception/Cashier)
-📊 *Queue Status:* Active in OPD Waiting Lounge
+📊 *Queue Status:* ${queueLocation}
 
 📋 *PATIENT INSTRUCTIONS (ہدایات):*
 • Please report to ${room} at least 10 minutes prior to your slot.
 • Keep this digital token active on your phone for verification at the reception.
-• Real-time queue call-outs are displayed on the OPD TV screens.
+• Real-time queue call-outs are displayed on the clinic TV screens.
 
-🚨 *24/7 EMERGENCY & AMBULANCE:*
-📞 Emergency Hotline: 0300-9998888 | Rescue: 1122
-📍 *Location Map:* https://maps.google.com/?q=Medora+Hospital
+🚨 *${emergencyTitle}:*
+📞 Emergency Hotline: ${hotline}
+📍 *Location Map:* https://maps.google.com/?q=${encodeURIComponent(clinicName)}
 ━━━━━━━━━━━━━━━━━━━━━━━━━
-_Thank you for choosing Medora Healthcare Complex._`;
+_${profile.thankYouMessage || `Thank you for choosing ${clinicName}.`}_`;
 }
 

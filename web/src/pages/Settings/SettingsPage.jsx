@@ -8,7 +8,7 @@ import { DOCTORS, STAFF, PATIENTS, APPOINTMENTS, INVOICES } from '../../legacy/l
 import { supabase } from '../../lib/supabase.js';
 import { useToast } from '../../hooks/useToast.js';
 import { useTheme } from '../../context/ThemeContext.jsx';
-import { getClinicProfile, saveClinicProfile } from '../../utils/clinicConfig.js';
+import { getClinicProfile, saveClinicProfile, applySpecialtyPreset, SPECIALTY_ARCHETYPES } from '../../utils/clinicConfig.js';
 
 const TABS = [
   'Clinic & Hospital Profile',
@@ -161,36 +161,70 @@ function ClinicProfileTab({ showToast }) {
     reader.readAsDataURL(file);
   }
 
-  function applyPreset(preset) {
-    setForm({ ...form, ...preset.data });
-    saveClinicProfile(preset.data);
-    showToast(`Loaded preset: "${preset.label}". All slips and receipts updated!`);
+  function handleSelectArchetype(archetypeId) {
+    const updated = applySpecialtyPreset(archetypeId);
+    setForm(updated);
+    const archetype = SPECIALTY_ARCHETYPES[archetypeId];
+    showToast(`Applied ${archetype?.practiceType || archetypeId} Archetype! Navigation, terminology, and clinical tools updated.`);
   }
 
   return (
     <div className="grid grid-2" style={{ gap: 20 }}>
       {/* Left Column: Form & Presets */}
       <div>
-        {/* Quick One-Click Presets */}
-        <div className="card card-pad" style={{ marginBottom: 16, border: '1px solid var(--c-primary-light)' }}>
-          <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 4 }}>
-            ⚡ 1-Click Clinic Presets (Test White-labeling)
+        {/* Multi-Specialty Clinical Archetype Switcher */}
+        <div className="card card-pad" style={{ marginBottom: 16, border: '1.5px solid var(--c-primary)', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(255, 255, 255, 0.6) 100%)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--c-text-primary)' }}>
+              ⚡ 1-Click Specialty Archetype Switcher
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, backgroundColor: 'var(--c-primary-light)', color: 'var(--c-primary-dark)' }}>
+              Dynamic Whitelabel
+            </span>
           </div>
-          <div className="hint" style={{ marginBottom: 12 }}>
-            Switch branding instantly to showcase Medora to different clinic types:
+          <div className="hint" style={{ marginBottom: 14 }}>
+            Instantly reconfigures the entire HMS (sidebar navigation, terminology, tooth charts, and Voice AI) to match your practice specialty:
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {CLINIC_PRESETS.map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                className="btn btn-secondary btn-sm"
-                style={{ fontWeight: 700 }}
-                onClick={() => applyPreset(p)}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+            {Object.values(SPECIALTY_ARCHETYPES).map((spec) => {
+              const isActive = form.archetype === spec.id || form.practiceType === spec.practiceType;
+              return (
+                <button
+                  key={spec.id}
+                  type="button"
+                  onClick={() => handleSelectArchetype(spec.id)}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: isActive ? '2px solid var(--c-primary, #0ea5e9)' : '1px solid var(--c-border, #cbd5e1)',
+                    backgroundColor: isActive ? 'rgba(14, 165, 233, 0.12)' : 'var(--c-surface, #ffffff)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    boxShadow: isActive ? '0 4px 14px rgba(14, 165, 233, 0.2)' : '0 1px 3px rgba(0,0,0,0.04)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <span style={{ fontSize: '20px' }}>{spec.logoIcon}</span>
+                    {isActive && (
+                      <span style={{ fontSize: '10px', fontWeight: '800', backgroundColor: '#10b981', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontWeight: '800', fontSize: '13px', color: 'var(--c-text-primary, #0f172a)' }}>
+                    {spec.practiceType}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--c-text-secondary, #64748b)', lineHeight: '1.3' }}>
+                    {spec.id === 'dental' ? 'Tooth Chart, Chairs, RCT, Hides Wards' : spec.id === 'pediatric' ? 'Vaccination Schedule, Child Bays' : spec.id === 'ophthalmology' ? 'Refraction, Cataract, Exam Lanes' : spec.id === 'polyclinic' ? 'Family Doctor, Ultrasound, Lab' : 'Full Inpatient Wards, Beds & ICU'}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 

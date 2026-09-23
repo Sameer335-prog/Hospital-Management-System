@@ -6,13 +6,25 @@ import { visibleRoutes } from '../../legacy/legacyEngine.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { useTheme } from '../../context/ThemeContext.jsx';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 export default function MobileDrawer({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const clinic = useClinicProfile();
-  const groups = visibleRoutes(user?.role);
+  const specialty = getSpecialtyConfig(clinic);
+  const rawGroups = visibleRoutes(user?.role);
+
+  const disabledRoutes = specialty?.disabledRoutes || [];
+  const customNavLabels = specialty?.customNavLabels || {};
+
+  const groups = rawGroups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) => !disabledRoutes.includes(item.id)),
+    }))
+    .filter((g) => g.items.length > 0);
 
   const logoText = clinic.name
     ? clinic.name
@@ -276,7 +288,7 @@ export default function MobileDrawer({ isOpen, onClose }) {
                     })}
                   >
                     <Icon name={iconKeyFor(item.id)} style={{ width: 18, height: 18 }} />
-                    <span>{item.label}</span>
+                    <span>{customNavLabels[item.id] || item.label}</span>
                   </NavLink>
                 ))}
               </div>

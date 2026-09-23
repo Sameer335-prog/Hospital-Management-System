@@ -5,6 +5,29 @@ import { appointmentService } from './appointmentService.js';
 import { notificationService } from './notificationService.js';
 import { PATIENTS } from '../legacy/legacyEngine.js';
 import { generateWhatsAppTokenSlip } from '../utils/messagingGateway.js';
+import { getClinicProfile } from '../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../utils/specialtyConfig.js';
+
+export function getActiveDoctors() {
+  const profile = getClinicProfile();
+  const specialty = getSpecialtyConfig(profile);
+  if (specialty && specialty.doctors && specialty.doctors.length > 0) {
+    return specialty.doctors.map((d) => ({
+      ...d,
+      hours: d.days || '09:00 AM – 05:00 PM',
+      keywords: [
+        d.name.toLowerCase(),
+        ...d.name.toLowerCase().split(' '),
+        d.dept.toLowerCase(),
+        ...(d.specialty ? d.specialty.toLowerCase().split(' ') : []),
+        ...(specialty.id === 'dental' ? ['teeth', 'tooth', 'dental', 'rct', 'cleaning', 'scaling', 'extraction', 'braces', 'cavity', 'filling', 'crown', 'dentist'] : []),
+        ...(specialty.id === 'ophthalmology' ? ['eye', 'vision', 'cataract', 'refraction', 'glasses', 'laser', 'eyes'] : []),
+        ...(specialty.id === 'pediatric' ? ['child', 'baby', 'vaccine', 'pediatric', 'kid', 'fever', 'infant'] : []),
+      ],
+    }));
+  }
+  return HOSPITAL_DOCTORS;
+}
 
 export const HOSPITAL_DOCTORS = [
   {
@@ -324,18 +347,21 @@ export const aiAgentService = {
       patientName = activeBookingSession.patientName || 'Patient Guest';
     }
 
+    // Active Doctors according to clinic specialty
+    const activeDoctors = getActiveDoctors();
+
     // Doctor matching helper
-    const matchedDoctor = HOSPITAL_DOCTORS.find((doc) =>
+    const matchedDoctor = activeDoctors.find((doc) =>
       doc.keywords.some((kw) => q.includes(kw)) || q.includes(doc.name.toLowerCase())
     );
 
     // Number matching (1 to 5) for doctor selection
     let numberDoctor = null;
-    if (q === '1' || q === 'one' || q.includes('option 1')) numberDoctor = HOSPITAL_DOCTORS[0];
-    if (q === '2' || q === 'two' || q.includes('option 2')) numberDoctor = HOSPITAL_DOCTORS[1];
-    if (q === '3' || q === 'three' || q.includes('option 3')) numberDoctor = HOSPITAL_DOCTORS[2];
-    if (q === '4' || q === 'four' || q.includes('option 4')) numberDoctor = HOSPITAL_DOCTORS[3];
-    if (q === '5' || q === 'five' || q.includes('option 5')) numberDoctor = HOSPITAL_DOCTORS[4];
+    if (q === '1' || q === 'one' || q.includes('option 1')) numberDoctor = activeDoctors[0];
+    if (q === '2' || q === 'two' || q.includes('option 2')) numberDoctor = activeDoctors[1];
+    if (q === '3' || q === 'three' || q.includes('option 3')) numberDoctor = activeDoctors[2];
+    if (q === '4' || q === 'four' || q.includes('option 4')) numberDoctor = activeDoctors[3];
+    if (q === '5' || q === 'five' || q.includes('option 5')) numberDoctor = activeDoctors[4];
 
     // Affirmative intent: "yes", "confirm", "book it", "haan", "sure", "ok", "please do"
     const isAffirmative = Boolean(
@@ -482,14 +508,16 @@ export const aiAgentService = {
           patientName
         };
 
-        const reply = `I would be delighted to arrange an appointment for you! Which specialist doctor would you like to consult with?\n\n1. Dr. Sarah Khan (Cardiology) · Rs. 2,500\n2. Dr. Bilal Ahmed (Orthopedics) · Rs. 2,500\n3. Dr. Ayesha Raza (Pediatrics) · Rs. 2,000\n4. Dr. Imran Malik (General Medicine) · Rs. 2,000\n5. Dr. Hina Farooq (Gynecology) · Rs. 2,500\n\nYou can say or tap any doctor's name to proceed.`;
-        const spoken = `I would be delighted to assist you with booking an appointment. Which specialist would you like to consult with? For example, Dr. Sarah for Cardiology or Dr. Bilal for Orthopedics?`;
+        const activeDocsList = getActiveDoctors();
+        const docChoices = activeDocsList.map((d, idx) => `${idx + 1}. ${d.name} (${d.dept}) · Rs. ${d.fee}`).join('\n');
+        const reply = `I would be delighted to arrange an appointment for you! Which specialist doctor would you like to consult with?\n\n${docChoices}\n\nYou can say or tap any doctor's name to proceed.`;
+        const spoken = `I would be delighted to assist you with booking an appointment. Which specialist would you like to consult with? For example, ${activeDocsList[0]?.name} for ${activeDocsList[0]?.dept}?`;
 
         return {
           text: reply,
           spokenText: spoken,
           action: 'PROMPT_DOCTOR',
-          doctors: HOSPITAL_DOCTORS
+          doctors: activeDocsList
         };
       }
     }
@@ -536,15 +564,16 @@ export const aiAgentService = {
         };
       }
 
-      const doctorSummary = HOSPITAL_DOCTORS.map(
-        (d) => `• **${d.name}** (${d.dept}): ${d.hours} [${d.days}] · ${d.room} · Rs. ${d.fee}`
+      const activeDocsList = getActiveDoctors();
+      const doctorSummary = activeDocsList.map(
+        (d) => `• **${d.name}** (${d.dept}): ${d.hours} [${d.days || 'Mon - Sat'}] · ${d.room} · Rs. ${d.fee}`
       ).join('\n');
 
       return {
-        text: `Here is our current OPD specialist consultation schedule:\n\n${doctorSummary}\n\nWhich doctor or department would you like to consult?`,
-        spokenText: "Our main OPD consultants are Dr. Sarah Khan for Cardiology, Dr. Bilal Ahmed for Orthopedics, Dr. Ayesha Raza for Pediatrics, Dr. Imran Malik for General Medicine, and Dr. Hina Farooq for Gynecology. Which specialist would you like to consult?",
+        text: `Here is our current specialist consultation schedule:\n\n${doctorSummary}\n\nWhich doctor or department would you like to consult?`,
+        spokenText: `Our active consultants are ${activeDocsList.map(d => `${d.name} for ${d.dept}`).join(', ')}. Which specialist would you like to consult?`,
         action: 'ALL_DOCTORS_SCHEDULE',
-        doctors: HOSPITAL_DOCTORS
+        doctors: activeDocsList
       };
     }
 
