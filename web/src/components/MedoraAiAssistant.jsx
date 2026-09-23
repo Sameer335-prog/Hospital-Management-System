@@ -14,13 +14,14 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
-      text: "Hello! I am your Medora Clinical AI Assistant. How can I help you today? You can ask me to check doctor schedules, book an appointment, or explain hospital services.",
+      text: "Hello! I am Maya, your personal healthcare concierge at Medora Hospital. It is a pleasure to assist you today.\n\nWhat operation would you like to perform?\n• 📅 Book an appointment with a specialist\n• 👨‍⚕️ Check doctor consultation hours & fees\n• 🏥 Inquire about hospital departments & services\n• 🚨 24/7 Emergency care & ambulance support",
       time: 'Online'
     }
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isChatDictating, setIsChatDictating] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState(null);
   const chatBottomRef = useRef(null);
   const chatInputRef = useRef(null);
 
@@ -105,14 +106,14 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
 
     const cleanText = text.replace(/[*_#•]/g, ' ');
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
+    utterance.rate = 0.96;
     utterance.pitch = 1.0;
     utterance.lang = 'en-US';
 
     const voices = window.speechSynthesis.getVoices();
     const friendlyVoice = voices.find(
-      (v) => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Ava'))
-    );
+      (v) => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Ava') || v.name.includes('Jenny') || v.name.includes('Zira'))
+    ) || voices.find((v) => v.lang.startsWith('en'));
     if (friendlyVoice) utterance.voice = friendlyVoice;
 
     setCallState('speaking');
@@ -239,6 +240,11 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
 
       if (result.appointment) {
         setLatestAppointment(result.appointment);
+        setPendingBooking(null);
+      } else if (result.action === 'CONFIRMATION_REQUIRED' && result.pendingAppointment) {
+        setPendingBooking(result.pendingAppointment);
+      } else if (result.action === 'CANCELLED') {
+        setPendingBooking(null);
       }
 
       setMessages((prev) => [
@@ -253,6 +259,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
           text: result.text,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           appointment: result.appointment,
+          pendingAppointment: result.pendingAppointment,
           action: result.action,
           doctors: result.doctors,
           doctor: result.doctor
@@ -276,15 +283,21 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
     setViewMode('call');
     setCallState('connecting');
     setLatestAppointment(null);
+    setPendingBooking(null);
     setIsMuted(false);
 
-    const greeting = "Hello! Welcome to Medora Hospital Voice Assistant. How can I help you? You can ask about doctor availability, book an appointment, or ask how the hospital works.";
+    const greeting = "Hello! I am Maya, your personal healthcare concierge at Medora Hospital. It is a pleasure to speak with you today. What operation would you like to perform? For example, would you like to schedule an appointment with a specialist doctor, check our consultation hours, or learn about our hospital services?";
+
+    setCurrentCaption({
+      speaker: 'ai',
+      text: greeting
+    });
 
     setTimeout(() => {
       speakText(greeting, () => {
         startCallListeningLoop();
       });
-    }, 500);
+    }, 450);
   };
 
   const handleEndCall = () => {
@@ -311,6 +324,78 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   };
 
   // -------------------------------------------------------------
+  // CLIENT-SIDE DIRECT CONFIRMATION / CANCELLATION HANDLERS
+  // -------------------------------------------------------------
+  const handleConfirmPendingBooking = async () => {
+    setIsTyping(true);
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setMessages((prev) => [
+      ...prev,
+      { sender: 'user', text: '✅ Yes, please confirm my appointment.', time: timeStr }
+    ]);
+
+    try {
+      const response = await aiAgentService.confirmPendingBooking({
+        patientName: currentPatientName
+      });
+      setIsTyping(false);
+      setLatestAppointment(response.appointment || null);
+      setPendingBooking(null);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: response.text,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          appointment: response.appointment,
+          action: response.action
+        }
+      ]);
+
+      if (viewMode === 'call') {
+        speakText(response.spokenText, () => {
+          if (isCallActiveRef.current && !isMuted) {
+            startCallListeningLoop();
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Error confirming booking:', err);
+      setIsTyping(false);
+    }
+  };
+
+  const handleCancelPendingBooking = () => {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setMessages((prev) => [
+      ...prev,
+      { sender: 'user', text: '❌ Cancel this appointment request.', time: timeStr }
+    ]);
+
+    const result = aiAgentService.cancelPendingBooking();
+    setPendingBooking(null);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: 'ai',
+        text: result.text,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        action: result.action
+      }
+    ]);
+
+    if (viewMode === 'call') {
+      speakText(result.spokenText, () => {
+        if (isCallActiveRef.current && !isMuted) {
+          startCallListeningLoop();
+        }
+      });
+    }
+  };
+
+  // -------------------------------------------------------------
   // TEXT CHAT LOGIC & DICTATION
   // -------------------------------------------------------------
   const handleSendMessage = async (explicitText) => {
@@ -332,6 +417,16 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
         patientId: user?.patientId
       });
       setIsTyping(false);
+
+      if (response.appointment) {
+        setLatestAppointment(response.appointment);
+        setPendingBooking(null);
+      } else if (response.action === 'CONFIRMATION_REQUIRED' && response.pendingAppointment) {
+        setPendingBooking(response.pendingAppointment);
+      } else if (response.action === 'CANCELLED') {
+        setPendingBooking(null);
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -339,6 +434,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
           text: response.text,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           appointment: response.appointment,
+          pendingAppointment: response.pendingAppointment,
           action: response.action,
           doctors: response.doctors,
           doctor: response.doctor
@@ -596,10 +692,10 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
             }}>
               <div>
                 <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: '#10b981', fontWeight: '700' }}>
-                  MEDORA VOICE COPILOT
+                  MAYA · HEALTHCARE CONCIERGE
                 </div>
                 <div style={{ fontSize: '14px', color: '#94a3b8', marginTop: '2px' }}>
-                  Voice Consultation · {formatTime(callDuration)}
+                  Personal Consultation · {formatTime(callDuration)}
                 </div>
               </div>
               <div style={{
@@ -614,23 +710,23 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                 fontWeight: '600'
               }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-                {callState === 'speaking' ? 'Speaking...' : callState === 'listening' ? 'Listening...' : callState === 'processing' ? 'Thinking...' : 'Connected'}
+                {callState === 'speaking' ? 'Maya is speaking...' : callState === 'listening' ? (pendingBooking ? 'Awaiting your confirmation...' : 'Listening to you...') : callState === 'processing' ? 'Thinking...' : 'Connected'}
               </div>
             </div>
 
             {/* Call Center Visuals */}
             <div style={{
-              padding: '32px 24px 16px',
+              padding: '28px 24px 14px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'radial-gradient(circle at center, rgba(13, 148, 136, 0.2) 0%, transparent 70%)'
+              background: 'radial-gradient(circle at center, rgba(13, 148, 136, 0.25) 0%, transparent 70%)'
             }}>
               <div style={{
                 position: 'relative',
-                width: '130px',
-                height: '130px',
+                width: '120px',
+                height: '120px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -645,39 +741,30 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                 }} />
 
                 <div style={{
-                  width: '90px',
-                  height: '90px',
+                  width: '86px',
+                  height: '86px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #0d9488 0%, #10b981 100%)',
                   boxShadow: '0 0 35px rgba(16, 185, 129, 0.5)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#ffffff'
+                  color: '#ffffff',
+                  fontSize: '34px'
                 }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
-                    <path d="M12 12 2.1 7.1"/>
-                    <path d="M12 12l9.9 4.9"/>
-                  </svg>
+                  👩‍⚕️
                 </div>
               </div>
 
-              <div style={{ marginTop: '16px', fontSize: '17px', fontWeight: '600', color: '#f8fafc' }}>
-                Medora Voice Assistant
+              <div style={{ marginTop: '14px', fontSize: '18px', fontWeight: '700', color: '#f8fafc' }}>
+                Maya
               </div>
-              <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>
-                {isMuted
-                  ? 'Microphone is muted'
-                  : callState === 'speaking'
-                  ? 'Speaking out loud...'
-                  : callState === 'listening'
-                  ? 'Speak naturally, I am listening...'
-                  : 'Processing response...'}
+              <div style={{ fontSize: '12.5px', color: '#94a3b8', marginTop: '2px', textAlign: 'center' }}>
+                Personal Healthcare Concierge · Medora Hospital
               </div>
 
               {/* Sound Wave Bars */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '28px', marginTop: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '28px', marginTop: '12px' }}>
                 {[16, 24, 12, 28, 20, 26, 14, 22, 10].map((height, i) => (
                   <div
                     key={i}
@@ -700,8 +787,8 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
               backgroundColor: 'rgba(15, 23, 42, 0.7)',
               borderRadius: '12px',
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              minHeight: '60px',
-              maxHeight: '100px',
+              minHeight: '54px',
+              maxHeight: '90px',
               overflowY: 'auto'
             }}>
               {currentCaption.text ? (
@@ -711,47 +798,119 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                     fontWeight: '700',
                     marginRight: '6px'
                   }}>
-                    {currentCaption.speaker === 'user' ? 'You:' : 'AI:'}
+                    {currentCaption.speaker === 'user' ? 'You:' : 'Maya:'}
                   </span>
                   {currentCaption.text}
                 </div>
               ) : (
-                <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'center', fontStyle: 'italic', paddingTop: '6px' }}>
+                <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'center', fontStyle: 'italic', paddingTop: '4px' }}>
                   Voice transcript will appear here in real time...
                 </div>
               )}
             </div>
 
-            {/* Appointment Created Card (if booked during call) */}
-            {latestAppointment && (
+            {/* Pending Booking Confirmation Card (Interactive Client Confirmation) */}
+            {pendingBooking && (
               <div style={{
                 margin: '12px 20px 0',
-                padding: '12px 14px',
-                backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
+                padding: '12px 16px',
+                backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                border: '1.5px solid #10b981',
+                borderRadius: '16px',
+                boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)'
               }}>
-                <div>
-                  <div style={{ fontSize: '11px', color: '#34d399', fontWeight: '700' }}>
-                    TOKEN CONFIRMED: {latestAppointment.token}
-                  </div>
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>
-                    {latestAppointment.doctor} ({latestAppointment.dept})
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                    Time: {latestAppointment.time} · {latestAppointment.room}
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', color: '#34d399', fontWeight: '800' }}>
+                    ⚡ Client Confirmation Required
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>Fee: Rs. {pendingBooking.fee}</span>
                 </div>
-                <span style={{ padding: '4px 8px', backgroundColor: '#10b981', color: '#fff', borderRadius: '6px', fontSize: '11px', fontWeight: '700' }}>
-                  Booked
-                </span>
+                <div style={{ fontSize: '14.5px', fontWeight: '700', color: '#ffffff' }}>
+                  {pendingBooking.doctor?.name || pendingBooking.doctor}
+                </div>
+                <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
+                  {pendingBooking.dept} · {pendingBooking.room} · {pendingBooking.time}
+                </div>
+                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
+                  Patient: <strong style={{ color: '#e2e8f0' }}>{pendingBooking.patientName || currentPatientName || 'Patient Guest'}</strong>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={handleConfirmPendingBooking}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      backgroundColor: '#10b981',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span>✅ Confirm Booking</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelPendingBooking}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                      color: '#f87171',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div style={{ fontSize: '10.5px', color: '#94a3b8', textAlign: 'center', marginTop: '5px' }}>
+                  🎤 Say <span style={{ color: '#34d399', fontWeight: '600' }}>"Yes, confirm"</span> or tap button above
+                </div>
               </div>
             )}
 
-            {/* Quick Prompts */}
+            {/* Appointment Created Thank You Card */}
+            {latestAppointment && !pendingBooking && (
+              <div style={{
+                margin: '12px 20px 0',
+                padding: '14px 16px',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                border: '1.5px solid #10b981',
+                borderRadius: '16px',
+                boxShadow: '0 8px 25px rgba(16, 185, 129, 0.2)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '11px', color: '#34d399', fontWeight: '800', letterSpacing: '0.5px' }}>
+                    💐 THANK YOU SO MUCH!
+                  </div>
+                  <span style={{ padding: '3px 8px', backgroundColor: '#10b981', color: '#fff', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
+                    TOKEN {latestAppointment.token}
+                  </span>
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff', marginTop: '4px' }}>
+                  {latestAppointment.doctor} ({latestAppointment.dept})
+                </div>
+                <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
+                  Time: {latestAppointment.time} · {latestAppointment.room}
+                </div>
+                <div style={{ fontSize: '11px', color: '#a7f3d0', marginTop: '5px', fontStyle: 'italic' }}>
+                  "We look forward to taking great care of you. Wishing you wonderful health!"
+                </div>
+              </div>
+            )}
+
+            {/* Quick Operation Prompts */}
             <div style={{
               display: 'flex',
               gap: '6px',
@@ -759,7 +918,12 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
               padding: '12px 20px 4px',
               scrollbarWidth: 'none'
             }}>
-              {['Book Dr. Sarah at 11 AM', 'Check Dr. Bilal timing', 'How does the hospital work?', 'Emergency hotline'].map((chip, idx) => (
+              {[
+                'Book Dr. Sarah at 10:30 AM',
+                'Which doctors are available?',
+                'How does the hospital work?',
+                'Emergency hotline'
+              ].map((chip, idx) => (
                 <button
                   key={idx}
                   type="button"
@@ -954,10 +1118,10 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                 </svg>
               </div>
               <div>
-                <div style={{ fontWeight: '700', fontSize: '15px' }}>Medora AI Assistant</div>
+                <div style={{ fontWeight: '700', fontSize: '15px' }}>Maya · Healthcare Concierge</div>
                 <div style={{ fontSize: '11px', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#34d399', display: 'inline-block' }} />
-                  Online · Voice & Chat Ready
+                  Online · Dedicated to Hospital Services
                 </div>
               </div>
             </div>
@@ -980,12 +1144,12 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                   fontWeight: '600',
                   cursor: 'pointer'
                 }}
-                title="Start Voice Call"
+                title="Start Voice Call with Maya"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                 </svg>
-                Call
+                Voice Call
               </button>
 
               <button
@@ -1041,22 +1205,108 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                   {msg.text}
                 </div>
 
-                {/* Appointment Card preview */}
+                {/* Client-Side Pending Confirmation Card */}
+                {msg.pendingAppointment && msg.action === 'CONFIRMATION_REQUIRED' && (
+                  <div style={{
+                    marginTop: '8px',
+                    padding: '12px 14px',
+                    backgroundColor: '#fffbeb',
+                    border: '1.5px solid #f59e0b',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    color: '#92400e',
+                    width: '100%',
+                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: '800', color: '#b45309', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        ⚡ Client Confirmation Needed
+                      </span>
+                      <span style={{ fontWeight: '600', color: '#78350f' }}>Fee: Rs. {msg.pendingAppointment.fee}</span>
+                    </div>
+                    <div style={{ fontWeight: '700', fontSize: '13px', color: '#1e293b', marginTop: '2px' }}>
+                      {msg.pendingAppointment.doctor?.name || msg.pendingAppointment.doctor} ({msg.pendingAppointment.dept})
+                    </div>
+                    <div style={{ color: '#475569', fontSize: '11.5px', marginTop: '2px' }}>
+                      Time: <strong>{msg.pendingAppointment.time}</strong> · {msg.pendingAppointment.room}
+                    </div>
+                    <div style={{ color: '#475569', fontSize: '11px', marginTop: '2px' }}>
+                      Patient: <strong>{msg.pendingAppointment.patientName || currentPatientName || 'Patient Guest'}</strong>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={handleConfirmPendingBooking}
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          backgroundColor: '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <span>✅ Confirm Booking</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelPendingBooking}
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#f1f5f9',
+                          color: '#ef4444',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Warm Human-like Thank You & Token Card */}
                 {msg.appointment && (
                   <div style={{
-                    marginTop: '6px',
-                    padding: '10px 12px',
+                    marginTop: '8px',
+                    padding: '12px 14px',
                     backgroundColor: '#ecfdf5',
-                    border: '1px solid #a7f3d0',
-                    borderRadius: '10px',
+                    border: '1.5px solid #10b981',
+                    borderRadius: '12px',
                     fontSize: '12px',
                     color: '#065f46',
-                    width: '100%'
+                    width: '100%',
+                    boxShadow: '0 3px 10px rgba(16, 185, 129, 0.15)'
                   }}>
-                    <div style={{ fontWeight: '700' }}>✓ Token Confirmed: {msg.appointment.token}</div>
-                    <div>{msg.appointment.doctor} ({msg.appointment.dept})</div>
-                    <div>Time: {msg.appointment.time} · {msg.appointment.room}</div>
-                    <div style={{ fontSize: '11px', color: '#047857', marginTop: '2px' }}>Consultation Fee: Rs. {msg.appointment.fee}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontWeight: '800', color: '#047857', fontSize: '12px' }}>💐 THANK YOU SO MUCH!</span>
+                      <span style={{ padding: '2px 7px', backgroundColor: '#10b981', color: '#fff', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
+                        TOKEN {msg.appointment.token}
+                      </span>
+                    </div>
+                    <div style={{ fontWeight: '700', fontSize: '13px', color: '#064e3b', marginTop: '4px' }}>
+                      {msg.appointment.doctor} ({msg.appointment.dept})
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#047857', marginTop: '2px' }}>
+                      Time: {msg.appointment.time} · {msg.appointment.room}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#047857', marginTop: '2px' }}>
+                      Consultation Fee: Rs. {msg.appointment.fee} · Status: Waiting in Queue
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#059669', marginTop: '6px', fontStyle: 'italic', borderTop: '1px solid #a7f3d0', paddingTop: '4px' }}>
+                      "We look forward to welcoming you at Medora Hospital. Please arrive 10 minutes early. Wishing you wonderful health!"
+                    </div>
                   </div>
                 )}
 
@@ -1085,9 +1335,9 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                       >
                         <div>
                           <div style={{ fontWeight: '600', fontSize: '12px', color: '#166534' }}>{d.name}</div>
-                          <div style={{ fontSize: '11px', color: '#15803d' }}>{d.dept} · {d.room}</div>
+                          <div style={{ fontSize: '11px', color: '#15803d' }}>{d.dept} · {d.room} · Rs. {d.fee}</div>
                         </div>
-                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#166534' }}>Book Now →</span>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#166534' }}>Select →</span>
                       </button>
                     ))}
                   </div>
@@ -1098,7 +1348,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                   <div style={{ marginTop: '8px', width: '100%' }}>
                     <button
                       type="button"
-                      onClick={() => handleSendMessage(`Yes, book an appointment with ${msg.doctor.name}`)}
+                      onClick={() => handleSendMessage(`Yes, please book an appointment with ${msg.doctor.name}`)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1140,7 +1390,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                 alignItems: 'center',
                 gap: '4px'
               }}>
-                <span>AI is thinking</span>
+                <span>Maya is thinking</span>
                 <span style={{ animation: 'blink 1s infinite' }}>...</span>
               </div>
             )}
@@ -1159,10 +1409,10 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
             scrollbarWidth: 'none'
           }}>
             {[
-              { label: 'Book Dr. Sarah', prompt: 'Book an appointment with Dr. Sarah at 11 AM' },
-              { label: 'Doctor Timings', prompt: 'Which doctors are available today?' },
-              { label: 'Hospital Workflow', prompt: 'How does the hospital work?' },
-              { label: 'Emergency ER', prompt: 'Where is the Emergency Room located?' }
+              { label: '📅 Book Dr. Sarah (10:30 AM)', prompt: 'Book an appointment with Dr. Sarah Khan at 10:30 AM' },
+              { label: '👨‍⚕️ Specialist Schedules', prompt: 'Which doctors are available today?' },
+              { label: '🏥 Hospital Guide', prompt: 'How does the hospital work?' },
+              { label: '🚨 Emergency Hotline', prompt: 'What is the Emergency Hotline number?' }
             ].map((chip, idx) => (
               <button
                 key={idx}
