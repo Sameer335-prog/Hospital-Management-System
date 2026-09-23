@@ -10,6 +10,7 @@ import { billingService } from '../../services/billingService.js';
 import { useToast } from '../../hooks/useToast.js';
 import ThermalReceiptModal from '../../components/common/ThermalReceiptModal.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 function toNumber(rs) {
   return Number(String(rs).replace(/[^0-9.]/g, '')) || 0;
@@ -192,6 +193,33 @@ export default function BillingPage() {
 
   // Shift Close & Daily Reconciliation State
   const clinic = useClinicProfile();
+  const specialty = useMemo(() => getSpecialtyConfig(clinic), [clinic]);
+
+  const dynamicServicePresets = useMemo(() => {
+    if (specialty?.procedures && specialty.procedures.length > 0) {
+      return specialty.procedures.map((p) => ({
+        code: p.code,
+        label: p.name,
+        dept: p.category || specialty.practiceType || 'Clinical Procedure',
+        rate: p.fee,
+      }));
+    }
+    return SERVICE_PRESETS;
+  }, [specialty]);
+
+  const billingDoctors = useMemo(() => {
+    if (specialty?.doctors && specialty.doctors.length > 0) {
+      return specialty.doctors.map((d) => `${d.name} (${d.specialty || d.dept})`);
+    }
+    return [
+      'Dr. Sarah Khan (Cardiology)',
+      'Dr. Bilal Ahmed (Orthopedics)',
+      'Dr. Hina Farooq (Gynecology)',
+      'Dr. Ayesha Raza (Pediatrics)',
+      'Dr. Imran Malik (General Medicine)',
+    ];
+  }, [specialty]);
+
   const [shiftArchive, setShiftArchive] = useState(() => {
     try {
       const saved = localStorage.getItem('medora_shift_archive');
@@ -293,12 +321,42 @@ export default function BillingPage() {
 
   // Itemized Generator State
   const [builderPatientId, setBuilderPatientId] = useState(PATIENTS[0]?.id || 'PT-00125');
-  const [builderCategory, setBuilderCategory] = useState('Inpatient Admission');
-  const [builderDoctor, setBuilderDoctor] = useState('Dr. Sarah Khan (Cardiology)');
-  const [builderItems, setBuilderItems] = useState([
-    { id: 1, code: 'CON-GEN', label: 'Specialist Physician Consultation', dept: 'Outpatient Clinic', qty: 1, rate: 2500, amount: 2500 },
-    { id: 2, code: 'LAB-CBC', label: 'Complete Blood Count (CBC) with Platelets', dept: 'Pathology Lab', qty: 1, rate: 1500, amount: 1500 },
-  ]);
+  const [builderCategory, setBuilderCategory] = useState(() =>
+    specialty.id === 'dental' ? 'Dental Consultation & Diagnosis' :
+    specialty.id === 'pediatric' ? 'Well-Child Clinic & Immunization' :
+    specialty.id === 'ophthalmology' ? 'Comprehensive Eye Exam & Refraction' : 'Outpatient Consultation (OPD)'
+  );
+  const [builderDoctor, setBuilderDoctor] = useState(billingDoctors[0] || 'Dr. Sarah Khan (Cardiology)');
+  const [builderItems, setBuilderItems] = useState(() => {
+    if (dynamicServicePresets.length >= 2) {
+      return [
+        { id: 1, ...dynamicServicePresets[0], qty: 1, amount: dynamicServicePresets[0].rate },
+        { id: 2, ...dynamicServicePresets[1], qty: 1, amount: dynamicServicePresets[1].rate },
+      ];
+    }
+    return [
+      { id: 1, code: 'CON-GEN', label: 'Specialist Physician Consultation', dept: 'Outpatient Clinic', qty: 1, rate: 2500, amount: 2500 },
+      { id: 2, code: 'LAB-CBC', label: 'Complete Blood Count (CBC) with Platelets', dept: 'Pathology Lab', qty: 1, rate: 1500, amount: 1500 },
+    ];
+  });
+
+  // Synchronize builder state dynamically if user changes clinic specialty
+  useEffect(() => {
+    if (billingDoctors.length > 0) {
+      setBuilderDoctor(billingDoctors[0]);
+    }
+    if (dynamicServicePresets.length >= 2) {
+      setBuilderItems([
+        { id: 1, ...dynamicServicePresets[0], qty: 1, amount: dynamicServicePresets[0].rate },
+        { id: 2, ...dynamicServicePresets[1], qty: 1, amount: dynamicServicePresets[1].rate },
+      ]);
+    }
+    setBuilderCategory(
+      specialty.id === 'dental' ? 'Dental Consultation & Diagnosis' :
+      specialty.id === 'pediatric' ? 'Well-Child Clinic & Immunization' :
+      specialty.id === 'ophthalmology' ? 'Comprehensive Eye Exam & Refraction' : 'Outpatient Consultation (OPD)'
+    );
+  }, [specialty.id]);
   const [builderDiscount, setBuilderDiscount] = useState(0); // in PKR
   const [builderTaxApplied, setBuilderTaxApplied] = useState(false); // 5% tax
   const [builderInsuranceCovered, setBuilderInsuranceCovered] = useState(false);
@@ -801,36 +859,60 @@ export default function BillingPage() {
                   value={builderCategory}
                   onChange={(e) => setBuilderCategory(e.target.value)}
                 >
-                  <option>Inpatient Admission (IPD)</option>
-                  <option>Outpatient Consultation (OPD)</option>
-                  <option>Emergency & Trauma Care (ER)</option>
-                  <option>Executive Health Checkup</option>
-                  <option>Daycare Surgery Unit</option>
+                  {specialty.id === 'dental' ? (
+                    <>
+                      <option>Dental Consultation & Diagnosis</option>
+                      <option>Restorative & Endodontics</option>
+                      <option>Oral & Maxillofacial Surgery</option>
+                      <option>Orthodontic Adjustment</option>
+                      <option>Periodontics & Hygiene</option>
+                    </>
+                  ) : specialty.id === 'pediatric' ? (
+                    <>
+                      <option>Well-Child Clinic & Immunization</option>
+                      <option>Pediatric Consultation & Followup</option>
+                      <option>Pediatric Emergency & Nebulization</option>
+                      <option>Growth & Developmental Assessment</option>
+                    </>
+                  ) : specialty.id === 'ophthalmology' ? (
+                    <>
+                      <option>Comprehensive Eye Exam & Refraction</option>
+                      <option>Cataract & Anterior Segment Daycare</option>
+                      <option>Retina & Glaucoma Diagnostic Imaging</option>
+                      <option>Ocular Urgent Care & Minor Surgery</option>
+                    </>
+                  ) : (
+                    <>
+                      <option>Inpatient Admission (IPD)</option>
+                      <option>Outpatient Consultation (OPD)</option>
+                      <option>Emergency & Trauma Care (ER)</option>
+                      <option>Executive Health Checkup</option>
+                      <option>Daycare Surgery Unit</option>
+                    </>
+                  )}
                 </select>
               </div>
 
               <div className="field" style={{ marginBottom: 16 }}>
-                <label>Consultant Physician</label>
+                <label>{specialty.terminology?.providerTitle || 'Consultant Specialist'}</label>
                 <select
                   className="input"
                   value={builderDoctor}
                   onChange={(e) => setBuilderDoctor(e.target.value)}
                 >
-                  <option>Dr. Sarah Khan (Cardiology)</option>
-                  <option>Dr. Bilal Ahmed (Orthopedics)</option>
-                  <option>Dr. Hina Farooq (Gynecology)</option>
-                  <option>Dr. Ayesha Raza (Pediatrics)</option>
-                  <option>Dr. Imran Malik (General Medicine)</option>
+                  {billingDoctors.map((doc, idx) => (
+                    <option key={idx} value={doc}>{doc}</option>
+                  ))}
                 </select>
               </div>
 
               {/* Quick Presets Drawer */}
               <div style={{ borderTop: '1px solid var(--c-border)', paddingTop: 14 }}>
                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: 'var(--c-text-muted)' }}>
-                  Quick Add Hospital Services:
+                  Quick Add {specialty.terminology?.procedureTitle || 'Clinical Services'}:
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {SERVICE_PRESETS.slice(0, 5).map((preset) => (
+                  {dynamicServicePresets.slice(0, 6).map((preset) => (
                     <button
                       key={preset.code}
                       type="button"
@@ -852,22 +934,22 @@ export default function BillingPage() {
             <div className="card card-pad" style={{ gridColumn: 'span 2' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>
-                  2. Itemized Hospital Services ({builderItems.length} items)
+                  2. Itemized {specialty.terminology?.procedureTitle || 'Services'} ({builderItems.length} items)
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <select
                     className="input"
-                    style={{ fontSize: 12, padding: '4px 8px', width: 220 }}
+                    style={{ fontSize: 12, padding: '4px 8px', width: 240 }}
                     onChange={(e) => {
                       if (e.target.value) {
-                        const preset = SERVICE_PRESETS.find((p) => p.code === e.target.value);
+                        const preset = dynamicServicePresets.find((p) => p.code === e.target.value);
                         if (preset) handleAddBuilderItem(preset);
                         e.target.value = '';
                       }
                     }}
                   >
                     <option value="">+ Add From Service Catalog…</option>
-                    {SERVICE_PRESETS.map((p) => (
+                    {dynamicServicePresets.map((p) => (
                       <option key={p.code} value={p.code}>
                         {p.label} ({toRs(p.rate)})
                       </option>

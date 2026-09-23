@@ -199,6 +199,31 @@ export const SPECIALTY_ARCHETYPES = {
       { name: 'Panadol Extra 500mg', dose: '1-2 Tabs', freq: 'Every 6-8 hours for mild ache', dur: '3 Days', note: 'Max 8 tablets in 24 hours' },
     ],
 
+    // Dental Specialty Sample Prescriptions
+    archetypePrescriptions: [
+      {
+        id: 'RX-D01', pid: 'PT-00125', patient: 'Muhammad Ahmed', doctor: 'Dr. Ali Raza', date: 'Sep 03, 2026', status: 'Active',
+        items: [
+          { medicine: 'Augmentin 625mg (Amoxicillin + Clavulanate)', dose: '1 Tab', frequency: 'Twice daily after meals', duration: '5 days' },
+          { medicine: 'Flagyl 400mg (Metronidazole)', dose: '1 Tab', frequency: 'Every 8 hours', duration: '5 days' },
+          { medicine: 'Hexidine 0.2% Chlorhexidine Mouthwash', dose: '10 ml', frequency: 'Twice daily rinse for 60s', duration: '7 days' },
+        ],
+      },
+      {
+        id: 'RX-D02', pid: 'PT-00130', patient: 'Sana Malik', doctor: 'Dr. Fatima Noor', date: 'Sep 02, 2026', status: 'Dispensed',
+        items: [
+          { medicine: 'Orthodontic Relief Wax + Panadol Extra 500mg', dose: '1 Tab', frequency: 'PRN for braces soreness', duration: '3 days' },
+        ],
+      },
+      {
+        id: 'RX-D03', pid: 'PT-00127', patient: 'Fahad Iqbal', doctor: 'Dr. Bilal Qureshi', date: 'Sep 05, 2026', status: 'Active',
+        items: [
+          { medicine: 'Brufen 400mg (Ibuprofen)', dose: '1 Tab', frequency: 'Every 8 hours after food', duration: '3 days' },
+          { medicine: 'Amoxicillin 500mg Capsules', dose: '1 Cap', frequency: 'Every 8 hours', duration: '5 days' },
+        ],
+      },
+    ],
+
     // AI Voice Persona Overrides
     aiPrompt: {
       roleGreeting: "Hello! I am Maya, your dental healthcare concierge at Dr. Ali Advanced Dental Surgery. How may I assist your smile today? You can schedule a dental checkup, book teeth scaling, consult for braces, or report an urgent toothache.",
@@ -374,6 +399,31 @@ export const SPECIALTY_ARCHETYPES = {
       { name: 'Saline Nasal Drops (0.9% NaCl)', dose: '2 Drops in each nostril', freq: 'Before feeding & bedtime', dur: '5 Days', note: 'Relieves infant nasal congestion' },
     ],
 
+    // Pediatric Specialty Sample Prescriptions
+    archetypePrescriptions: [
+      {
+        id: 'RX-P01', pid: 'PT-00130', patient: 'Baby Zainab', doctor: 'Dr. Ayesha Malik', date: 'Sep 03, 2026', status: 'Active',
+        items: [
+          { medicine: 'Syrup Calpol 120mg/5ml (Paracetamol)', dose: '5 ml (wt based)', frequency: 'Every 8 hours PRN for fever', duration: '3 days' },
+          { medicine: 'Saline Nasal Drops (0.9% NaCl)', dose: '2 Drops in each nostril', frequency: 'Before feeds & bedtime', duration: '5 days' },
+        ],
+      },
+      {
+        id: 'RX-P02', pid: 'PT-00127', patient: 'Master Fahad', doctor: 'Dr. Ayesha Malik', date: 'Sep 02, 2026', status: 'Dispensed',
+        items: [
+          { medicine: 'Syrup Augmentin DS 312mg/5ml', dose: '5 ml', frequency: 'Twice daily after milk', duration: '5 days' },
+          { medicine: 'Pediatric Oral Rehydration Salts (ORS)', dose: '1 Sachet in 1 Litre', frequency: 'Sip after each loose stool', duration: '3 days' },
+        ],
+      },
+      {
+        id: 'RX-P03', pid: 'PT-00125', patient: 'Muhammad Ahmed (Child)', doctor: 'Dr. Ayesha Malik', date: 'Sep 05, 2026', status: 'Active',
+        items: [
+          { medicine: 'Syrup Brufen 100mg/5ml', dose: '5 ml', frequency: 'Every 8 hours after food', duration: '3 days' },
+          { medicine: 'Pediatric Saline Nebulization Solution', dose: '3 ml', frequency: 'Twice daily via nebulizer', duration: '3 days' },
+        ],
+      },
+    ],
+
     aiPrompt: {
       roleGreeting: "Hello! I am Maya, healthcare concierge at KidsCare Pediatric Clinic. I am here to help schedule a child checkup, book vaccinations, or consult our pediatric specialists.",
       emergencyDisclaimer: "If your child has high unyielding fever, severe dehydration, breathing difficulty, or lethargy, please bring them to our pediatric emergency station immediately or call 051-5544332.",
@@ -547,6 +597,30 @@ export const SPECIALTY_ARCHETYPES = {
       { name: 'Tobramycin + Dexamethasone Drops (Tobradex)', dose: '1 Drop in operative eye', freq: 'TDS (Every 8 hours)', dur: '10 Days', note: 'Anti-inflammatory steroid combo; taper as directed' },
     ],
 
+    // Ophthalmology Specialty Sample Prescriptions
+    archetypePrescriptions: [
+      {
+        id: 'RX-O01', pid: 'PT-00125', patient: 'Muhammad Ahmed', doctor: 'Prof. Dr. Tariq Mehmood', date: 'Sep 03, 2026', status: 'Active',
+        items: [
+          { medicine: 'Moxifloxacin 0.5% Eye Drops', dose: '1 Drop (OD)', frequency: '4 times daily', duration: '7 days' },
+          { medicine: 'Systane Ultra Lubricant Eye Drops', dose: '1 Drop both eyes', frequency: 'Every 4-6 hours', duration: '30 days' },
+        ],
+      },
+      {
+        id: 'RX-O02', pid: 'PT-00130', patient: 'Sana Malik', doctor: 'Dr. Hina Asif', date: 'Sep 02, 2026', status: 'Dispensed',
+        items: [
+          { medicine: 'Tobramycin + Dexamethasone Drops (Tobradex)', dose: '1 Drop (OS)', frequency: 'Every 8 hours', duration: '10 days' },
+        ],
+      },
+      {
+        id: 'RX-O03', pid: 'PT-00127', patient: 'Fahad Iqbal', doctor: 'Prof. Dr. Tariq Mehmood', date: 'Sep 05, 2026', status: 'Active',
+        items: [
+          { medicine: 'Timolol 0.5% Ophthalmic Solution', dose: '1 Drop both eyes', frequency: 'Twice daily (12 hrs apart)', duration: '30 days' },
+          { medicine: 'Sodium Hyaluronate 0.1% Eye Drops', dose: '1 Drop as needed', frequency: '4 times daily', duration: '30 days' },
+        ],
+      },
+    ],
+
     aiPrompt: {
       roleGreeting: "Hello! I am Maya, your healthcare concierge at Al-Noor Eye Hospital. I can assist you in booking a comprehensive eye exam, vision refraction, or consultation with our cataract specialists.",
       emergencyDisclaimer: "If you have suffered direct chemical trauma to the eye, sudden loss of vision, or severe eye pain, please flush the eye and report to our ocular emergency room immediately.",
@@ -679,7 +753,31 @@ export const SPECIALTY_ARCHETYPES = {
       },
     ],
 
-    prescriptionPresets: [],
+    prescriptionPresets: [
+      { name: 'Panadol 500mg (Paracetamol)', dose: '1-2 Tabs', freq: 'Every 6-8 hours for fever/bodyache', dur: '3 Days', note: 'Max 8 tabs in 24 hours' },
+      { name: 'Omeprazole 20mg (Risek)', dose: '1 Cap', freq: 'Once daily 30 mins before breakfast', dur: '14 Days', note: 'For GERD / gastric acidity' },
+      { name: 'Amoxicillin 500mg Capsules', dose: '1 Cap', freq: 'Every 8 hours after food', dur: '5 Days', note: 'Complete full course' },
+      { name: 'Brufen 400mg (Ibuprofen)', dose: '1 Tab', freq: 'Every 8 hours after meals', dur: '3 Days', note: 'Anti-inflammatory & pain relief' },
+    ],
+
+    // Polyclinic Specialty Sample Prescriptions
+    archetypePrescriptions: [
+      {
+        id: 'RX-PC01', pid: 'PT-00125', patient: 'Muhammad Ahmed', doctor: 'Dr. Bilal Tariq', date: 'Sep 03, 2026', status: 'Active',
+        items: [
+          { medicine: 'Panadol 500mg (Paracetamol)', dose: '1-2 Tabs', frequency: 'Every 8 hours', duration: '3 days' },
+          { medicine: 'Omeprazole 20mg (Risek)', dose: '1 Cap', frequency: 'Once daily before breakfast', duration: '14 days' },
+        ],
+      },
+      {
+        id: 'RX-PC02', pid: 'PT-00130', patient: 'Sana Malik', doctor: 'Dr. Samina Kausar', date: 'Sep 02, 2026', status: 'Dispensed',
+        items: [
+          { medicine: 'Amoxicillin 500mg Capsules', dose: '1 Cap', frequency: 'Every 8 hours', duration: '5 days' },
+          { medicine: 'Multivitamin & Iron Folate', dose: '1 Tab', frequency: 'Once daily', duration: '30 days' },
+        ],
+      },
+    ],
+
     aiPrompt: {
       roleGreeting: "Hello! I am Maya, healthcare concierge at Al-Madina Family Health Clinic. How may I assist you today? I can help you book a doctor, schedule an ultrasound, or check lab test hours.",
       emergencyDisclaimer: "For urgent acute pain, high fever, or immediate attention, our polyclinic doctors are available on a walk-in basis.",
@@ -823,7 +921,33 @@ export const SPECIALTY_ARCHETYPES = {
       },
     ],
 
-    prescriptionPresets: [],
+    prescriptionPresets: [
+      { name: 'Losartan 50mg Tablets', dose: '1 Tab', freq: 'Once daily morning', dur: '30 Days', note: 'Hypertension maintenance' },
+      { name: 'Metformin 500mg Tablets', dose: '1 Tab', freq: 'Twice daily with meals', dur: '30 Days', note: 'Type 2 Diabetes glycemic control' },
+      { name: 'Ceftriaxone 1g IV Infusion', dose: '1 Vial', freq: 'Twice daily IV', dur: '3 Days', note: 'Broad-spectrum inpatient coverage' },
+      { name: 'Omeprazole 40mg IV/Oral', dose: '1 Dose', freq: 'Once daily before breakfast', dur: '5 Days', note: 'GI prophylaxis' },
+      { name: 'Paracetamol 500mg', dose: '1 Tab', freq: 'Every 8 hours PRN', dur: '5 Days', note: 'Antipyretic / Analgesic' },
+    ],
+
+    // General Hospital Sample Prescriptions
+    archetypePrescriptions: [
+      {
+        id: 'RX-901', pid: 'PT-00125', patient: 'Muhammad Ahmed', doctor: 'Dr. Sarah Khan', date: 'Sep 03, 2026', status: 'Active',
+        items: [
+          { medicine: 'Losartan 50mg', dose: '1 tab', frequency: 'Once daily', duration: '30 days' },
+          { medicine: 'Metformin 500mg', dose: '1 tab', frequency: 'Twice daily', duration: '30 days' },
+        ],
+      },
+      {
+        id: 'RX-902', pid: 'PT-00130', patient: 'Sana Malik', doctor: 'Dr. Sarah Khan', date: 'Sep 02, 2026', status: 'Dispensed',
+        items: [{ medicine: 'Losartan 50mg', dose: '1 tab', frequency: 'Once daily', duration: '30 days' }],
+      },
+      {
+        id: 'RX-903', pid: 'PT-00127', patient: 'Fahad Iqbal', doctor: 'Dr. Ayesha Raza', date: 'Sep 05, 2026', status: 'Active',
+        items: [{ medicine: 'Paracetamol 500mg', dose: '1 tab', frequency: 'Every 8 hours', duration: '5 days' }],
+      },
+    ],
+
     aiPrompt: {
       roleGreeting: "Hello! I am Maya, your personal healthcare concierge at Al-Shifa Healthcare Complex. It is a pleasure to assist you. What operation would you like to perform today? You can book an appointment with our specialists, check doctor consultation hours, inquire about hospital departments, or request 24/7 emergency support.",
       emergencyDisclaimer: "If this is a critical medical emergency (chest pain, acute breathlessness, or major trauma), please dial 1122 or proceed to our 24/7 Emergency & Trauma Center immediately.",

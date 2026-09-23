@@ -152,13 +152,19 @@ export function applySpecialtyPreset(archetypeId) {
 
   // Automatically reset appointments queue to match specialty (zero hospital bleed-through)
   try {
-    if (typeof window !== 'undefined' && archetype.archetypeAppointments) {
-      localStorage.setItem('medora_appointments_queue', JSON.stringify(archetype.archetypeAppointments));
-      window.dispatchEvent(new CustomEvent('medora-queue-reset', { detail: archetype.archetypeAppointments }));
-      if ('BroadcastChannel' in window) {
-        const bc = new BroadcastChannel('medora_queue_sync');
-        bc.postMessage(archetype.archetypeAppointments);
-        bc.close();
+    if (typeof window !== 'undefined') {
+      if (archetype.archetypeAppointments) {
+        localStorage.setItem('medora_appointments_queue', JSON.stringify(archetype.archetypeAppointments));
+        window.dispatchEvent(new CustomEvent('medora-queue-reset', { detail: archetype.archetypeAppointments }));
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('medora_queue_sync');
+          bc.postMessage(archetype.archetypeAppointments);
+          bc.close();
+        }
+      }
+      if (archetype.archetypePrescriptions) {
+        localStorage.setItem('medora_prescriptions_list', JSON.stringify(archetype.archetypePrescriptions));
+        window.dispatchEvent(new CustomEvent('medora-prescriptions-reset', { detail: archetype.archetypePrescriptions }));
       }
     }
   } catch {

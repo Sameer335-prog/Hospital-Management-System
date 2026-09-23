@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell.jsx';
 import Avatar from '../../components/ui/Avatar.jsx';
@@ -7,6 +7,8 @@ import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { DOCTORS, PATIENTS } from '../../legacy/legacyEngine.js';
 import { useToast } from '../../hooks/useToast.js';
+import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 
 const INITIAL_PRESCRIPTIONS = [
   {
@@ -26,24 +28,66 @@ const INITIAL_PRESCRIPTIONS = [
   },
 ];
 
-const EMPTY_RX = {
-  patientId: '',
-  doctor: 'Dr. Sarah Khan',
-  medicine: 'Panadol 500mg',
-  dose: '1 tablet',
-  frequency: 'Every 8 hours',
-  duration: '5 days',
-};
-
 export default function PrescriptionsPage() {
   const navigate = useNavigate();
   const { toast, showToast } = useToast();
-  const [prescriptions, setPrescriptions] = useState(INITIAL_PRESCRIPTIONS);
+  const clinic = useClinicProfile();
+  const specialty = useMemo(() => getSpecialtyConfig(clinic), [clinic]);
+
+  const specialtyDoctors = useMemo(() => {
+    if (specialty?.doctors && specialty.doctors.length > 0) return specialty.doctors;
+    return DOCTORS;
+  }, [specialty]);
+
+  const [prescriptions, setPrescriptions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('medora_prescriptions_list');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return specialty?.archetypePrescriptions || INITIAL_PRESCRIPTIONS;
+  });
+
+  useEffect(() => {
+    const handleReset = (e) => {
+      if (e.detail && Array.isArray(e.detail)) {
+        setPrescriptions(e.detail);
+      }
+    };
+    window.addEventListener('medora-prescriptions-reset', handleReset);
+    return () => window.removeEventListener('medora-prescriptions-reset', handleReset);
+  }, []);
+
+  // When active specialty changes, synchronize default prescriptions
+  useEffect(() => {
+    if (specialty?.archetypePrescriptions) {
+      setPrescriptions(specialty.archetypePrescriptions);
+    }
+  }, [specialty?.id]);
+
   const [patientQuery, setPatientQuery] = useState('');
   const [doctorFilter, setDoctorFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [modalOpen, setModalOpen] = useState(false);
-  const [newRx, setNewRx] = useState(EMPTY_RX);
+  const [newRx, setNewRx] = useState({
+    patientId: '',
+    doctor: specialtyDoctors[0]?.name || 'Dr. Sarah Khan',
+    medicine: specialty?.prescriptionPresets?.[0]?.name || 'Panadol 500mg',
+    dose: specialty?.prescriptionPresets?.[0]?.dose || '1 tablet',
+    frequency: 'Every 8 hours',
+    duration: specialty?.prescriptionPresets?.[0]?.dur || '5 days',
+  });
+
+  // Keep default doctor in sync when specialty shifts
+  useEffect(() => {
+    if (specialtyDoctors[0]?.name) {
+      setNewRx((prev) => ({ ...prev, doctor: specialtyDoctors[0].name }));
+    }
+  }, [specialtyDoctors]);
 
   const filtered = useMemo(
     () =>
@@ -72,12 +116,17 @@ export default function PrescriptionsPage() {
       .map((it) => `• *${it.medicine}* (${it.dose}) — ${it.frequency} for ${it.duration}`)
       .join('\n');
 
+    const clinicHeader = clinic.name || 'Medora Healthcare';
+    const providerTitle = specialty.terminology?.providerTitle || 'Consultant Specialist';
+
     const message = encodeURIComponent(
-      `🏥 *Medora HMS — Official Electronic Prescription*\n\n` +
-      `Prescription No: *${rx.id}*\n` +
-      `Patient: *${rx.patient}* (${rx.pid})\n` +
-      `Consultant: *${rx.doctor}*\n` +
-      `Date: ${rx.date}\n\n` +
+      `🏥 *${clinicHeader} — Official Electronic Prescription*\n` +
+      `${clinic.address ? `📍 ${clinic.address}\n` : ''}` +
+      `📞 Helpline: ${clinic.phone || '051-111-222-333'}\n\n` +
+      `📄 Prescription No: *${rx.id}*\n` +
+      `👤 Patient: *${rx.patient}* (${rx.pid})\n` +
+      `🩺 ${providerTitle}: *${rx.doctor}*\n` +
+      `📅 Date: ${rx.date}\n\n` +
       `📋 *Prescribed Medications:*\n${medLines}\n\n` +
       `⚠️ *Instructions:* Follow dosages strictly. Take with water.\n\n` +
       `_Medora Cloud Health · Verified Electronic Health Record_`
@@ -91,7 +140,8 @@ export default function PrescriptionsPage() {
   function handleCreatePrescription(e) {
     e.preventDefault();
     const patient = PATIENTS.find((p) => p.id === newRx.patientId) || PATIENTS[0];
-    const rxId = `RX-${904 + prescriptions.length}`;
+    const rxPrefix = specialty.id === 'dental' ? 'RX-D' : specialty.id === 'pediatric' ? 'RX-P' : specialty.id === 'ophthalmology' ? 'RX-O' : 'RX-';
+    const rxId = `${rxPrefix}${910 + prescriptions.length}`;
 
     const newRecord = {
       id: rxId,
@@ -110,9 +160,22 @@ export default function PrescriptionsPage() {
       ],
     };
 
-    setPrescriptions((prev) => [newRecord, ...prev]);
+    const updatedList = [newRecord, ...prescriptions];
+    setPrescriptions(updatedList);
+    try {
+      localStorage.setItem('medora_prescriptions_list', JSON.stringify(updatedList));
+    } catch {
+      // safe fallback
+    }
     showToast(`Prescription ${rxId} issued for ${patient.name}.`);
-    setNewRx(EMPTY_RX);
+    setNewRx({
+      patientId: '',
+      doctor: specialtyDoctors[0]?.name || 'Dr. Sarah Khan',
+      medicine: specialty?.prescriptionPresets?.[0]?.name || 'Panadol 500mg',
+      dose: specialty?.prescriptionPresets?.[0]?.dose || '1 tablet',
+      frequency: 'Every 8 hours',
+      duration: specialty?.prescriptionPresets?.[0]?.dur || '5 days',
+    });
     setModalOpen(false);
   }
 
@@ -121,7 +184,7 @@ export default function PrescriptionsPage() {
       <div className="page-header">
         <div>
           <h1>Prescriptions</h1>
-          <div className="sub">{prescriptions.length} electronic prescription records on file</div>
+          <div className="sub">{prescriptions.length} electronic prescription records on file · {clinic.name}</div>
         </div>
         <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
           <Icon name="plus" /> New Prescription
@@ -139,14 +202,14 @@ export default function PrescriptionsPage() {
         />
         <select
           className="input"
-          style={{ maxWidth: 200 }}
+          style={{ maxWidth: 220 }}
           value={doctorFilter}
           onChange={(e) => setDoctorFilter(e.target.value)}
           aria-label="Filter prescriptions by doctor"
         >
-          <option value="All">All Doctors</option>
-          {DOCTORS.map((d) => (
-            <option key={d.id} value={d.name}>{d.name}</option>
+          <option value="All">All {specialty.terminology?.providerShort ? `${specialty.terminology.providerShort}s` : 'Doctors'}</option>
+          {specialtyDoctors.map((d) => (
+            <option key={d.id || d.name} value={d.name}>{d.name} ({d.specialty || d.dept})</option>
           ))}
         </select>
         <select
@@ -261,19 +324,50 @@ export default function PrescriptionsPage() {
                   </select>
                 </div>
                 <div className="field" style={{ marginBottom: 12 }}>
-                  <label>Prescribing Physician</label>
+                  <label>{specialty.terminology?.providerTitle || 'Prescribing Physician'}</label>
                   <select
                     className="input"
                     value={newRx.doctor}
                     onChange={(e) => setNewRx({ ...newRx, doctor: e.target.value })}
                   >
-                    {DOCTORS.map((d) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name} ({d.dept})
+                    {specialtyDoctors.map((d) => (
+                      <option key={d.id || d.name} value={d.name}>
+                        {d.name} ({d.specialty || d.dept})
                       </option>
                     ))}
                   </select>
                 </div>
+
+                {specialty?.prescriptionPresets && specialty.prescriptionPresets.length > 0 && (
+                  <div style={{ marginBottom: 14, padding: '10px 12px', background: 'var(--c-surface-2)', borderRadius: 8, border: '1px solid var(--c-border)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--c-text-muted)', marginBottom: 6 }}>
+                      ⚡ Quick {specialty.terminology?.providerShort || 'Clinical'} Presets:
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {specialty.prescriptionPresets.map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{ fontSize: 11, padding: '3px 8px', height: 'auto', textAlign: 'left' }}
+                          onClick={() => {
+                            setNewRx((prev) => ({
+                              ...prev,
+                              medicine: preset.name,
+                              dose: preset.dose,
+                              frequency: preset.freq.toLowerCase().includes('once') ? 'Once daily' : preset.freq.toLowerCase().includes('twice') ? 'Twice daily' : 'Every 8 hours',
+                              duration: preset.dur,
+                            }));
+                          }}
+                          title={preset.note}
+                        >
+                          + {preset.name.split(' ')[0]} {preset.name.split(' ')[1] || ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="field" style={{ marginBottom: 12 }}>
                   <label>Medication *</label>
                   <input
