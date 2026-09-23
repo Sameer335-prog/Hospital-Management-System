@@ -4,6 +4,7 @@
 import { appointmentService } from './appointmentService.js';
 import { notificationService } from './notificationService.js';
 import { PATIENTS } from '../legacy/legacyEngine.js';
+import { generateWhatsAppTokenSlip } from '../utils/messagingGateway.js';
 
 export const HOSPITAL_DOCTORS = [
   {
@@ -241,15 +242,18 @@ export const aiAgentService = {
         notes: 'Confirmed directly via client-side confirmation'
       });
 
-      const humanThankYouText = `💐 **Thank You So Much, ${appt.patient}!**\n\nYour appointment is officially confirmed and registered in our live clinic queue.\n\n• **Token Number**: **${appt.token}**\n• **Consultant**: ${doc.name} (${doc.dept})\n• **Time & Room**: ${appt.time} · ${doc.room}\n• **Patient Name**: ${appt.patient}\n• **Consultation Fee**: Rs. ${doc.fee}\n• **Queue Status**: Live in OPD Queue & Displayed on Lobby Board\n• 💬 **WhatsApp Slip**: You can tap the WhatsApp button below to send this digital token and clinic map directly to your phone.\n\nWe are honored to care for you at Medora Hospital. Please arrive 10 minutes prior to your consultation. Wishing you excellent health! How else may I assist you today?`;
+      const whatsAppSlipText = generateWhatsAppTokenSlip(appt);
 
-      const humanThankYouSpoken = `Thank you so much, ${appt.patient}! Your appointment has been successfully confirmed. Your token number is ${appt.token} with ${doc.name} in ${doc.room} for ${appt.time}. You can also tap the WhatsApp button on your screen to receive this token slip directly on your phone. Wishing you wonderful health!`;
+      const humanThankYouText = `💐 **Thank You So Much, ${appt.patient}!**\n\nYour appointment is officially confirmed and registered in our live clinic queue.\n\n• **Token Number**: **${appt.token}**\n• **Consultant**: ${doc.name} (${doc.dept})\n• **Scheduled Time**: ${appt.time} (Today)\n• **Clinic Room**: ${doc.room}\n• **Consultation Fee**: Rs. ${doc.fee}\n• **Queue Status**: Live in OPD Queue & Displayed on Lobby Board\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📱 **OFFICIAL WHATSAPP TOKEN SLIP (PREVIEW)**:\n${whatsAppSlipText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nWe are honored to care for you at Medora Hospital. Please arrive 10 minutes prior to your consultation. You can send this token directly to WhatsApp or SMS using the controls below. Wishing you excellent health! How else may I assist you today?`;
+
+      const humanThankYouSpoken = `Thank you so much, ${appt.patient}! Your appointment has been successfully confirmed. Your token number is ${appt.token} with ${doc.name} in ${doc.room} for ${appt.time}. I have prepared your complete official WhatsApp token slip on your screen. You can review the full details and send it directly to your phone with one tap. Wishing you wonderful health!`;
 
       return {
         text: humanThankYouText,
         spokenText: humanThankYouSpoken,
         action: 'BOOKING_SUCCESS',
-        appointment: appt
+        appointment: appt,
+        whatsAppSlip: whatsAppSlipText
       };
     }
 
@@ -372,15 +376,18 @@ export const aiAgentService = {
           notes: 'Confirmed via Medora AI Client Voice/Action'
         });
 
-        const humanThankYouText = `💐 **Thank You So Much, ${appt.patient}!**\n\nYour appointment is officially confirmed and registered in our live clinic queue.\n\n• **Token Number**: **${appt.token}**\n• **Consultant**: ${doc.name} (${doc.dept})\n• **Scheduled Time**: ${appt.time}\n• **Clinic Room**: ${doc.room}\n• **Consultation Fee**: Rs. ${doc.fee}\n• **Queue Status**: Live in OPD Waiting Lounge\n• 💬 **WhatsApp Slip**: You can tap the WhatsApp button below to send this digital token and clinic map directly to your phone.\n\nWe truly appreciate you choosing Medora Hospital, and our clinical team looks forward to taking great care of you. Please arrive 10 minutes before your consultation. Wishing you wonderful health! How else may I assist you today?`;
+        const whatsAppSlipText = generateWhatsAppTokenSlip(appt);
 
-        const humanThankYouSpoken = `Thank you so much, ${appt.patient}! Your appointment has been successfully confirmed. Your token number is ${appt.token} with ${doc.name} in ${doc.room} for ${appt.time}. You can also tap the WhatsApp button on your screen to receive this token slip directly on your phone. Wishing you wonderful health!`;
+        const humanThankYouText = `💐 **Thank You So Much, ${appt.patient}!**\n\nYour appointment is officially confirmed and registered in our live clinic queue.\n\n• **Token Number**: **${appt.token}**\n• **Consultant**: ${doc.name} (${doc.dept})\n• **Scheduled Time**: ${appt.time} (Today)\n• **Clinic Room**: ${doc.room}\n• **Consultation Fee**: Rs. ${doc.fee}\n• **Queue Status**: Live in OPD Waiting Lounge\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📱 **OFFICIAL WHATSAPP TOKEN SLIP (PREVIEW)**:\n${whatsAppSlipText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nWe truly appreciate you choosing Medora Hospital, and our clinical team looks forward to taking great care of you. Please arrive 10 minutes before your consultation. You can send this token directly to WhatsApp or SMS using the controls below. Wishing you wonderful health! How else may I assist you today?`;
+
+        const humanThankYouSpoken = `Thank you so much, ${appt.patient}! Your appointment has been successfully confirmed. Your token number is ${appt.token} with ${doc.name} in ${doc.room} for ${appt.time}. I have prepared your complete official WhatsApp token slip on your screen. You can review the full details and send it directly to your phone with one tap. Wishing you wonderful health!`;
 
         return {
           text: humanThankYouText,
           spokenText: humanThankYouSpoken,
           action: 'BOOKING_SUCCESS',
-          appointment: appt
+          appointment: appt,
+          whatsAppSlip: whatsAppSlipText
         };
       } else {
         // Still awaiting explicit confirmation from client side

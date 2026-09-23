@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { aiAgentService } from '../services/aiAgentService';
 import { useAuth } from '../context/AuthContext.jsx';
 import { audioFeedback } from '../utils/audioFeedback.js';
-import { sendWhatsApp, sendNativeSms } from '../utils/messagingGateway.js';
+import { sendWhatsApp, sendNativeSms, generateWhatsAppTokenSlip } from '../utils/messagingGateway.js';
 
 const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   const { user } = useAuth();
@@ -24,6 +24,8 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isChatDictating, setIsChatDictating] = useState(false);
   const [pendingBooking, setPendingBooking] = useState(null);
+  const [whatsAppPhone, setWhatsAppPhone] = useState(user?.phone || '0300-1234567');
+  const [copiedSlip, setCopiedSlip] = useState(false);
   const chatBottomRef = useRef(null);
   const chatInputRef = useRef(null);
 
@@ -36,32 +38,32 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
   const [latestAppointment, setLatestAppointment] = useState(null);
 
   // 1-Click WhatsApp & SMS Dispatch Handlers
-  const handleDispatchWhatsAppToken = (appt) => {
+  const handleDispatchWhatsAppToken = (appt, phoneOverride) => {
     const targetAppt = appt || latestAppointment;
     if (!targetAppt) return;
-    const patientPhone = user?.phone || '0300-1234567';
-    const msg = `🏥 *MEDORA HEALTHCARE COMPLEX - APPOINTMENT TOKEN*
-━━━━━━━━━━━━━━━━━━━━━━
-🎫 *Token Number*: ${targetAppt.token}
-👨‍⚕️ *Consultant*: ${targetAppt.doctor} (${targetAppt.dept || 'OPD'})
-🕒 *Date & Time*: ${targetAppt.date || 'Today'} at ${targetAppt.time}
-📍 *Clinic Room*: ${targetAppt.room || 'OPD Consulting Room'}
-👤 *Patient Name*: ${targetAppt.patient || currentPatientName || 'Valued Patient'}
-💳 *Consultation Fee*: Rs. ${targetAppt.fee || 2000}
-📊 *Queue Status*: Waiting in OPD Queue
-━━━━━━━━━━━━━━━━━━━━━━
-⚠️ *Instructions*: Please report to ${targetAppt.room || 'the consultation desk'} 10 minutes prior to your slot.
-🚨 *24/7 Emergency*: 0300-9998888 | Ambulance: 1122
-📍 *Location*: Medora Hospital Main Complex`;
-    sendWhatsApp(patientPhone, msg);
+    const phone = phoneOverride || whatsAppPhone || user?.phone || '0300-1234567';
+    const msg = generateWhatsAppTokenSlip(targetAppt);
+    sendWhatsApp(phone, msg);
   };
 
-  const handleDispatchSmsToken = (appt) => {
+  const handleCopyWhatsAppSlip = (appt) => {
     const targetAppt = appt || latestAppointment;
     if (!targetAppt) return;
-    const patientPhone = user?.phone || '0300-1234567';
+    const msg = generateWhatsAppTokenSlip(targetAppt);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(msg).then(() => {
+        setCopiedSlip(true);
+        setTimeout(() => setCopiedSlip(false), 2500);
+      }).catch(() => {});
+    }
+  };
+
+  const handleDispatchSmsToken = (appt, phoneOverride) => {
+    const targetAppt = appt || latestAppointment;
+    if (!targetAppt) return;
+    const phone = phoneOverride || whatsAppPhone || user?.phone || '0300-1234567';
     const msg = `MEDORA HOSPITAL: Token ${targetAppt.token} confirmed for ${targetAppt.patient} with ${targetAppt.doctor}. Time: ${targetAppt.time} in ${targetAppt.room}. Fee: Rs. ${targetAppt.fee}. Emergency: 0300-9998888.`;
-    sendNativeSms(patientPhone, msg);
+    sendNativeSms(phone, msg);
   };
 
   // References for Speech Recognition & Voice Synthesis
@@ -720,10 +722,10 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
             maxWidth: '480px',
             maxHeight: '94vh',
             overflowY: 'auto',
+            overflowX: 'hidden',
             backgroundColor: '#1e293b',
             borderRadius: '24px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-            overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             color: '#f8fafc'
@@ -931,7 +933,7 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
               <div style={{
                 margin: '12px 20px 0',
                 padding: '14px 16px',
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
                 border: '1.5px solid #10b981',
                 borderRadius: '16px',
                 boxShadow: '0 8px 25px rgba(16, 185, 129, 0.2)'
@@ -950,56 +952,136 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                 <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
                   Time: {latestAppointment.time} · {latestAppointment.room}
                 </div>
-                <div style={{ fontSize: '11px', color: '#a7f3d0', marginTop: '5px', fontStyle: 'italic' }}>
-                  "We look forward to taking great care of you. Wishing you wonderful health!"
+                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                  Patient: <strong style={{ color: '#e2e8f0' }}>{latestAppointment.patient || currentPatientName || 'Valued Patient'}</strong> · Fee: Rs. {latestAppointment.fee}
                 </div>
 
-                {/* 1-Click WhatsApp & SMS Dispatch */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleDispatchWhatsAppToken(latestAppointment)}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '7px 12px',
-                      backgroundColor: '#25D366',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '11.5px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)'
-                    }}
-                    title="Send Token Slip to WhatsApp"
-                  >
-                    <span>💬 WhatsApp Slip</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDispatchSmsToken(latestAppointment)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      padding: '7px 12px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      color: '#e2e8f0',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '8px',
-                      fontSize: '11.5px',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}
-                    title="Send Token via SMS"
-                  >
-                    <span>📱 SMS</span>
-                  </button>
+                {/* WhatsApp Token Slip Full Preview */}
+                <div style={{ marginTop: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#6ee7b7' }}>
+                      💬 Official WhatsApp Token Slip:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyWhatsAppSlip(latestAppointment)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: copiedSlip ? '#34d399' : '#93c5fd',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    >
+                      {copiedSlip ? '✓ Copied to Clipboard!' : '📋 Copy Slip Text'}
+                    </button>
+                  </div>
+                  <pre style={{
+                    margin: 0,
+                    padding: '8px 10px',
+                    backgroundColor: 'rgba(5, 46, 22, 0.7)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    borderRadius: '8px',
+                    fontSize: '10.5px',
+                    lineHeight: '1.45',
+                    color: '#a7f3d0',
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    maxHeight: '120px',
+                    overflowY: 'auto'
+                  }}>
+                    {generateWhatsAppTokenSlip(latestAppointment)}
+                  </pre>
+                </div>
+
+                {/* Phone Number Input & 1-Click Dispatch */}
+                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap' }}>📱 Recipient:</span>
+                    <input
+                      type="tel"
+                      value={whatsAppPhone}
+                      onChange={(e) => setWhatsAppPhone(e.target.value)}
+                      placeholder="0300-1234567"
+                      style={{
+                        flex: 1,
+                        padding: '5px 8px',
+                        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                        borderRadius: '6px',
+                        color: '#f8fafc',
+                        fontSize: '11.5px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleDispatchWhatsAppToken(latestAppointment)}
+                      style={{
+                        flex: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '8px 12px',
+                        backgroundColor: '#25D366',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 3px 10px rgba(37, 211, 102, 0.35)'
+                      }}
+                      title="Send Official Token Slip to WhatsApp"
+                    >
+                      <span>💬 Send to WhatsApp</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyWhatsAppSlip(latestAppointment)}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                        padding: '8px 8px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        color: copiedSlip ? '#34d399' : '#e2e8f0',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        fontSize: '11.5px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                      title="Copy Token Slip to Clipboard"
+                    >
+                      <span>{copiedSlip ? '✓ Copied' : '📋 Copy'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDispatchSmsToken(latestAppointment)}
+                      style={{
+                        padding: '8px 10px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                        color: '#cbd5e1',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '8px',
+                        fontSize: '11.5px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                      title="Send Token via SMS"
+                    >
+                      <span>📱 SMS</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1370,12 +1452,12 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                   </div>
                 )}
 
-                {/* Warm Human-like Thank You & Token Card */}
+                {/* Warm Human-like Thank You & Full WhatsApp Token Slip Card */}
                 {msg.appointment && (
                   <div style={{
                     marginTop: '8px',
                     padding: '12px 14px',
-                    backgroundColor: '#ecfdf5',
+                    backgroundColor: '#f0fdf4',
                     border: '1.5px solid #10b981',
                     borderRadius: '12px',
                     fontSize: '12px',
@@ -1396,58 +1478,135 @@ const MedoraAiAssistant = ({ userRole = 'patient' }) => {
                       Time: {msg.appointment.time} · {msg.appointment.room}
                     </div>
                     <div style={{ fontSize: '11px', color: '#047857', marginTop: '2px' }}>
-                      Consultation Fee: Rs. {msg.appointment.fee} · Status: Waiting in Queue
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#059669', marginTop: '6px', fontStyle: 'italic', borderTop: '1px solid #a7f3d0', paddingTop: '4px' }}>
-                      "We look forward to welcoming you at Medora Hospital. Please arrive 10 minutes early. Wishing you wonderful health!"
+                      Patient: <strong>{msg.appointment.patient || currentPatientName || 'Valued Patient'}</strong> · Fee: Rs. {msg.appointment.fee} · Status: Waiting in Queue
                     </div>
 
-                    {/* 1-Click WhatsApp & SMS Dispatch */}
-                    <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleDispatchWhatsAppToken(msg.appointment)}
-                        style={{
-                          flex: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '5px',
-                          padding: '7px 12px',
-                          backgroundColor: '#25D366',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontSize: '11.5px',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)'
-                        }}
-                        title="Send Token Slip to WhatsApp"
-                      >
-                        <span>💬 WhatsApp Token</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDispatchSmsToken(msg.appointment)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px',
-                          padding: '7px 12px',
-                          backgroundColor: '#f1f5f9',
-                          color: '#334155',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '8px',
-                          fontSize: '11.5px',
-                          fontWeight: '600',
-                          cursor: 'pointer'
-                        }}
-                        title="Send Token via SMS"
-                      >
-                        <span>📱 SMS</span>
-                      </button>
+                    {/* WhatsApp Slip Full Monospace Preview Box */}
+                    <div style={{ marginTop: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#047857' }}>
+                          💬 Official WhatsApp Token Slip Preview:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWhatsAppSlip(msg.appointment)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: copiedSlip ? '#059669' : '#0284c7',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            padding: 0
+                          }}
+                        >
+                          {copiedSlip ? '✓ Copied to Clipboard!' : '📋 Copy Slip Text'}
+                        </button>
+                      </div>
+                      <pre style={{
+                        margin: 0,
+                        padding: '8px 10px',
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #bbf7d0',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        lineHeight: '1.45',
+                        color: '#14532d',
+                        fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        maxHeight: '130px',
+                        overflowY: 'auto'
+                      }}>
+                        {generateWhatsAppTokenSlip(msg.appointment)}
+                      </pre>
+                    </div>
+
+                    {/* WhatsApp Phone Recipient & Action Buttons */}
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '11px', color: '#475569', whiteSpace: 'nowrap' }}>📱 Recipient:</span>
+                        <input
+                          type="tel"
+                          value={whatsAppPhone}
+                          onChange={(e) => setWhatsAppPhone(e.target.value)}
+                          placeholder="0300-1234567"
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #86efac',
+                            borderRadius: '6px',
+                            color: '#0f172a',
+                            fontSize: '11.5px',
+                            outline: 'none'
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleDispatchWhatsAppToken(msg.appointment)}
+                          style={{
+                            flex: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '5px',
+                            padding: '8px 12px',
+                            backgroundColor: '#25D366',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '11.5px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 6px rgba(37, 211, 102, 0.3)'
+                          }}
+                          title="Send Token Slip to WhatsApp"
+                        >
+                          <span>💬 Send to WhatsApp</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWhatsAppSlip(msg.appointment)}
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            padding: '8px 8px',
+                            backgroundColor: '#ffffff',
+                            color: copiedSlip ? '#059669' : '#334155',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '11.5px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                          title="Copy Token Slip to Clipboard"
+                        >
+                          <span>{copiedSlip ? '✓ Copied' : '📋 Copy'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDispatchSmsToken(msg.appointment)}
+                          style={{
+                            padding: '8px 10px',
+                            backgroundColor: '#f1f5f9',
+                            color: '#334155',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '11.5px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                          title="Send Token via SMS"
+                        >
+                          <span>📱 SMS</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

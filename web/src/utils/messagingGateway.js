@@ -96,3 +96,41 @@ export async function sendCloudMessage({ to, message, channel = 'whatsapp', reci
     };
   }
 }
+
+/**
+ * Generates an official, highly optimized WhatsApp appointment token slip.
+ */
+export function generateWhatsAppTokenSlip(appt = {}) {
+  const clinicName = 'Medora Healthcare Complex';
+  const token = appt.token || 'TK-01';
+  const doctor = appt.doctor || 'Attending Physician';
+  const dept = appt.dept || 'OPD';
+  const room = appt.room || 'Room 204 · East Wing';
+  const time = appt.time || '10:30 AM';
+  const date = appt.date || 'Today';
+  const patient = appt.patient || 'Valued Patient';
+  const fee = appt.fee || 2000;
+
+  return `🏥 *${clinicName}* — Official OPD Appointment Token
+━━━━━━━━━━━━━━━━━━━━━━━━━
+🎫 *TOKEN NUMBER:* *${token}*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 *Patient Name:* ${patient}
+👨‍⚕️ *Consultant:* ${doctor} (${dept})
+🕒 *Consultation Time:* ${time} (${date})
+📍 *Clinic Chamber:* ${room}
+💳 *Consultation Fee:* Rs. ${fee} (Pay at Reception/Cashier)
+📊 *Queue Status:* Active in OPD Waiting Lounge
+
+📋 *PATIENT INSTRUCTIONS (ہدایات):*
+• Please report to ${room} at least 10 minutes prior to your slot.
+• Keep this digital token active on your phone for verification at the reception.
+• Real-time queue call-outs are displayed on the OPD TV screens.
+
+🚨 *24/7 EMERGENCY & AMBULANCE:*
+📞 Emergency Hotline: 0300-9998888 | Rescue: 1122
+📍 *Location Map:* https://maps.google.com/?q=Medora+Hospital
+━━━━━━━━━━━━━━━━━━━━━━━━━
+_Thank you for choosing Medora Healthcare Complex._`;
+}
+
