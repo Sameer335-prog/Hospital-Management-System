@@ -7,9 +7,16 @@ import StatusBadge from '../../components/ui/StatusBadge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { PATIENTS, DOCTORS } from '../../legacy/legacyEngine.js';
 import { appointmentService } from '../../services/appointmentService.js';
+import { patientService } from '../../services/patientService.js';
 import { useToast } from '../../hooks/useToast.js';
 import { useNotification } from '../../context/NotificationContext.jsx';
-import { sendWhatsApp, sendNativeSms } from '../../utils/messagingGateway.js';
+import {
+  sendWhatsApp,
+  sendNativeSms,
+  sendTokenPdfViaWhatsApp,
+  downloadTokenPDF,
+  generateAppointmentReminderText,
+} from '../../utils/messagingGateway.js';
 import ThermalReceiptModal from '../../components/common/ThermalReceiptModal.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
@@ -79,19 +86,14 @@ const INITIAL_DOCTORS = [
 
 const STANDARD_SLOTS = [
   '09:00 AM',
-  '09:30 AM',
   '10:00 AM',
-  '10:30 AM',
   '11:00 AM',
-  '11:30 AM',
   '12:00 PM',
-  '12:30 PM',
   '01:00 PM',
   '02:00 PM',
-  '02:30 PM',
   '03:00 PM',
-  '03:30 PM',
   '04:00 PM',
+  '05:00 PM',
 ];
 
 const INITIAL_APPOINTMENTS = [
@@ -530,19 +532,18 @@ export default function AppointmentsPage() {
     setAppointments((prev) => [newAppt, ...prev]);
     appointmentService.createAppointment(newAppt);
 
-    // Add to PATIENTS registry if not present
-    if (!PATIENTS.some((p) => p.name === newAppt.patient)) {
-      PATIENTS.unshift({
-        id: newPid,
-        name: newAppt.patient,
-        phone: walkinForm.phone || '0300-1234567',
-        doctor: doc.name,
-        status: 'Waiting',
-        lastVisit: 'Today (Walk-in)',
-        blood: 'B+',
-        allergy: 'None recorded',
-      });
-    }
+    // Persist to PATIENTS registry & DB
+    patientService.createPatient({
+      id: newPid,
+      name: newAppt.patient,
+      phone: walkinForm.phone || '0300-1234567',
+      doctor: doc.name,
+      status: 'Waiting',
+      lastVisit: 'Today (Walk-in)',
+      blood: 'B+',
+      allergy: 'None recorded',
+      clinicId: clinic?.id || 'tenant-001',
+    }).catch(console.error);
 
     dispatchBookingNotification(newAppt);
     showToast(`Walk-in registered! Token ${tokenStr} issued. Please print slip or WhatsApp to patient.`);
@@ -1167,18 +1168,51 @@ export default function AppointmentsPage() {
                               boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
                               cursor: 'pointer',
                             }}
-                            title={`Send Token details to ${appt.patient} on WhatsApp`}
-                            aria-label={`Send Token to ${appt.patient} on WhatsApp`}
-                            onClick={() => {
+                            title={`Send Official Token PDF to ${appt.patient} on WhatsApp`}
+                            aria-label={`Send Token PDF to ${appt.patient} on WhatsApp`}
+                            onClick={async () => {
                               const patientObj = PATIENTS.find((p) => p.name === appt.patient || p.id === appt.pid);
                               const phone = patientObj?.phone || '0300-9876543';
-                              const clinicTitle = clinic?.name || 'Clinic';
-                              const msg = `${clinicTitle}: Dear ${appt.patient}, your appointment with ${appt.doctor} (${appt.dept}) is confirmed. Token: ${appt.token}, Time: ${appt.time}, ${appt.room}. Please report to the waiting lounge.`;
-                              sendWhatsApp(phone, msg);
-                              showToast(`WhatsApp message opened for ${appt.patient}!`);
+                              showToast(`Generating official Token PDF for ${appt.patient}...`);
+                              try {
+                                const res = await sendTokenPdfViaWhatsApp(appt, clinic, phone);
+                                if (res.mode === 'share_api') {
+                                  showToast(`Token PDF shared to WhatsApp for ${appt.patient}!`);
+                                } else {
+                                  showToast(`Token PDF downloaded (${res.fileName}) & WhatsApp opened!`);
+                                }
+                              } catch (err) {
+                                console.error('Failed to generate token PDF:', err);
+                                showToast('Failed to generate token PDF');
+                              }
                             }}
                           >
                             <WhatsAppIcon size={15} color="#ffffff" />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{
+                              width: 28,
+                              height: 28,
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 12,
+                            }}
+                            title={`Send Appointment Text Reminder to ${appt.patient}`}
+                            aria-label={`Send Reminder to ${appt.patient}`}
+                            onClick={() => {
+                              const patientObj = PATIENTS.find((p) => p.name === appt.patient || p.id === appt.pid);
+                              const phone = patientObj?.phone || '0300-9876543';
+                              const reminderText = generateAppointmentReminderText(appt, clinic);
+                              sendWhatsApp(phone, reminderText);
+                              showToast(`Appointment text reminder opened for ${appt.patient}!`);
+                            }}
+                          >
+                            ⏰
                           </button>
 
                           {appt.status === 'Waiting' && (
@@ -1346,17 +1380,43 @@ export default function AppointmentsPage() {
                     boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
                     cursor: 'pointer',
                   }}
-                  onClick={() => {
+                  onClick={async () => {
                     const patientObj = PATIENTS.find((p) => p.name === activeTokenSlip.patient || p.id === activeTokenSlip.pid);
                     const phone = patientObj?.phone || '0300-9876543';
-                    const text = `${clinic.name} OPD Token Slip:\n• Patient: ${activeTokenSlip.patient} (${activeTokenSlip.pid})\n• Token: ${activeTokenSlip.token}\n• Doctor: ${activeTokenSlip.doctor}\n• Room: ${activeTokenSlip.room}\n• Time: ${activeTokenSlip.time}\n• Date: ${activeTokenSlip.date}\nPlease arrive 10 mins prior.`;
-                    sendWhatsApp(phone, text);
-                    showToast('WhatsApp opened with Token Slip!');
+                    showToast('Generating official Token PDF for WhatsApp...');
+                    try {
+                      const res = await sendTokenPdfViaWhatsApp(activeTokenSlip, clinic, phone);
+                      if (res.mode === 'share_api') {
+                        showToast('Token PDF shared to WhatsApp!');
+                      } else {
+                        showToast(`Token PDF downloaded (${res.fileName}) & WhatsApp opened!`);
+                      }
+                    } catch (err) {
+                      console.error('Error sending token PDF:', err);
+                      showToast('Failed to generate token PDF');
+                    }
                   }}
-                  title="Share token slip directly on WhatsApp"
-                  aria-label="Share token on WhatsApp"
+                  title="Send official Token PDF via WhatsApp"
+                  aria-label="Send Token PDF on WhatsApp"
                 >
                   <WhatsAppIcon size={18} color="#ffffff" />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={async () => {
+                    try {
+                      showToast('Downloading Token PDF...');
+                      const fn = await downloadTokenPDF(activeTokenSlip, clinic);
+                      showToast(`Downloaded ${fn}`);
+                    } catch (err) {
+                      console.error('Download PDF error:', err);
+                      showToast('Failed to download PDF');
+                    }
+                  }}
+                  title="Download official Token Slip PDF"
+                >
+                  📄 PDF
                 </button>
                 <button
                   type="button"
@@ -1364,12 +1424,13 @@ export default function AppointmentsPage() {
                   onClick={() => {
                     const patientObj = PATIENTS.find((p) => p.name === activeTokenSlip.patient || p.id === activeTokenSlip.pid);
                     const phone = patientObj?.phone || '0300-9876543';
-                    const text = `${clinic.name}: Token ${activeTokenSlip.token} confirmed for ${activeTokenSlip.patient} with ${activeTokenSlip.doctor} at ${activeTokenSlip.time}. Room: ${activeTokenSlip.room}.`;
-                    sendNativeSms(phone, text);
+                    const reminderText = generateAppointmentReminderText(activeTokenSlip, clinic);
+                    sendNativeSms(phone, reminderText);
+                    showToast('SMS app opened with Appointment reminder!');
                   }}
-                  title="Send token via phone SMS"
+                  title="Send appointment text reminder via phone SMS"
                 >
-                  📱 SMS
+                  📱 SMS Reminder
                 </button>
                 <button
                   type="button"

@@ -58,34 +58,31 @@ export default function PatientsPage() {
     return maxId + 1;
   });
   const [patientsList, setPatientsList] = useState(() => {
-    if (specialty?.archetypePatients) {
-      return specialty.archetypePatients.map((p) => ({ ...p, clinicId: clinic?.id }));
+    const currentClinicId = clinic?.id || 'tenant-001';
+    const cached = patientService.getStoredPatientsSync(currentClinicId);
+    if (cached && cached.length > 0) return cached;
+    if (specialty?.archetypePatients && specialty.archetypePatients.length > 0) {
+      return specialty.archetypePatients.map((p) => ({ ...p, clinicId: currentClinicId }));
     }
-    return PATIENTS.filter((p) => !p.clinicId || p.clinicId === (clinic?.id || 'tenant-001'));
+    return PATIENTS.filter((p) => !p.clinicId || p.clinicId === currentClinicId);
   });
 
   useEffect(() => {
     let active = true;
     const currentClinicId = clinic?.id || 'tenant-001';
 
-    if (specialty?.archetypePatients) {
-      setPatientsList(specialty.archetypePatients.map((p) => ({ ...p, clinicId: currentClinicId })));
-    } else {
+    patientService.getPatients(currentClinicId).then((data) => {
+      if (active && data && data.length > 0) {
+        setPatientsList(data);
+      }
+    });
+
+    const unsubscribe = patientService.subscribe(() => {
       patientService.getPatients(currentClinicId).then((data) => {
         if (active && data) {
           setPatientsList(data);
         }
       });
-    }
-
-    const unsubscribe = patientService.subscribe(() => {
-      if (!specialty?.archetypePatients) {
-        patientService.getPatients(currentClinicId).then((data) => {
-          if (active && data) {
-            setPatientsList(data);
-          }
-        });
-      }
     });
 
     return () => {
@@ -151,10 +148,16 @@ export default function PatientsPage() {
       emergencyPhone: form.emergencyPhone,
     };
 
-    setPatientsList((prev) => [newRecord, ...prev]);
-    patientService.createPatient(newRecord);
-    setGeneratedId(id);
-    showToast(`Registered patient ${newRecord.name} (${id}) for ${clinic?.name || 'Clinic'}.`);
+    patientService.createPatient(newRecord).then((saved) => {
+      setPatientsList((prev) => [saved, ...prev.filter((p) => p.id !== saved.id)]);
+      setGeneratedId(id);
+      showToast(`Registered patient ${saved.name} (${id}) for ${clinic?.name || 'Clinic'}.`);
+    }).catch((err) => {
+      console.error('Registration error:', err);
+      setPatientsList((prev) => [newRecord, ...prev.filter((p) => p.id !== newRecord.id)]);
+      setGeneratedId(id);
+      showToast(`Registered patient ${newRecord.name} (${id}) locally.`);
+    });
   }
 
   function closeDrawer() {

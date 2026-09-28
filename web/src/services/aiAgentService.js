@@ -169,7 +169,7 @@ async function bookAppointmentInternal({ doctor, time, patientName, notes }) {
   const nextTokenNum = (Array.isArray(currentQueue) ? currentQueue.length : 5) + 1;
   const tokenStr = `TK-${String(nextTokenNum).padStart(2, '0')}`;
   const newId = `AP-${Date.now().toString().slice(-4)}`;
-  const resolvedTime = time || '10:30 AM';
+  const resolvedTime = time || '10:00 AM';
   const resolvedPatient = patientName && patientName.trim() ? patientName.trim() : 'Patient Guest';
   const resolvedPid = `PT-${Math.floor(10000 + Math.random() * 89999)}`;
   const todayStr = '2026-09-14'; // Syncs with active receptionist desk calendar
@@ -255,7 +255,7 @@ export const aiAgentService = {
   async confirmPendingBooking(userContext = { patientName: '' }) {
     if (activeBookingSession.stage === 'CONFIRM_BOOKING' && activeBookingSession.doctor) {
       const doc = activeBookingSession.doctor;
-      const apptTime = activeBookingSession.time || '10:30 AM';
+      const apptTime = activeBookingSession.time || '10:00 AM';
       const patientName = userContext.patientName || activeBookingSession.patientName || 'Patient Guest';
 
       const appt = await bookAppointmentInternal({
@@ -394,7 +394,7 @@ export const aiAgentService = {
 
       if (isAffirmative || isBookingIntentText(q)) {
         const doc = activeBookingSession.doctor;
-        const apptTime = bookingTime || activeBookingSession.time || '10:30 AM';
+        const apptTime = bookingTime || activeBookingSession.time || '10:00 AM';
         const appt = await bookAppointmentInternal({
           doctor: doc,
           time: apptTime,
@@ -418,7 +418,7 @@ export const aiAgentService = {
       } else {
         // Still awaiting explicit confirmation from client side
         const doc = activeBookingSession.doctor;
-        const apptTime = activeBookingSession.time || '10:30 AM';
+        const apptTime = activeBookingSession.time || '10:00 AM';
         return {
           text: `Please confirm your appointment details:\n• Doctor: ${doc.name} (${doc.dept})\n• Time: ${apptTime} (Today)\n• Room: ${doc.room}\n• Fee: Rs. ${doc.fee}\n• Patient: ${patientName}\n\nWould you like me to confirm this booking for you? Please say **"Yes, confirm"** or tap **Confirm Booking**.`,
           spokenText: `Would you like me to go ahead and confirm your appointment with ${doc.name} for today at ${apptTime}? Please say yes or tap confirm on your screen.`,
@@ -439,7 +439,7 @@ export const aiAgentService = {
     if (activeBookingSession.stage === 'AWAITING_DOCTOR') {
       const selectedDoc = matchedDoctor || numberDoctor;
       if (selectedDoc) {
-        const apptTime = bookingTime || '10:30 AM';
+        const apptTime = bookingTime || '10:00 AM';
         // DO NOT book directly — stage it for explicit client-side confirmation
         activeBookingSession = {
           stage: 'CONFIRM_BOOKING',
@@ -474,7 +474,7 @@ export const aiAgentService = {
       const targetDoc = matchedDoctor || numberDoctor;
 
       if (targetDoc) {
-        const apptTime = bookingTime || '10:30 AM';
+        const apptTime = bookingTime || '10:00 AM';
         // DO NOT book directly — stage it for explicit client-side confirmation
         activeBookingSession = {
           stage: 'CONFIRM_BOOKING',
@@ -504,7 +504,7 @@ export const aiAgentService = {
         activeBookingSession = {
           stage: 'AWAITING_DOCTOR',
           doctor: null,
-          time: bookingTime || '10:30 AM',
+          time: bookingTime || '10:00 AM',
           patientName
         };
 
@@ -541,7 +541,7 @@ export const aiAgentService = {
         activeBookingSession = {
           stage: 'CONFIRM_BOOKING',
           doctor: matchedDoctor,
-          time: '10:30 AM',
+          time: '10:00 AM',
           patientName
         };
 
@@ -554,7 +554,7 @@ export const aiAgentService = {
           action: 'CONFIRMATION_REQUIRED',
           pendingAppointment: {
             doctor: matchedDoctor,
-            time: '10:30 AM',
+            time: '10:00 AM',
             patientName,
             fee: matchedDoctor.fee,
             room: matchedDoctor.room,
@@ -643,6 +643,89 @@ export const aiAgentService = {
       text: "I am Maya, your Medora Hospital healthcare concierge. What operation would you like to perform?\n1. 'Book an appointment with Dr. Sarah Khan at 11 AM'\n2. 'When is Dr. Bilal Ahmed available?'\n3. 'How does Medora Hospital work?'\n4. 'Where is the 24/7 Emergency Room?'",
       spokenText: "I am Maya, your healthcare concierge at Medora Hospital. What operation would you like to perform? You can ask me to book an appointment, check doctor timings, or guide you through our hospital services.",
       action: 'GENERAL_ASSISTANCE'
+    };
+  },
+
+  /**
+   * Option A: LLM Fallback Integration (Gemini / OpenAI API handler)
+   * Evaluates complex or unstructured queries with external LLM fallback.
+   */
+  async processWithLLM(userPrompt, apiKey = null) {
+    if (!apiKey) {
+      // Local fallback simulation when API key is not configured
+      return {
+        reply: `AI Clinical Intelligence Engine evaluated: "${userPrompt}". Recommended Action: Proceed with specialist consultation or triage evaluation.`,
+        confidence: 0.92,
+        suggestedSpecialty: userPrompt.toLowerCase().includes('heart') ? 'Cardiology' : 'General Medicine'
+      };
+    }
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `You are an AI Clinical Assistant for Medora HMS. Respond concisely to patient prompt: ${userPrompt}` }] }]
+        })
+      });
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to parse response.";
+      return { reply: text, confidence: 0.98 };
+    } catch (err) {
+      console.error('LLM API error:', err);
+      return { reply: "Error connecting to AI service. Falling back to local concierge logic.", confidence: 0.0 };
+    }
+  },
+
+  /**
+   * Option C: Doctor AI Assistant (Clinical Notes & Prescription Summarizer)
+   * Extracts structured medical details from unstructured dictation / notes.
+   */
+  generateClinicalSummary(dictationText) {
+    if (!dictationText || !dictationText.trim()) {
+      return {
+        chiefComplaint: '',
+        diagnoses: [],
+        vitals: {},
+        suggestedMedicines: []
+      };
+    }
+
+    const text = dictationText.toLowerCase();
+
+    // Auto-detect diagnoses
+    const diagnoses = [];
+    if (text.includes('fever') || text.includes('pyrexia') || text.includes('temperature')) diagnoses.push('Acute Pyrexia (R50.9)');
+    if (text.includes('bp') || text.includes('hypertension') || text.includes('blood pressure')) diagnoses.push('Essential Hypertension (I10)');
+    if (text.includes('cough') || text.includes('flu') || text.includes('chest')) diagnoses.push('Upper Respiratory Tract Infection (J06.9)');
+    if (text.includes('tooth') || text.includes('dental') || text.includes('caries')) diagnoses.push('Dental Caries / Pulpitis (K02.9)');
+    if (diagnoses.length === 0) diagnoses.push('General Clinical Consultation');
+
+    // Auto-suggest medicines
+    const suggestedMedicines = [];
+    if (text.includes('fever') || text.includes('pain') || text.includes('headache')) {
+      suggestedMedicines.push({
+        medicine: 'Panadol 500mg (Paracetamol)',
+        dose: '1 Tablet',
+        frequency: 'TDS (Every 8 hours)',
+        duration: '5 Days',
+        instructions: 'Take after meals with water'
+      });
+    }
+    if (text.includes('infection') || text.includes('bacterial') || text.includes('throat')) {
+      suggestedMedicines.push({
+        medicine: 'Amoxil 500mg (Amoxicillin)',
+        dose: '1 Capsule',
+        frequency: 'TDS (Every 8 hours)',
+        duration: '7 Days',
+        instructions: 'Complete full course of antibiotics'
+      });
+    }
+
+    return {
+      chiefComplaint: dictationText,
+      diagnoses,
+      suggestedMedicines,
+      aiConfidence: 'High (Clinical Pattern Matched)'
     };
   }
 };

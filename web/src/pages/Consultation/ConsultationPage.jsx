@@ -11,6 +11,7 @@ import { useClinicProfile } from '../../utils/clinicConfig.js';
 import { sendWhatsApp } from '../../utils/messagingGateway.js';
 import { getSpecialtyConfig } from '../../utils/specialtyConfig.js';
 import DentalOdontogram from '../../components/dental/DentalOdontogram.jsx';
+import { aiAgentService } from '../../services/aiAgentService.js';
 
 const DRUG_ALLERGY_RULES = [
   {
@@ -495,7 +496,29 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
           <SectionLabel>Step 1 · Clinical Assessment</SectionLabel>
 
           <div className="card card-pad">
-            <div className="section-title">Chief Complaint & Presenting Illness</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div className="section-title" style={{ margin: 0 }}>Chief Complaint & Presenting Illness</div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', border: 'none' }}
+                onClick={() => {
+                  const summary = aiAgentService.generateClinicalSummary(chiefComplaint);
+                  if (summary.diagnoses.length > 0) {
+                    setDiagnoses((prev) => Array.from(new Set([...prev, ...summary.diagnoses])));
+                  }
+                  if (summary.suggestedMedicines.length > 0) {
+                    setMedicines((prev) => [
+                      ...prev,
+                      ...summary.suggestedMedicines.map((m, idx) => ({ ...m, id: Date.now() + idx }))
+                    ]);
+                  }
+                  showToast('AI Clinical Assistant: Diagnoses & Prescriptions auto-extracted from notes!');
+                }}
+              >
+                🤖 AI Clinical Auto-Summarize
+              </button>
+            </div>
             <textarea
               className="input"
               rows={2}

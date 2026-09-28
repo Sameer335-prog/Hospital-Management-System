@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../hooks/useToast.js';
 import { useNotification } from '../../context/NotificationContext.jsx';
 import { appointmentService } from '../../services/appointmentService.js';
-import { sendWhatsApp, sendNativeSms } from '../../utils/messagingGateway.js';
+import { sendWhatsApp, sendNativeSms, sendTokenPdfViaWhatsApp, downloadTokenPDF } from '../../utils/messagingGateway.js';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
 import ThermalReceiptModal from '../../components/common/ThermalReceiptModal.jsx';
 import {
@@ -26,8 +26,7 @@ const TABS = [
 ];
 
 const STANDARD_BOOKING_SLOTS = [
-  '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-  '12:00 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM',
+  '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
 ];
 
 export default function PatientPortalPage() {
@@ -524,13 +523,27 @@ export default function PatientPortalPage() {
                               boxShadow: '0 1px 4px rgba(37, 211, 102, 0.25)',
                               cursor: 'pointer',
                             }}
-                            title="Share token on WhatsApp"
-                            aria-label="Share token on WhatsApp"
-                            onClick={() => {
-                              const clinicName = clinic?.name || 'Clinic';
-                              const msg = `${clinicName} Visit Token: Token ${a.token} with ${a.doctor} (${a.dept}) on ${a.date} at ${a.time}. Room: ${a.room}.`;
-                              sendWhatsApp(patient.phone || '0300-1234567', msg);
-                              showToast('WhatsApp opened with Token details!');
+                            title="Send Token PDF via WhatsApp"
+                            aria-label="Send Token PDF on WhatsApp"
+                            onClick={async () => {
+                              showToast('Generating Token PDF...');
+                              try {
+                                const apptData = {
+                                  ...a,
+                                  patient: patient?.name,
+                                  pid: patient?.id,
+                                  phone: patient?.phone,
+                                };
+                                const res = await sendTokenPdfViaWhatsApp(apptData, clinic, patient?.phone);
+                                if (res.mode === 'share_api') {
+                                  showToast('Token PDF shared to WhatsApp!');
+                                } else {
+                                  showToast(`Token PDF downloaded (${res.fileName}) & WhatsApp opened!`);
+                                }
+                              } catch (err) {
+                                console.error(err);
+                                showToast('Failed to generate token PDF');
+                              }
                             }}
                           >
                             <WhatsAppIcon size={14} color="#ffffff" />
@@ -882,16 +895,53 @@ export default function PatientPortalPage() {
                     boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
                     cursor: 'pointer',
                   }}
-                  onClick={() => {
-                    const clinicName = clinic?.name || 'Clinic';
-                    const text = `${clinicName} OPD Token Slip:\n• Patient: ${patient.name} (${patient.id})\n• Token: ${tokenSlipModal.token}\n• Doctor: ${tokenSlipModal.doctor}\n• Room: ${tokenSlipModal.room}\n• Date & Time: ${tokenSlipModal.date} · ${tokenSlipModal.time}\nPlease report 10 minutes before consultation.`;
-                    sendWhatsApp(patient.phone || '0300-1234567', text);
-                    showToast('WhatsApp opened with Token Slip!');
+                  onClick={async () => {
+                    showToast('Generating official Token PDF...');
+                    try {
+                      const apptData = {
+                        ...tokenSlipModal,
+                        patient: patient?.name,
+                        pid: patient?.id,
+                        phone: patient?.phone,
+                      };
+                      const res = await sendTokenPdfViaWhatsApp(apptData, clinic, patient?.phone);
+                      if (res.mode === 'share_api') {
+                        showToast('Token PDF shared to WhatsApp!');
+                      } else {
+                        showToast(`Token PDF downloaded (${res.fileName}) & WhatsApp opened!`);
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      showToast('Failed to generate token PDF');
+                    }
                   }}
-                  title="Share token on WhatsApp"
-                  aria-label="Share token on WhatsApp"
+                  title="Send official Token PDF via WhatsApp"
+                  aria-label="Send Token PDF on WhatsApp"
                 >
                   <WhatsAppIcon size={18} color="#ffffff" />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={async () => {
+                    try {
+                      showToast('Downloading Token PDF...');
+                      const apptData = {
+                        ...tokenSlipModal,
+                        patient: patient?.name,
+                        pid: patient?.id,
+                        phone: patient?.phone,
+                      };
+                      const fn = await downloadTokenPDF(apptData, clinic);
+                      showToast(`Downloaded ${fn}`);
+                    } catch (err) {
+                      console.error(err);
+                      showToast('Failed to download PDF');
+                    }
+                  }}
+                  title="Download Official Token PDF"
+                >
+                  📄 PDF
                 </button>
                 <button
                   type="button"

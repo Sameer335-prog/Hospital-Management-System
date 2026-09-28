@@ -142,3 +142,11 @@ export function generateWhatsAppTokenSlip(appt = {}) {
 _${profile.thankYouMessage || `Thank you for choosing ${clinicName}.`}_`;
 }
 
+export {
+  generateTokenPDFDoc,
+  generateTokenPDFBlob,
+  downloadTokenPDF,
+  sendTokenPdfViaWhatsApp,
+  generateAppointmentReminderText,
+} from './tokenPdfGenerator.js';
+

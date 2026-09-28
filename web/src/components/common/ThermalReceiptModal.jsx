@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import Icon, { WhatsAppIcon } from '../ui/Icon.jsx';
 import QrCode from '../ui/QrCode.jsx';
 import { useClinicProfile } from '../../utils/clinicConfig.js';
-import { sendWhatsApp } from '../../utils/messagingGateway.js';
+import { sendWhatsApp, sendTokenPdfViaWhatsApp, downloadTokenPDF } from '../../utils/messagingGateway.js';
 
 /**
  * ThermalReceiptModal.jsx
@@ -39,8 +39,16 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
     setTimeout(cleanup, 2000);
   };
 
-  const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = async () => {
     const phone = data.patientPhone || data.phone || '0300-1234567';
+    if (data.token) {
+      try {
+        await sendTokenPdfViaWhatsApp(data, clinic, phone);
+        return;
+      } catch (err) {
+        console.warn('PDF dispatch fallback to WhatsApp text:', err);
+      }
+    }
     let text = `🧾 *${clinic.name}* — Official Counter Receipt\n`;
     text += `━━━━━━━━━━━━━━━━━━━━\n`;
     if (data.token) text += `🎫 *Token Number:* #${data.token}\n`;
@@ -501,6 +509,22 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
             <button className="btn btn-secondary btn-sm" onClick={onClose}>
               Close
             </button>
+            {data.token && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={async () => {
+                  try {
+                    await downloadTokenPDF(data, clinic);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                title="Download Official Token Slip PDF"
+              >
+                📄 PDF
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-sm"
@@ -519,7 +543,7 @@ export default function ThermalReceiptModal({ isOpen, onClose, data, type = 'tok
                 cursor: 'pointer',
               }}
               onClick={handleSendWhatsApp}
-              title="Send via WhatsApp"
+              title={data?.token ? "Send Official Token PDF via WhatsApp" : "Send via WhatsApp"}
               aria-label="Send via WhatsApp"
             >
               <WhatsAppIcon size={18} color="#ffffff" />
