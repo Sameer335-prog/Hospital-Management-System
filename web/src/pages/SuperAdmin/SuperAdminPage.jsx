@@ -25,6 +25,7 @@ export default function SuperAdminPage() {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [inspectClinic, setInspectClinic] = useState(null);
+  const [editingClinic, setEditingClinic] = useState(null);
   const [invoiceModalData, setInvoiceModalData] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -116,6 +117,18 @@ export default function SuperAdminPage() {
     setTenants(updated);
     saveTenantClinics(updated);
     showToast('Clinic status updated.');
+  };
+
+  // Action: Save Edit Clinic Details (Phone, Doctor, Name, City)
+  const handleSaveEditClinic = (e) => {
+    e.preventDefault();
+    if (!editingClinic || !editingClinic.name.trim() || !editingClinic.doctorInCharge.trim()) return;
+
+    const updated = tenants.map((t) => (t.id === editingClinic.id ? editingClinic : t));
+    setTenants(updated);
+    saveTenantClinics(updated);
+    setEditingClinic(null);
+    showToast(`✏️ Updated profile & phone number for ${editingClinic.name}!`);
   };
 
   // Submit New Clinic Onboarding
@@ -602,6 +615,15 @@ export default function SuperAdminPage() {
                               title="Generate official SaaS subscription invoice"
                             >
                               🧾 Invoice
+                            </button>
+
+                            {/* Edit Clinic Profile & Phone */}
+                            <button
+                              className="btn btn-secondary btn-xs"
+                              onClick={() => setEditingClinic({ ...tenant })}
+                              title={`Edit profile, phone number & doctor in-charge for ${tenant.name}`}
+                            >
+                              ✏️ Edit
                             </button>
 
                             {/* Inspect Clinic Details */}
@@ -1251,6 +1273,92 @@ export default function SuperAdminPage() {
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Clinic Profile & Phone Number */}
+      {editingClinic && (
+        <div className="modal-overlay" onClick={() => setEditingClinic(null)}>
+          <div className="modal" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>✏️ Edit Clinic Profile & Owner Contact</h3>
+              <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setEditingClinic(null)}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSaveEditClinic}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="field">
+                  <label>Clinic / Practice Name</label>
+                  <input
+                    className="input"
+                    value={editingClinic.name || ''}
+                    onChange={(e) => setEditingClinic({ ...editingClinic, name: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Doctor In-Charge / Owner Name</label>
+                  <input
+                    className="input"
+                    value={editingClinic.doctorInCharge || ''}
+                    onChange={(e) => setEditingClinic({ ...editingClinic, doctorInCharge: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Owner Official Phone / WhatsApp Number</label>
+                  <input
+                    className="input"
+                    value={editingClinic.phone || ''}
+                    onChange={(e) => setEditingClinic({ ...editingClinic, phone: e.target.value })}
+                    placeholder="e.g. 0300-1234567"
+                    required
+                  />
+                  <div className="hint" style={{ fontSize: 11, marginTop: 4 }}>
+                    Used for WhatsApp automated welcome links, invoice receipts, and platform support notifications.
+                  </div>
+                </div>
+
+                <div className="grid grid-2" style={{ gap: 12 }}>
+                  <div className="field">
+                    <label>City</label>
+                    <select
+                      className="select"
+                      value={editingClinic.city || 'Islamabad'}
+                      onChange={(e) => setEditingClinic({ ...editingClinic, city: e.target.value })}
+                    >
+                      {PAKISTANI_CITIES.filter((c) => c !== 'All Cities').map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="field">
+                    <label>Specialty Practice Type</label>
+                    <input
+                      className="input"
+                      value={editingClinic.practiceType || ''}
+                      onChange={(e) => setEditingClinic({ ...editingClinic, practiceType: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-foot">
+                <button type="button" className="btn btn-secondary" onClick={() => setEditingClinic(null)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
