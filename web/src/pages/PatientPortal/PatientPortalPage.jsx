@@ -513,40 +513,25 @@ export default function PatientPortalPage() {
                               background: '#25D366',
                               color: '#ffffff',
                               border: 'none',
-                              width: 26,
-                              height: 26,
-                              padding: 0,
+                              padding: '4px 10px',
+                              borderRadius: 6,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: 'var(--radius-sm, 6px)',
-                              boxShadow: '0 1px 4px rgba(37, 211, 102, 0.25)',
+                              gap: 4,
+                              fontSize: 11,
+                              fontWeight: 700,
                               cursor: 'pointer',
                             }}
-                            title="Send Token PDF via WhatsApp"
-                            aria-label="Send Token PDF on WhatsApp"
-                            onClick={async () => {
-                              showToast('Generating Token PDF...');
-                              try {
-                                const apptData = {
-                                  ...a,
-                                  patient: patient?.name,
-                                  pid: patient?.id,
-                                  phone: patient?.phone,
-                                };
-                                const res = await sendTokenPdfViaWhatsApp(apptData, clinic, patient?.phone);
-                                if (res.mode === 'share_api') {
-                                  showToast('Token PDF shared to WhatsApp!');
-                                } else {
-                                  showToast(`Token PDF downloaded (${res.fileName}) & WhatsApp opened!`);
-                                }
-                              } catch (err) {
-                                console.error(err);
-                                showToast('Failed to generate token PDF');
-                              }
+                            onClick={() => {
+                              const clinicName = clinic?.name || 'Medora Hospital';
+                              const msg = `📱 *${clinicName} Appointment Reminder*\n\nDear ${patient.name},\n\nYour appointment is confirmed:\n• *Token Number*: ${a.token}\n• *Consultant*: ${a.doctor} (${a.dept})\n• *Time*: ${a.time} (${a.date})\n• *Location*: ${a.room}\n\nPlease arrive 10 minutes before your scheduled slot. Wishing you good health!`;
+                              sendWhatsApp(patient.phone || '0300-1234567', msg);
+                              showToast(`WhatsApp reminder dispatched for Token ${a.token}!`);
                             }}
+                            title="Send instant WhatsApp appointment reminder to my phone"
                           >
                             <WhatsAppIcon size={14} color="#ffffff" />
+                            <span>WhatsApp Reminder</span>
                           </button>
                         </div>
                       </td>
