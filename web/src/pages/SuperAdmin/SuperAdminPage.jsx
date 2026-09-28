@@ -161,12 +161,17 @@ export default function SuperAdminPage() {
   const openWhatsAppOutreach = (tenant) => {
     const cleanPhone = tenant.phone.replace(/[^0-9]/g, '');
     const intl = cleanPhone.startsWith('0') ? `92${cleanPhone.slice(1)}` : cleanPhone;
+    const origin = window.location.origin;
+    const accessLink = `${origin}?tenant=${tenant.slug || tenant.id}`;
+
     const msg = encodeURIComponent(
       `Assalam-o-Alaikum Dr. ${tenant.doctorInCharge},\n\n` +
-      `This is Medora Cloud SaaS Platform Operations regarding *${tenant.name}*.\n` +
-      `Your current subscription plan is *${tenant.plan.toUpperCase()} Tier* (Valid until: ${tenant.expiresAt}).\n\n` +
-      `Please let us know if you require doctor seat additions or technical support.\n\n` +
-      `_Medora Healthcare Systems Cloud Operations_`
+      `Welcome to Medora Cloud HMS! Your dedicated portal for *${tenant.name}* is live.\n\n` +
+      `🔗 **Direct Portal Access Link**:\n${accessLink}\n\n` +
+      `• **Subscription Plan**: ${tenant.plan.toUpperCase()} Tier\n` +
+      `• **Trial Expiry**: ${tenant.expiresAt}\n\n` +
+      `You can bookmark this link to access your clinic desk, OPD queues, and patient records anytime.\n\n` +
+      `_Medora Healthcare Systems SaaS Operations_`
     );
     window.open(`https://wa.me/${intl}?text=${msg}`, '_blank', 'noopener,noreferrer');
   };
