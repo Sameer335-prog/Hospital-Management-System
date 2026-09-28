@@ -532,10 +532,26 @@ export default function SuperAdminPage() {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                            {/* Copy Access Link Button */}
+                            <button
+                              className="btn btn-secondary btn-xs"
+                              onClick={() => {
+                                const origin = window.location.origin;
+                                const link = `${origin}?tenant=${tenant.slug || tenant.id}`;
+                                if (navigator.clipboard) {
+                                  navigator.clipboard.writeText(link);
+                                  showToast(`📋 Copied Access Link for ${tenant.name}!`);
+                                }
+                              }}
+                              title={`Copy live access URL link for ${tenant.name}`}
+                            >
+                              🔗 Copy Link
+                            </button>
+
                             {/* Direct WhatsApp Contact Button */}
                             <button
                               className="btn btn-ghost btn-icon btn-xs"
-                              onClick={() => handleWhatsAppClinic(tenant)}
+                              onClick={() => openWhatsAppOutreach(tenant)}
                               title={`Direct WhatsApp to ${tenant.name} (${tenant.phone})`}
                               aria-label="Message clinic doctor directly on WhatsApp"
                             >
