@@ -552,19 +552,29 @@ export default function SuperAdminPage() {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
-                            {/* Direct Open Portal Button */}
+                            {/* Primary Launch Portal */}
                             <a
                               href={`${window.location.origin}?tenant=${tenant.slug || tenant.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="btn btn-primary btn-xs"
-                              style={{ textDecoration: 'none', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#ffffff', fontWeight: 700 }}
+                              style={{ textDecoration: 'none', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#ffffff', fontWeight: 800 }}
                               title={`Directly open portal for ${tenant.name}`}
                             >
-                              🚀 Open Portal
+                              🚀 Open
                             </a>
 
-                            {/* Copy Access Link Button */}
+                            {/* Direct WhatsApp Contact */}
+                            <button
+                              className="btn btn-secondary btn-icon btn-xs"
+                              onClick={() => openWhatsAppOutreach(tenant)}
+                              title={`Direct WhatsApp to ${tenant.name} (${tenant.phone})`}
+                              aria-label="Message clinic doctor directly on WhatsApp"
+                            >
+                              <WhatsAppIcon size={14} color="#25D366" />
+                            </button>
+
+                            {/* Copy Access Link */}
                             <button
                               className="btn btn-secondary btn-xs"
                               onClick={() => {
@@ -577,61 +587,10 @@ export default function SuperAdminPage() {
                               }}
                               title={`Copy live access URL link for ${tenant.name}`}
                             >
-                              🔗 Copy Link
+                              🔗 Link
                             </button>
 
-                            {/* Direct WhatsApp Contact Button */}
-                            <button
-                              className="btn btn-ghost btn-icon btn-xs"
-                              onClick={() => openWhatsAppOutreach(tenant)}
-                              title={`Direct WhatsApp to ${tenant.name} (${tenant.phone})`}
-                              aria-label="Message clinic doctor directly on WhatsApp"
-                            >
-                              <WhatsAppIcon size={14} color="#25D366" />
-                            </button>
-
-                            {/* Plan Switcher */}
-                            <select
-                              className="select select-xs"
-                              value={tenant.plan}
-                              onChange={(e) => handleChangePlan(tenant.id, e.target.value)}
-                              title="Change subscription plan"
-                            >
-                              <option value="starter">Solo (Rs. 4,500)</option>
-                              <option value="growth">Polyclinic (Rs. 9,500)</option>
-                              <option value="hospital">Hospital (Rs. 18,500)</option>
-                              <option value="enterprise">Enterprise (Rs. 35,000)</option>
-                            </select>
-
-                            {/* Extend Trial */}
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onClick={() => handleExtendTrial(tenant.id)}
-                              title="Add 14 Days Free Extension"
-                            >
-                              +14d
-                            </button>
-
-                            {/* Suspend / Activate Toggle */}
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              style={{ color: tenant.status === 'suspended' ? 'var(--c-success)' : 'var(--c-error)' }}
-                              onClick={() => handleToggleStatus(tenant.id)}
-                              title={tenant.status === 'suspended' ? 'Activate Clinic' : 'Freeze / Suspend Clinic'}
-                            >
-                              {tenant.status === 'suspended' ? 'Activate' : 'Suspend'}
-                            </button>
-
-                            {/* Generate SaaS Tax Invoice */}
-                            <button
-                              className="btn btn-ghost btn-xs"
-                              onClick={() => handleGenerateInvoice(tenant)}
-                              title="Generate official SaaS subscription invoice"
-                            >
-                              🧾 Invoice
-                            </button>
-
-                            {/* Edit Clinic Profile & Phone */}
+                            {/* Edit Profile */}
                             <button
                               className="btn btn-secondary btn-xs"
                               onClick={() => setEditingClinic({ ...tenant })}
@@ -640,13 +599,37 @@ export default function SuperAdminPage() {
                               ✏️ Edit
                             </button>
 
-                            {/* Inspect Clinic Details */}
-                            <button
-                              className="btn btn-secondary btn-xs"
-                              onClick={() => setInspectClinic(tenant)}
-                              title="Inspect clinic profile and subscription metrics"
+                            {/* Plan Switcher */}
+                            <select
+                              className="select select-xs"
+                              value={tenant.plan}
+                              onChange={(e) => handleChangePlan(tenant.id, e.target.value)}
+                              title="Change subscription plan"
+                              style={{ fontSize: 11, padding: '2px 6px' }}
                             >
-                              Inspect
+                              <option value="starter">Solo (Rs. 4,500)</option>
+                              <option value="growth">Polyclinic (Rs. 9,500)</option>
+                              <option value="hospital">Hospital (Rs. 18,500)</option>
+                              <option value="enterprise">Enterprise (Rs. 35,000)</option>
+                            </select>
+
+                            {/* Invoice */}
+                            <button
+                              className="btn btn-ghost btn-xs"
+                              onClick={() => handleGenerateInvoice(tenant)}
+                              title="Generate official SaaS subscription invoice"
+                            >
+                              🧾 Invoice
+                            </button>
+
+                            {/* Suspend / Activate */}
+                            <button
+                              className="btn btn-ghost btn-xs"
+                              style={{ color: tenant.status === 'suspended' ? 'var(--c-success)' : 'var(--c-error)', fontWeight: 700 }}
+                              onClick={() => handleToggleStatus(tenant.id)}
+                              title={tenant.status === 'suspended' ? 'Activate Clinic' : 'Freeze / Suspend Clinic'}
+                            >
+                              {tenant.status === 'suspended' ? 'Activate' : 'Freeze'}
                             </button>
                           </div>
                         </td>
