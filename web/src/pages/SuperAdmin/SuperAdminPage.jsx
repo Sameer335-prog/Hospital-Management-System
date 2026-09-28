@@ -178,13 +178,15 @@ export default function SuperAdminPage() {
     const accessLink = `${origin}?tenant=${tenant.slug || tenant.id}`;
 
     const msg = encodeURIComponent(
-      `Assalam-o-Alaikum Dr. ${tenant.doctorInCharge},\n\n` +
-      `Welcome to Medora Cloud HMS! Your dedicated portal for *${tenant.name}* is live.\n\n` +
-      `🔗 **Direct Portal Access Link**:\n${accessLink}\n\n` +
-      `• **Subscription Plan**: ${tenant.plan.toUpperCase()} Tier\n` +
-      `• **Trial Expiry**: ${tenant.expiresAt}\n\n` +
-      `You can bookmark this link to access your clinic desk, OPD queues, and patient records anytime.\n\n` +
-      `_Medora Healthcare Systems SaaS Operations_`
+      `Dear Dr. ${tenant.doctorInCharge},\n\n` +
+      `We are pleased to inform you that the digital healthcare workspace for *${tenant.name}* is officially provisioned on Medora Cloud HMS.\n\n` +
+      `🌐 **Direct Access Portal Link**:\n${accessLink}\n\n` +
+      `📋 **Subscription Details**:\n` +
+      `• Tier: ${tenant.plan.toUpperCase()}\n` +
+      `• Renewal / Validity: ${tenant.expiresAt}\n\n` +
+      `You may launch your portal immediately by clicking the link above to manage appointments, electronic health records, and billing.\n\n` +
+      `Kind regards,\n` +
+      `*Medora Healthcare Systems Operations Team*`
     );
     window.open(`https://wa.me/${intl}?text=${msg}`, '_blank', 'noopener,noreferrer');
   };
@@ -550,6 +552,18 @@ export default function SuperAdminPage() {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                            {/* Direct Open Portal Button */}
+                            <a
+                              href={`${window.location.origin}?tenant=${tenant.slug || tenant.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-primary btn-xs"
+                              style={{ textDecoration: 'none', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#ffffff', fontWeight: 700 }}
+                              title={`Directly open portal for ${tenant.name}`}
+                            >
+                              🚀 Open Portal
+                            </a>
+
                             {/* Copy Access Link Button */}
                             <button
                               className="btn btn-secondary btn-xs"
