@@ -37,6 +37,31 @@ const STORAGE_KEY = 'medora_hospital_profile';
 export function getClinicProfile() {
   if (typeof window === 'undefined') return DEFAULT_CLINIC_PROFILE;
   try {
+    // 1. Dynamic Subdomain / URL Slug Tenant Resolution for SaaS Live Service
+    const host = window.location.hostname;
+    const searchParams = new URLSearchParams(window.location.search);
+    const tenantQuery = searchParams.get('tenant') || searchParams.get('clinic');
+
+    if (tenantQuery) {
+      const saasTenantsRaw = localStorage.getItem('medora_saas_tenants');
+      const tenants = saasTenantsRaw ? JSON.parse(saasTenantsRaw) : [];
+      const matched = tenants.find((t) => t.slug === tenantQuery || t.id === tenantQuery);
+      if (matched) {
+        return { ...DEFAULT_CLINIC_PROFILE, ...matched };
+      }
+    } else if (host && !host.includes('localhost') && !host.startsWith('127.') && !host.startsWith('192.')) {
+      const parts = host.split('.');
+      if (parts.length > 2) {
+        const subdomainSlug = parts[0].toLowerCase();
+        const saasTenantsRaw = localStorage.getItem('medora_saas_tenants');
+        const tenants = saasTenantsRaw ? JSON.parse(saasTenantsRaw) : [];
+        const matched = tenants.find((t) => t.slug === subdomainSlug);
+        if (matched) {
+          return { ...DEFAULT_CLINIC_PROFILE, ...matched };
+        }
+      }
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return DEFAULT_CLINIC_PROFILE;
     return { ...DEFAULT_CLINIC_PROFILE, ...JSON.parse(saved) };

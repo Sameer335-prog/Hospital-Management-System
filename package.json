@@ -6,6 +6,7 @@
     "build": "npm --prefix web install && npm --prefix web run build",
     "vercel-build": "npm --prefix web install && npm --prefix web run build",
     "dev": "npm --prefix web run dev",
+    "web": "npm --prefix web run dev",
     "preview": "npm --prefix web run preview",
     "lint": "npm --prefix web run lint",
     "server": "npm --prefix backend run dev",
