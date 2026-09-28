@@ -12,12 +12,13 @@ export default function LandingPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
   const [generatedClinic, setGeneratedClinic] = useState(null);
+  const [activeThemeOverride, setActiveThemeOverride] = useState(null);
 
   const CLINIC_PROMPT_PRESETS = [
     { title: '🫀 Cardiology Center', prompt: 'Al-Razi Heart & Vascular Institute, Lahore' },
     { title: '🦷 Aesthetic Dental Studio', prompt: 'SmileCare Dental & Orthodontic Studio, Karachi' },
     { title: '👶 Pediatric Clinic', prompt: 'Little Stars Pediatric & Childcare Clinic, Islamabad' },
-    { title: '🦴 Orthopedic Center', prompt: 'Khyber Bone & Joint Specialty Complex, Peshawar' },
+    { title: '🦴 Orthopedic Complex', prompt: 'Khyber Bone & Joint Specialty Complex, Peshawar' },
   ];
 
   const handleGenerateClinicWithAI = () => {
@@ -26,9 +27,9 @@ export default function LandingPage() {
     setGenerationStep(1);
     setGeneratedClinic(null);
 
-    // AI Generation Animation Pipeline
-    setTimeout(() => setGenerationStep(2), 500);
-    setTimeout(() => setGenerationStep(3), 1000);
+    // AI Generation Pipeline Simulation
+    setTimeout(() => setGenerationStep(2), 400);
+    setTimeout(() => setGenerationStep(3), 800);
     setTimeout(() => {
       setGenerationStep(4);
       const isDental = promptInput.toLowerCase().includes('dental') || promptInput.toLowerCase().includes('smile');
@@ -36,28 +37,29 @@ export default function LandingPage() {
       const isCardio = promptInput.toLowerCase().includes('heart') || promptInput.toLowerCase().includes('cardio');
 
       const primaryColor = isDental ? '#0d9488' : isPeds ? '#ec4899' : isCardio ? '#e11d48' : '#0284c7';
-      const specialty = isDental ? 'Dental & Orthodontics' : isPeds ? 'Pediatrics & Neonatology' : isCardio ? 'Cardiology & Vascular Surgery' : 'General & Multi-Specialty';
+      const specialty = isDental ? 'Dental & Orthodontics' : isPeds ? 'Pediatrics & Child Care' : isCardio ? 'Cardiology & Vascular Care' : 'General & Multi-Specialty';
 
       const created = {
         name: promptInput.trim(),
         specialty,
         primaryColor,
         city: promptInput.includes('Lahore') ? 'Lahore' : promptInput.includes('Karachi') ? 'Karachi' : promptInput.includes('Islamabad') ? 'Islamabad' : 'Peshawar',
-        tagline: `Leading ${specialty} Care with Real-Time Tokens & Gemini AI Notes`,
+        tagline: `Premier ${specialty} Care with Real-Time OPD Tokens & Gemini AI Documentation`,
         doctors: [
           { name: 'Dr. Sarah Ahmed', role: `Senior ${specialty} Specialist`, fee: 'Rs. 2,500', slot: '1-Hour Fixed Slots' },
           { name: 'Dr. Bilal Chaudhry', role: `Consultant ${specialty}`, fee: 'Rs. 3,000', slot: '1-Hour Fixed Slots' },
         ],
         phone: '0300-9988776',
-        address: 'Main Boulevard, Sector G-9, Pakistan',
+        address: 'Main Health Boulevard, Sector G-9, Pakistan',
       };
 
       setGeneratedClinic(created);
       setIsGenerating(false);
-    }, 1600);
+    }, 1400);
   };
 
-  const handleLaunchGeneratedWorkspace = (generated) => {
+  const handleApplyThemeToPage = (generated) => {
+    setActiveThemeOverride(generated);
     switchActiveClinic({
       name: generated.name,
       city: generated.city,
@@ -66,8 +68,18 @@ export default function LandingPage() {
       brandColor: generated.primaryColor,
       slug: generated.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
     });
+  };
+
+  const handleLaunchGeneratedWorkspace = (generated) => {
+    handleApplyThemeToPage(generated);
     navigate('/appointments');
   };
+
+  // Active Display Info (derived from dynamic clinic profile or AI theme override)
+  const currentBrandColor = activeThemeOverride?.primaryColor || clinic?.brandColor || '#0284c7';
+  const currentClinicName = activeThemeOverride?.name || clinic?.name || 'Medora Cloud HMS';
+  const currentCity = activeThemeOverride?.city || clinic?.city || 'Pakistan';
+  const currentPhone = activeThemeOverride?.phone || clinic?.phone || '+92 300 1234567';
 
   const DEMO_WORKSPACES = [
     {
@@ -120,84 +132,84 @@ export default function LandingPage() {
   return (
     <div style={{ fontFamily: 'var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)', color: '#0f172a', backgroundColor: '#f8fafc', minHeight: '100vh', scrollBehavior: 'smooth' }}>
       {/* Top Navigation Bar */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: 'rgba(255, 255, 255, 0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(226, 232, 240, 0.8)', padding: '16px 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: 'rgba(255, 255, 255, 0.94)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(226, 232, 240, 0.8)', padding: '16px 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 24, fontWeight: 900, boxShadow: '0 6px 16px rgba(2, 132, 199, 0.35)' }}>
-            M
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${currentBrandColor} 0%, #0369a1 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 24, fontWeight: 900, boxShadow: `0 6px 16px ${currentBrandColor}40` }}>
+            {currentClinicName.charAt(0)}
           </div>
           <div>
-            <div style={{ fontSize: 21, fontWeight: 900, background: 'linear-gradient(135deg, #0f172a 0%, #0284c7 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.3px' }}>
-              Medora Cloud HMS
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.3px' }}>
+              {currentClinicName}
             </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#0284c7', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
-              Multi-Tenant Healthcare Platform
+            <div style={{ fontSize: 11, fontWeight: 700, color: currentBrandColor, letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+              {currentCity} · {currentPhone}
             </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 28, fontSize: 14.5, fontWeight: 700, color: '#475569' }}>
-          <a href="#ai-builder" style={{ color: '#0284c7', textDecoration: 'none', transition: 'color 0.15s' }}>✨ Gemini AI Builder</a>
-          <a href="#workspaces" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>Live Workspaces</a>
-          <a href="#features" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>AI & Features</a>
-          <a href="#pricing" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>SaaS Pricing</a>
+          <a href="#ai-builder" style={{ color: currentBrandColor, textDecoration: 'none', transition: 'color 0.15s' }}>✨ Gemini AI Builder</a>
+          <a href="#workspaces" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>Workspaces</a>
+          <a href="#features" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>Features</a>
+          <a href="#pricing" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>SaaS Plans</a>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => navigate('/login')} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a', fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s' }}>
+          <button onClick={() => navigate('/login')} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
             Sign In
           </button>
-          <button onClick={() => navigate('/login?mode=signup')} style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', color: '#ffffff', fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)', transition: 'all 0.15s' }}>
-            Start 14-Day Free Trial
+          <button onClick={() => navigate('/login?mode=signup')} style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${currentBrandColor} 0%, #0369a1 100%)`, color: '#ffffff', fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: `0 4px 14px ${currentBrandColor}40` }}>
+            Free 14-Day Trial
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <header style={{ padding: '90px 32px 60px', maxWidth: 1280, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, backgroundColor: 'rgba(2, 132, 199, 0.08)', color: '#0284c7', padding: '6px 18px', borderRadius: 999, fontWeight: 800, fontSize: 13.5, marginBottom: 24, border: '1px solid rgba(2, 132, 199, 0.25)' }}>
-          <span>✨ Enterprise Healthcare ERP · Powered by Gemini AI & Supabase</span>
+      <header style={{ padding: '80px 32px 60px', maxWidth: 1280, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, backgroundColor: `${currentBrandColor}15`, color: currentBrandColor, padding: '6px 18px', borderRadius: 999, fontWeight: 800, fontSize: 13.5, marginBottom: 24, border: `1px solid ${currentBrandColor}30` }}>
+          <span>✨ Modern Healthcare OS · Powered by Gemini AI & Supabase PostgreSQL</span>
         </div>
         
-        <h1 style={{ fontSize: 58, fontWeight: 900, lineHeight: 1.12, letterSpacing: '-1.5px', color: '#0f172a', maxWidth: 980, margin: '0 auto 24px' }}>
-          The Modern Multi-Tenant Clinical Operating System
+        <h1 style={{ fontSize: 56, fontWeight: 900, lineHeight: 1.15, letterSpacing: '-1.5px', color: '#0f172a', maxWidth: 960, margin: '0 auto 24px' }}>
+          {activeThemeOverride ? activeThemeOverride.tagline : 'The Intelligent Operating System for Modern Clinics & Hospitals'}
         </h1>
         
-        <p style={{ fontSize: 20, color: '#475569', maxWidth: 780, margin: '0 auto 40px', lineHeight: 1.6, fontWeight: 500 }}>
-          Manage your hospital or polyclinic chain with real-time OPD token queues, Gemini AI SOAP note summarization, 80mm thermal receipts, 30-day WhatsApp patient recall, and dynamic subdomain white-labeling.
+        <p style={{ fontSize: 19.5, color: '#475569', maxWidth: 780, margin: '0 auto 40px', lineHeight: 1.6, fontWeight: 500 }}>
+          Manage your outpatient clinic or healthcare network with automated OPD queues, Gemini AI clinical SOAP summaries, continuous 80mm thermal receipts, 30-day WhatsApp recall CRM, and dynamic subdomain multi-tenancy.
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 40 }}>
           <a href="#ai-builder" style={{ padding: '16px 36px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', color: '#ffffff', fontWeight: 800, fontSize: 17, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 25px rgba(139, 92, 246, 0.4)' }}>
             ✨ Build Clinic Website with Gemini AI
           </a>
-          <button onClick={() => navigate('/display')} style={{ padding: '16px 32px', borderRadius: 14, border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a', fontWeight: 700, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>📺 Open TV Lounge Display</span>
+          <button onClick={() => navigate('/appointments')} style={{ padding: '16px 32px', borderRadius: 14, border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a', fontWeight: 700, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>🏥 Open Reception Desk</span>
           </button>
         </div>
 
         {/* Feature Pill Grid */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap', color: '#64748b', fontSize: 13.5, fontWeight: 700 }}>
-          <span>✓ Multi-Tenant Subdomain Routing</span>
+          <span>✓ Subdomain & Multi-Tenant Routing</span>
           <span>✓ Gemini AI Doctor SOAP Summarizer</span>
           <span>✓ 1-Click WhatsApp 30-Day Patient Recall</span>
-          <span>✓ 80mm ESC/POS Thermal Printing</span>
+          <span>✓ 80mm/58mm ESC/POS Thermal Printing</span>
         </div>
       </header>
 
       {/* GEMINI AI INSTANT CLINIC WEBSITE BUILDER SECTION */}
       <section id="ai-builder" style={{ padding: '70px 32px 90px', backgroundColor: '#0f172a', color: '#ffffff', position: 'relative', overflow: 'hidden' }}>
-        {/* Glow Effects */}
+        {/* Ambient Glow */}
         <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(15, 23, 42, 0) 70%)', pointerEvents: 'none' }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, backgroundColor: 'rgba(139, 92, 246, 0.15)', color: '#c084fc', padding: '6px 18px', borderRadius: 999, fontWeight: 800, fontSize: 13, border: '1px solid rgba(139, 92, 246, 0.3)', marginBottom: 16 }}>
               <span>🤖 Gemini AI Live Website Generator</span>
             </div>
-            <h2 style={{ fontSize: 40, fontWeight: 900, color: '#ffffff', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 38, fontWeight: 900, color: '#ffffff', marginBottom: 12 }}>
               Build & Customize Your Clinic Web Portal in Seconds
             </h2>
-            <p style={{ fontSize: 17, color: '#94a3b8', maxWidth: 680, margin: '0 auto' }}>
+            <p style={{ fontSize: 16.5, color: '#94a3b8', maxWidth: 680, margin: '0 auto' }}>
               Type your clinic name or specialty below. Gemini AI will instantly generate your custom branding, appointment slots, doctor directory, and live portal configuration!
             </p>
           </div>
@@ -250,7 +262,6 @@ export default function LandingPage() {
                     padding: '6px 14px',
                     borderRadius: 999,
                     cursor: 'pointer',
-                    transition: 'all 0.15s',
                   }}
                 >
                   {item.title}
@@ -259,9 +270,9 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* AI Progress Logs during Generation */}
+          {/* AI Progress Simulation */}
           {isGenerating && (
-            <div style={{ backgroundColor: '#1e293b', padding: 28, borderRadius: 20, border: '1px solid rgba(139, 92, 246, 0.4)', textAlign: 'center', marginBottom: 32, animation: 'pulse 1.5s infinite' }}>
+            <div style={{ backgroundColor: '#1e293b', padding: 28, borderRadius: 20, border: '1px solid rgba(139, 92, 246, 0.4)', textAlign: 'center', marginBottom: 32 }}>
               <div style={{ fontSize: 28, marginBottom: 12 }}>🤖</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#c084fc', marginBottom: 8 }}>
                 {generationStep === 1 && '🔮 Gemini AI is analyzing clinical specialty & OPD triage requirements...'}
@@ -275,7 +286,7 @@ export default function LandingPage() {
 
           {/* Generated Clinic Preview Card */}
           {generatedClinic && !isGenerating && (
-            <div style={{ backgroundColor: '#1e293b', padding: 36, borderRadius: 24, border: `2px solid ${generatedClinic.primaryColor}`, boxShadow: '0 16px 40px rgba(0, 0, 0, 0.4)', transition: 'all 0.3s' }}>
+            <div style={{ backgroundColor: '#1e293b', padding: 36, borderRadius: 24, border: `2px solid ${generatedClinic.primaryColor}`, boxShadow: '0 16px 40px rgba(0, 0, 0, 0.4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24, borderBottom: '1px solid #334155', paddingBottom: 20 }}>
                 <div>
                   <div style={{ display: 'inline-block', backgroundColor: `${generatedClinic.primaryColor}25`, color: generatedClinic.primaryColor, fontSize: 12, fontWeight: 800, padding: '4px 14px', borderRadius: 999, border: `1px solid ${generatedClinic.primaryColor}50`, marginBottom: 8 }}>
@@ -285,22 +296,39 @@ export default function LandingPage() {
                   <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 4 }}>📍 {generatedClinic.city} · {generatedClinic.address} · 📞 {generatedClinic.phone}</div>
                 </div>
 
-                <button
-                  onClick={() => handleLaunchGeneratedWorkspace(generatedClinic)}
-                  style={{
-                    padding: '14px 28px',
-                    borderRadius: 12,
-                    border: 'none',
-                    backgroundColor: generatedClinic.primaryColor,
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: 15,
-                    cursor: 'pointer',
-                    boxShadow: `0 6px 20px ${generatedClinic.primaryColor}50`,
-                  }}
-                >
-                  🚀 Launch & Test This Generated Portal →
-                </button>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => handleApplyThemeToPage(generatedClinic)}
+                    style={{
+                      padding: '12px 20px',
+                      borderRadius: 12,
+                      border: `1px solid ${generatedClinic.primaryColor}`,
+                      backgroundColor: '#0f172a',
+                      color: generatedClinic.primaryColor,
+                      fontWeight: 800,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🎨 Apply Theme to This Page
+                  </button>
+                  <button
+                    onClick={() => handleLaunchGeneratedWorkspace(generatedClinic)}
+                    style={{
+                      padding: '12px 24px',
+                      borderRadius: 12,
+                      border: 'none',
+                      backgroundColor: generatedClinic.primaryColor,
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                      boxShadow: `0 6px 20px ${generatedClinic.primaryColor}50`,
+                    }}
+                  >
+                    🚀 Launch Live Portal →
+                  </button>
+                </div>
               </div>
 
               {/* Doctors & Slots Generated */}
@@ -324,7 +352,7 @@ export default function LandingPage() {
       {/* Interactive Demo Workspaces Launcher */}
       <section id="workspaces" style={{ padding: '80px 32px 90px', maxWidth: 1280, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 8 }}>Instant Interactive Demos</div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: currentBrandColor, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 8 }}>Instant Interactive Demos</div>
           <h2 style={{ fontSize: 36, fontWeight: 900, color: '#0f172a', marginBottom: 12 }}>
             Test Live Operational Workspaces
           </h2>
@@ -348,7 +376,7 @@ export default function LandingPage() {
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 flexDirection: 'column',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)',
               }}
             >
@@ -448,14 +476,14 @@ export default function LandingPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 32 }}>
           {Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => (
-            <div key={key} style={{ backgroundColor: '#ffffff', padding: 36, borderRadius: 24, border: plan.recommended ? '2px solid #0284c7' : '1px solid #e2e8f0', boxShadow: plan.recommended ? '0 12px 36px rgba(2, 132, 199, 0.15)' : 'none', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+            <div key={key} style={{ backgroundColor: '#ffffff', padding: 36, borderRadius: 24, border: plan.recommended ? `2px solid ${currentBrandColor}` : '1px solid #e2e8f0', boxShadow: plan.recommended ? `0 12px 36px ${currentBrandColor}25` : 'none', position: 'relative', display: 'flex', flexDirection: 'column' }}>
               {plan.recommended && (
-                <span style={{ position: 'absolute', top: -14, right: 24, backgroundColor: '#0284c7', color: '#fff', fontSize: 12, fontWeight: 800, padding: '4px 14px', borderRadius: 999, textTransform: 'uppercase' }}>
+                <span style={{ position: 'absolute', top: -14, right: 24, backgroundColor: currentBrandColor, color: '#fff', fontSize: 12, fontWeight: 800, padding: '4px 14px', borderRadius: 999, textTransform: 'uppercase' }}>
                   {plan.badge}
                 </span>
               )}
               <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0f172a', marginBottom: 6 }}>{plan.name}</h3>
-              <div style={{ fontSize: 36, fontWeight: 900, color: '#0284c7', marginBottom: 12 }}>
+              <div style={{ fontSize: 36, fontWeight: 900, color: currentBrandColor, marginBottom: 12 }}>
                 Rs. {plan.priceMonthlyPKR.toLocaleString()}<span style={{ fontSize: 15, color: '#64748b', fontWeight: 600 }}>/mo</span>
               </div>
               <p style={{ fontSize: 13.5, color: '#64748b', marginBottom: 24, minHeight: 40 }}>{plan.tagline}</p>
@@ -469,7 +497,7 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <button onClick={() => navigate('/login?mode=signup')} style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', backgroundColor: plan.recommended ? '#0284c7' : '#0f172a', color: '#ffffff', fontWeight: 800, fontSize: 15, cursor: 'pointer' }}>
+              <button onClick={() => navigate('/login?mode=signup')} style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', backgroundColor: plan.recommended ? currentBrandColor : '#0f172a', color: '#ffffff', fontWeight: 800, fontSize: 15, cursor: 'pointer' }}>
                 Select {plan.name}
               </button>
             </div>
@@ -481,8 +509,8 @@ export default function LandingPage() {
       <footer style={{ backgroundColor: '#0f172a', color: '#94a3b8', padding: '64px 32px 32px', borderTop: '1px solid #1e293b' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 24, borderBottom: '1px solid #1e293b', paddingBottom: 40 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', marginBottom: 6 }}>Medora Cloud HMS</div>
-            <div style={{ fontSize: 13 }}>Enterprise Healthcare Operations Platform · Pakistan</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', marginBottom: 6 }}>{currentClinicName}</div>
+            <div style={{ fontSize: 13 }}>Enterprise Healthcare Operations Platform · {currentCity}</div>
           </div>
           <div style={{ display: 'flex', gap: 24, fontSize: 14 }}>
             <a href="/login" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Portal Login</a>
@@ -491,7 +519,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div style={{ maxWidth: 1280, margin: '24px auto 0', textAlign: 'center', fontSize: 13 }}>
-          © {new Date().getFullYear()} Medora Health Technologies. All rights reserved. Built for modern clinical precision.
+          © {new Date().getFullYear()} {currentClinicName}. All rights reserved. Built for modern clinical precision.
         </div>
       </footer>
     </div>
