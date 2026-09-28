@@ -438,6 +438,29 @@ export default function PatientsPage() {
                             <Icon name="eye" /> Summary
                           </button>
                           <button
+                            className="btn btn-sm"
+                            style={{
+                              background: 'linear-gradient(135deg, #059669, #10b981)',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: 700,
+                              fontSize: 11,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                            title={`Send 30-Day Follow-Up & Recall invitation to ${p.name}`}
+                            onClick={() => {
+                              const msg = `Assalam-o-Alaikum ${p.name},\n\nThis is ${clinic.name || 'Medora Healthcare Complex'} reminding you that your 30-day follow-up consultation with ${p.doctor} is now due.\n\nTo schedule your consultation slot, please reply to this message or visit our online booking portal:\n${window.location.origin}?tenant=${clinic.slug || clinic.id}\n\nWishing you wonderful health!`;
+                              const cleanPhone = p.phone ? p.phone.replace(/\D/g, '') : '';
+                              const intl = cleanPhone.startsWith('0') ? `92${cleanPhone.slice(1)}` : cleanPhone;
+                              window.open(`https://wa.me/${intl || '923001234567'}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+                              showToast(`Dispatched follow-up recall invitation to ${p.name}!`);
+                            }}
+                          >
+                            <span>💬 Follow-Up Recall</span>
+                          </button>
+                          <button
                             className="btn btn-secondary btn-sm"
                             title="Print Hospital Barcode Wristband / ID"
                             onClick={() => setIdCardPatient(p)}
