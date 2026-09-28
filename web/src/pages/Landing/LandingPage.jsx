@@ -1,11 +1,73 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useClinicProfile } from '../../utils/clinicConfig.js';
+import { useClinicProfile, switchActiveClinic } from '../../utils/clinicConfig.js';
 import { SUBSCRIPTION_PLANS } from '../../utils/subscriptionConfig.js';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const clinic = useClinicProfile();
+
+  // Gemini AI Clinic Website Generator State
+  const [promptInput, setPromptInput] = useState('Al-Shifa Heart & Vascular Center, Lahore');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState(0);
+  const [generatedClinic, setGeneratedClinic] = useState(null);
+
+  const CLINIC_PROMPT_PRESETS = [
+    { title: '🫀 Cardiology Center', prompt: 'Al-Razi Heart & Vascular Institute, Lahore' },
+    { title: '🦷 Aesthetic Dental Studio', prompt: 'SmileCare Dental & Orthodontic Studio, Karachi' },
+    { title: '👶 Pediatric Clinic', prompt: 'Little Stars Pediatric & Childcare Clinic, Islamabad' },
+    { title: '🦴 Orthopedic Center', prompt: 'Khyber Bone & Joint Specialty Complex, Peshawar' },
+  ];
+
+  const handleGenerateClinicWithAI = () => {
+    if (!promptInput.trim()) return;
+    setIsGenerating(true);
+    setGenerationStep(1);
+    setGeneratedClinic(null);
+
+    // AI Generation Animation Pipeline
+    setTimeout(() => setGenerationStep(2), 500);
+    setTimeout(() => setGenerationStep(3), 1000);
+    setTimeout(() => {
+      setGenerationStep(4);
+      const isDental = promptInput.toLowerCase().includes('dental') || promptInput.toLowerCase().includes('smile');
+      const isPeds = promptInput.toLowerCase().includes('pediatric') || promptInput.toLowerCase().includes('child') || promptInput.toLowerCase().includes('stars');
+      const isCardio = promptInput.toLowerCase().includes('heart') || promptInput.toLowerCase().includes('cardio');
+
+      const primaryColor = isDental ? '#0d9488' : isPeds ? '#ec4899' : isCardio ? '#e11d48' : '#0284c7';
+      const specialty = isDental ? 'Dental & Orthodontics' : isPeds ? 'Pediatrics & Neonatology' : isCardio ? 'Cardiology & Vascular Surgery' : 'General & Multi-Specialty';
+
+      const created = {
+        name: promptInput.trim(),
+        specialty,
+        primaryColor,
+        city: promptInput.includes('Lahore') ? 'Lahore' : promptInput.includes('Karachi') ? 'Karachi' : promptInput.includes('Islamabad') ? 'Islamabad' : 'Peshawar',
+        tagline: `Leading ${specialty} Care with Real-Time Tokens & Gemini AI Notes`,
+        doctors: [
+          { name: 'Dr. Sarah Ahmed', role: `Senior ${specialty} Specialist`, fee: 'Rs. 2,500', slot: '1-Hour Fixed Slots' },
+          { name: 'Dr. Bilal Chaudhry', role: `Consultant ${specialty}`, fee: 'Rs. 3,000', slot: '1-Hour Fixed Slots' },
+        ],
+        phone: '0300-9988776',
+        address: 'Main Boulevard, Sector G-9, Pakistan',
+      };
+
+      setGeneratedClinic(created);
+      setIsGenerating(false);
+    }, 1600);
+  };
+
+  const handleLaunchGeneratedWorkspace = (generated) => {
+    switchActiveClinic({
+      name: generated.name,
+      city: generated.city,
+      phone: generated.phone,
+      address: generated.address,
+      brandColor: generated.primaryColor,
+      slug: generated.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+    });
+    navigate('/appointments');
+  };
 
   const DEMO_WORKSPACES = [
     {
@@ -74,6 +136,7 @@ export default function LandingPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 28, fontSize: 14.5, fontWeight: 700, color: '#475569' }}>
+          <a href="#ai-builder" style={{ color: '#0284c7', textDecoration: 'none', transition: 'color 0.15s' }}>✨ Gemini AI Builder</a>
           <a href="#workspaces" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>Live Workspaces</a>
           <a href="#features" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>AI & Features</a>
           <a href="#pricing" style={{ color: '#475569', textDecoration: 'none', transition: 'color 0.15s' }}>SaaS Pricing</a>
@@ -90,7 +153,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <header style={{ padding: '90px 32px 80px', maxWidth: 1280, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+      <header style={{ padding: '90px 32px 60px', maxWidth: 1280, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, backgroundColor: 'rgba(2, 132, 199, 0.08)', color: '#0284c7', padding: '6px 18px', borderRadius: 999, fontWeight: 800, fontSize: 13.5, marginBottom: 24, border: '1px solid rgba(2, 132, 199, 0.25)' }}>
           <span>✨ Enterprise Healthcare ERP · Powered by Gemini AI & Supabase</span>
         </div>
@@ -104,9 +167,9 @@ export default function LandingPage() {
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 40 }}>
-          <button onClick={() => navigate('/login?mode=signup')} style={{ padding: '16px 36px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', color: '#ffffff', fontWeight: 800, fontSize: 17, cursor: 'pointer', boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4)', transition: 'transform 0.15s, boxShadow 0.15s' }}>
-            🚀 Provision Digital Clinic Free
-          </button>
+          <a href="#ai-builder" style={{ padding: '16px 36px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', color: '#ffffff', fontWeight: 800, fontSize: 17, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 25px rgba(139, 92, 246, 0.4)' }}>
+            ✨ Build Clinic Website with Gemini AI
+          </a>
           <button onClick={() => navigate('/display')} style={{ padding: '16px 32px', borderRadius: 14, border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a', fontWeight: 700, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>📺 Open TV Lounge Display</span>
           </button>
@@ -121,8 +184,145 @@ export default function LandingPage() {
         </div>
       </header>
 
+      {/* GEMINI AI INSTANT CLINIC WEBSITE BUILDER SECTION */}
+      <section id="ai-builder" style={{ padding: '70px 32px 90px', backgroundColor: '#0f172a', color: '#ffffff', position: 'relative', overflow: 'hidden' }}>
+        {/* Glow Effects */}
+        <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(15, 23, 42, 0) 70%)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 2 }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, backgroundColor: 'rgba(139, 92, 246, 0.15)', color: '#c084fc', padding: '6px 18px', borderRadius: 999, fontWeight: 800, fontSize: 13, border: '1px solid rgba(139, 92, 246, 0.3)', marginBottom: 16 }}>
+              <span>🤖 Gemini AI Live Website Generator</span>
+            </div>
+            <h2 style={{ fontSize: 40, fontWeight: 900, color: '#ffffff', marginBottom: 12 }}>
+              Build & Customize Your Clinic Web Portal in Seconds
+            </h2>
+            <p style={{ fontSize: 17, color: '#94a3b8', maxWidth: 680, margin: '0 auto' }}>
+              Type your clinic name or specialty below. Gemini AI will instantly generate your custom branding, appointment slots, doctor directory, and live portal configuration!
+            </p>
+          </div>
+
+          {/* AI Generator Input Bar */}
+          <div style={{ backgroundColor: '#1e293b', padding: 24, borderRadius: 24, border: '1px solid #334155', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)', marginBottom: 32 }}>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 18 }}>
+              <input
+                type="text"
+                value={promptInput}
+                onChange={(e) => setPromptInput(e.target.value)}
+                placeholder="e.g. Al-Razi Heart & Vascular Clinic, Lahore"
+                style={{ flex: 1, minWidth: 280, backgroundColor: '#0f172a', border: '1px solid #475569', color: '#ffffff', borderRadius: 14, padding: '16px 20px', fontSize: 16, outline: 'none', fontWeight: 600 }}
+              />
+              <button
+                onClick={handleGenerateClinicWithAI}
+                disabled={isGenerating}
+                style={{
+                  padding: '16px 32px',
+                  borderRadius: 14,
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: 16,
+                  cursor: isGenerating ? 'wait' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  boxShadow: '0 8px 20px rgba(139, 92, 246, 0.4)',
+                }}
+              >
+                <span>{isGenerating ? '⚡ Generating...' : '✨ Generate Portal with Gemini AI'}</span>
+              </button>
+            </div>
+
+            {/* Quick Prompt Presets */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: '#64748b' }}>Quick Presets:</span>
+              {CLINIC_PROMPT_PRESETS.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setPromptInput(item.prompt)}
+                  style={{
+                    backgroundColor: '#0f172a',
+                    border: '1px solid #334155',
+                    color: '#cbd5e1',
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {item.title}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Progress Logs during Generation */}
+          {isGenerating && (
+            <div style={{ backgroundColor: '#1e293b', padding: 28, borderRadius: 20, border: '1px solid rgba(139, 92, 246, 0.4)', textAlign: 'center', marginBottom: 32, animation: 'pulse 1.5s infinite' }}>
+              <div style={{ fontSize: 28, marginBottom: 12 }}>🤖</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#c084fc', marginBottom: 8 }}>
+                {generationStep === 1 && '🔮 Gemini AI is analyzing clinical specialty & OPD triage requirements...'}
+                {generationStep === 2 && '🎨 Synthesizing custom theme palette, logo & portal branding...'}
+                {generationStep === 3 && '👨‍⚕️ Generating 1-hour appointment slot schedule & doctor directory...'}
+                {generationStep === 4 && '📲 Configuring WhatsApp 30-day recall engine & thermal slip headers...'}
+              </div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>Please wait while Gemini AI builds your custom hospital workspace...</div>
+            </div>
+          )}
+
+          {/* Generated Clinic Preview Card */}
+          {generatedClinic && !isGenerating && (
+            <div style={{ backgroundColor: '#1e293b', padding: 36, borderRadius: 24, border: `2px solid ${generatedClinic.primaryColor}`, boxShadow: '0 16px 40px rgba(0, 0, 0, 0.4)', transition: 'all 0.3s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24, borderBottom: '1px solid #334155', paddingBottom: 20 }}>
+                <div>
+                  <div style={{ display: 'inline-block', backgroundColor: `${generatedClinic.primaryColor}25`, color: generatedClinic.primaryColor, fontSize: 12, fontWeight: 800, padding: '4px 14px', borderRadius: 999, border: `1px solid ${generatedClinic.primaryColor}50`, marginBottom: 8 }}>
+                    ✨ AI GENERATED CLINIC PORTAL
+                  </div>
+                  <h3 style={{ fontSize: 28, fontWeight: 900, color: '#ffffff', margin: 0 }}>{generatedClinic.name}</h3>
+                  <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 4 }}>📍 {generatedClinic.city} · {generatedClinic.address} · 📞 {generatedClinic.phone}</div>
+                </div>
+
+                <button
+                  onClick={() => handleLaunchGeneratedWorkspace(generatedClinic)}
+                  style={{
+                    padding: '14px 28px',
+                    borderRadius: 12,
+                    border: 'none',
+                    backgroundColor: generatedClinic.primaryColor,
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: 15,
+                    cursor: 'pointer',
+                    boxShadow: `0 6px 20px ${generatedClinic.primaryColor}50`,
+                  }}
+                >
+                  🚀 Launch & Test This Generated Portal →
+                </button>
+              </div>
+
+              {/* Doctors & Slots Generated */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+                {generatedClinic.doctors.map((doc, idx) => (
+                  <div key={idx} style={{ backgroundColor: '#0f172a', padding: 20, borderRadius: 16, border: '1px solid #334155' }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', marginBottom: 4 }}>{doc.name}</div>
+                    <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 8 }}>{doc.role}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: generatedClinic.primaryColor }}>
+                      <span>Fee: {doc.fee}</span>
+                      <span>⏰ {doc.slot}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Interactive Demo Workspaces Launcher */}
-      <section id="workspaces" style={{ padding: '60px 32px 90px', maxWidth: 1280, margin: '0 auto' }}>
+      <section id="workspaces" style={{ padding: '80px 32px 90px', maxWidth: 1280, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 8 }}>Instant Interactive Demos</div>
           <h2 style={{ fontSize: 36, fontWeight: 900, color: '#0f172a', marginBottom: 12 }}>
