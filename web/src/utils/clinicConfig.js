@@ -80,6 +80,26 @@ export function saveClinicProfile(updated) {
   const merged = { ...getClinicProfile(), ...updated };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+
+    // Also synchronize phone/name updates back to SuperAdmin tenant directory
+    const saasTenantsRaw = localStorage.getItem('medora_saas_tenants');
+    if (saasTenantsRaw && merged.id) {
+      const tenants = JSON.parse(saasTenantsRaw);
+      const updatedTenants = tenants.map((t) => {
+        if (t.id === merged.id) {
+          return {
+            ...t,
+            name: merged.name || t.name,
+            phone: merged.phone || t.phone,
+            doctorInCharge: merged.doctorInCharge || t.doctorInCharge,
+            city: merged.city || t.city,
+          };
+        }
+        return t;
+      });
+      localStorage.setItem('medora_saas_tenants', JSON.stringify(updatedTenants));
+    }
+
     window.dispatchEvent(new CustomEvent('clinic-profile-updated', { detail: merged }));
   } catch (err) {
     console.error('Failed to save clinic profile:', err);
