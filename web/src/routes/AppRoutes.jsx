@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { ROLE_LANDING } from '../legacy/legacyEngine.js';
 
 // Lazy-loaded routes for web and mobile performance
+const LandingPage = lazy(() => import('../pages/Landing/LandingPage.jsx'));
 const LoginPage = lazy(() => import('../pages/Login/LoginPage.jsx'));
 const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage.jsx'));
 const PatientsPage = lazy(() => import('../pages/Patients/PatientsPage.jsx'));
@@ -56,6 +57,7 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/display" element={<LobbyDisplayPage />} />
       <Route path="/lobby" element={<LobbyDisplayPage />} />
