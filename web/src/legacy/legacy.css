@@ -2128,9 +2128,13 @@ body:has(.cmd-overlay) .medora-ai-launcher {
 
   /* 8. Full Touch-Friendly Tables with Horizontal Momentum */
   .table-responsive,
-  .table-container {
+  .table-container,
+  .data-table,
+  .table {
+    display: block !important;
     width: 100% !important;
     overflow-x: auto !important;
+    white-space: nowrap !important;
     -webkit-overflow-scrolling: touch !important;
     border-radius: var(--radius-md);
     margin-bottom: 12px;
