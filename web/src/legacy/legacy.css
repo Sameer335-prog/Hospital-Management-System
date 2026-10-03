@@ -2060,9 +2060,9 @@ body:has(.cmd-overlay) .medora-ai-launcher {
     gap: 6px !important;
   }
 
+  /* Hide non-essential topbar buttons on mobile so the Theme Toggle is visible */
   .topbar-right .btn-sm {
-    padding: 4px 8px !important;
-    font-size: 11px !important;
+    display: none !important;
   }
 
   /* 4. Scrollable Screen Content with Mobile Safe Area */

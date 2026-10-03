@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useTheme } from '../../context/ThemeContext.jsx';
 import { ROLE_LANDING } from '../../legacy/legacyEngine.js';
 import Icon from '../../components/ui/Icon.jsx';
 
 export default function LoginPage() {
   const { login, signup, resetPassword, isAuthenticated, user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -126,7 +128,31 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-wrap" style={{ minHeight: '100vh', padding: '32px 16px' }}>
+    <div className="login-wrap" style={{ minHeight: '100vh', padding: '32px 16px', position: 'relative' }}>
+      {/* Floating Theme Toggle */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          background: 'var(--c-surface)',
+          border: '1px solid var(--c-border)',
+          borderRadius: '50%',
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: 'var(--shadow-sm)',
+          zIndex: 10,
+        }}
+        title="Toggle Theme"
+      >
+        <Icon name={theme === 'light' ? 'moon' : 'sun'} />
+      </button>
+
       <div className="login-card" style={{ width: 480, maxWidth: '100%' }}>
         {/* Brand Identity */}
         <div className="login-logo">
