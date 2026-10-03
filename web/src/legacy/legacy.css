@@ -2104,6 +2104,12 @@ body:has(.cmd-overlay) .medora-ai-launcher {
     gap: 10px !important;
   }
 
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
   /* 7. Full Touch-Friendly Tables with Horizontal Momentum */
   .table-responsive,
   .table-container {
