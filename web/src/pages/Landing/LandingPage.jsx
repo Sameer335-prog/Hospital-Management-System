@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useClinicProfile, switchActiveClinic } from '../../utils/clinicConfig.js';
 import { SUBSCRIPTION_PLANS } from '../../utils/subscriptionConfig.js';
+import './LandingPage.css';
 
 export default function LandingPage() {
   const navigate = useNavigate();

@@ -1,0 +1,112 @@
+/* Mobile Responsive Overrides for Landing Page */
+
+@media (max-width: 768px) {
+  /* Navigation */
+  nav {
+    flex-direction: column !important;
+    padding: 16px 20px !important;
+    gap: 16px !important;
+    text-align: center;
+  }
+  
+  /* Hide the 4 center links (AI Builder, Workspaces, etc.) on mobile to save space */
+  nav > div:nth-child(2) {
+    display: none !important;
+  }
+  
+  /* Make the action buttons span full width */
+  nav > div:nth-child(3) {
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 12px !important;
+  }
+  
+  /* Hero Section */
+  header {
+    padding: 40px 20px 40px !important;
+  }
+  
+  header h1 {
+    font-size: 36px !important;
+    line-height: 1.2 !important;
+  }
+  
+  header p {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* Hero Action Buttons */
+  header > div:nth-of-type(2) {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+  
+  header > div:nth-of-type(2) > a, 
+  header > div:nth-of-type(2) > button {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  
+  /* AI Builder Section */
+  #ai-builder {
+    padding: 40px 20px !important;
+  }
+  
+  #ai-builder h2 {
+    font-size: 30px !important;
+  }
+  
+  /* Prompt Input Bar */
+  #ai-builder > div:nth-child(2) > div:nth-child(2) > div:first-child {
+    flex-direction: column !important;
+  }
+  
+  #ai-builder input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  
+  #ai-builder button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  /* Workspaces Section */
+  #workspaces {
+    padding: 40px 20px !important;
+  }
+  
+  #workspaces h2 {
+    font-size: 28px !important;
+  }
+  
+  /* Pricing Section */
+  #pricing {
+    padding: 40px 20px !important;
+  }
+  
+  #pricing > div:nth-of-type(2) {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  
+  #pricing > div:nth-of-type(2) > div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Footer */
+  footer {
+    padding: 40px 20px !important;
+  }
+  
+  footer > div:first-child {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 32px !important;
+    text-align: center !important;
+  }
+}
