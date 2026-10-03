@@ -2122,6 +2122,10 @@ body:has(.cmd-overlay) .medora-ai-launcher {
     gap: 12px !important;
   }
 
+  .med-grid, .lab-grid {
+    grid-template-columns: 1fr !important;
+  }
+
   /* 8. Full Touch-Friendly Tables with Horizontal Momentum */
   .table-responsive,
   .table-container {

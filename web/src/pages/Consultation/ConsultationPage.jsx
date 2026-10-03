@@ -724,7 +724,7 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'center' }}>
+                      <div className="med-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'center' }}>
                         <div>
                           <input
                             className="input"
@@ -887,6 +887,7 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
                 {labOrders.map((o) => (
                   <div
                     key={o.id}
+                    className="lab-grid"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '1fr 130px auto',
