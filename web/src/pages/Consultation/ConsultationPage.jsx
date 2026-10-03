@@ -649,6 +649,7 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
                         fontSize: 12.5,
                         display: 'flex',
                         alignItems: 'center',
+                        flexWrap: 'wrap',
                         gap: 6,
                         textTransform: 'uppercase',
                         letterSpacing: '0.04em',
@@ -682,7 +683,10 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
                               border: 'none',
                               fontWeight: 700,
                               fontSize: 11.5,
-                              padding: '4px 10px',
+                              padding: '6px 10px',
+                              whiteSpace: 'normal',
+                              textAlign: 'left',
+                              lineHeight: 1.4,
                             }}
                             onClick={() => handleReplaceWithSafeAlternative(c)}
                           >
@@ -1162,32 +1166,34 @@ ${followUpNotes ? `📝 *Notes:* ${followUpNotes}\n` : ''}
                       No pharmaceuticals prescribed. Advised symptomatic care.
                     </div>
                   ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid #cbd5e1', textAlign: 'left', color: '#475569' }}>
-                          <th style={{ padding: '6px 4px' }}>#</th>
-                          <th style={{ padding: '6px 4px' }}>Medicine Name</th>
-                          <th style={{ padding: '6px 4px' }}>Dosage</th>
-                          <th style={{ padding: '6px 4px' }}>Frequency</th>
-                          <th style={{ padding: '6px 4px' }}>Duration</th>
-                          <th style={{ padding: '6px 4px' }}>Instructions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {medicines.map((m, idx) => (
-                          <tr key={m.id || idx} style={{ borderBottom: '1px dashed #e2e8f0' }}>
-                            <td style={{ padding: '8px 4px', fontWeight: 600 }}>{idx + 1}.</td>
-                            <td style={{ padding: '8px 4px', fontWeight: 800, color: '#0f172a' }}>
-                              {m.medicine || 'Generic Formula'}
-                            </td>
-                            <td style={{ padding: '8px 4px' }}>{m.dose || '1 dose'}</td>
-                            <td style={{ padding: '8px 4px', fontFamily: 'monospace' }}>{m.frequency || '1-0-1'}</td>
-                            <td style={{ padding: '8px 4px' }}>{m.duration || '7 Days'}</td>
-                            <td style={{ padding: '8px 4px', color: '#475569' }}>{m.instructions || 'After meals'}</td>
+                    <div className="table-responsive">
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #cbd5e1', textAlign: 'left', color: '#475569' }}>
+                            <th style={{ padding: '6px 4px' }}>#</th>
+                            <th style={{ padding: '6px 4px' }}>Medicine Name</th>
+                            <th style={{ padding: '6px 4px' }}>Dosage</th>
+                            <th style={{ padding: '6px 4px' }}>Frequency</th>
+                            <th style={{ padding: '6px 4px' }}>Duration</th>
+                            <th style={{ padding: '6px 4px' }}>Instructions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {medicines.map((m, idx) => (
+                            <tr key={m.id || idx} style={{ borderBottom: '1px dashed #e2e8f0' }}>
+                              <td style={{ padding: '8px 4px', fontWeight: 600 }}>{idx + 1}.</td>
+                              <td style={{ padding: '8px 4px', fontWeight: 800, color: '#0f172a' }}>
+                                {m.medicine || 'Generic Formula'}
+                              </td>
+                              <td style={{ padding: '8px 4px' }}>{m.dose || '1 dose'}</td>
+                              <td style={{ padding: '8px 4px', fontFamily: 'monospace' }}>{m.frequency || '1-0-1'}</td>
+                              <td style={{ padding: '8px 4px' }}>{m.duration || '7 Days'}</td>
+                              <td style={{ padding: '8px 4px', color: '#475569' }}>{m.instructions || 'After meals'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
 
