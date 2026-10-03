@@ -2033,7 +2033,7 @@ body:has(.cmd-overlay) .medora-ai-launcher {
     padding: 0 12px !important;
     display: flex !important;
     align-items: center !important;
-    justifyContent: space-between !important;
+    justify-content: space-between !important;
     gap: 8px !important;
     border-bottom: 1px solid var(--c-border) !important;
     background: var(--c-surface) !important;
@@ -2110,7 +2110,19 @@ body:has(.cmd-overlay) .medora-ai-launcher {
     gap: 12px !important;
   }
 
-  /* 7. Full Touch-Friendly Tables with Horizontal Momentum */
+  /* 7. Login Card & Forms Mobile Adjustments */
+  .login-wrap {
+    padding: 16px 8px !important;
+  }
+  .login-card {
+    padding: 24px 16px !important;
+  }
+  .login-card > div[style*="display: flex"] {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* 8. Full Touch-Friendly Tables with Horizontal Momentum */
   .table-responsive,
   .table-container {
     width: 100% !important;

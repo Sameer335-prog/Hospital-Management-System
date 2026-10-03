@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useClinicProfile, switchActiveClinic } from '../../utils/clinicConfig.js';
 import { SUBSCRIPTION_PLANS } from '../../utils/subscriptionConfig.js';
@@ -7,6 +7,13 @@ import './LandingPage.css';
 export default function LandingPage() {
   const navigate = useNavigate();
   const clinic = useClinicProfile();
+
+  useEffect(() => {
+    // If the user is on a mobile device, skip the landing page and go straight to login
+    if (window.innerWidth <= 768) {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
 
   // Gemini AI Clinic Website Generator State
   const [promptInput, setPromptInput] = useState('Al-Shifa Heart & Vascular Center, Lahore');
